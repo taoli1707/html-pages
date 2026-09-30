@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oliden LLC Setup</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: OLIDEN, NJ, US, IRS, FinCEN, NJ-REG, W-9, DOR, NAICS, PL12 -->
+<h1>How do you form Oliden LLC in New Jersey to publish the app?</h1>
+<p class="meta">Written 2026-09-29 · Reading time: about 24 minutes · You need to know: nothing about company law; you need a New Jersey street address and your Social Security number</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>Oliden LLC exists after three filings. You file them online, in this order, in about one hour of your own time.</p>
+  <ol>
+    <li><strong>Certificate of Formation</strong> with the New Jersey Division of Revenue: <strong>US$100</strong>. This creates the company.</li>
+    <li><strong>Employer Identification Number</strong> from the Internal Revenue Service (IRS): <strong>$0</strong>. This is the tax number of the company.</li>
+    <li><strong>Business registration (form NJ-REG)</strong> with New Jersey: <strong>$0</strong>, due within 60 days of the first filing. This registers the company for state tax.</li>
+  </ol>
+  <p>After that, the company costs <strong>$75 per year</strong> for the state annual report. The name <strong>Oliden</strong> was available in the New Jersey business name search on 2026-09-29. But <strong>OLIDEN is a registered United States trademark</strong> of a Texas oil-tool company. This does not stop the New Jersey filing. It matters if you later want to register your own trademark, see section 4.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>You are the only owner. The company is a single-member LLC.</li>
+    <li>Your home address in New Jersey is the address of the company and of its registered agent.</li>
+    <li>The company has no employees and collects no New Jersey sales tax. Apple collects the sales tax on App Store sales, see "Words that you will hear".</li>
+    <li>The company keeps the default tax treatment. You do not elect corporation or S-corporation tax treatment.</li>
+    <li>The example dates assume that you file the Certificate of Formation on 5 October 2026.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#example">One example: the three filings for Oliden LLC, step by step</a></li>
+    <li><a href="#rule">The rule: an LLC is a separate legal person, and the state must know three things about it</a></li>
+    <li><a href="#data">The cost: US$100 in the first year, then US$75 per year, compared with no company</a></li>
+    <li><a href="#name">The name: Oliden is free in New Jersey, but OLIDEN is a federal trademark in another field</a></li>
+    <li><a href="#mistake">Wrong idea corrected: a single-member LLC does not change your income tax</a></li>
+    <li><a href="#limits">Limits: the employer clause, fees that change, and what this page is not</a></li>
+    <li><a href="#words">Words that you will hear</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One example: the three filings for Oliden LLC, step by step</h2>
+<p>A <dfn>limited liability company</dfn> (LLC) is a company that the state creates when you file one document. The company is a legal person that is separate from you. It can own the app, sign the Apple contract, and receive the App Store money. If the company owes money, the creditor can take the money of the company, but not your house or your savings. This protection is the "limited liability" in the name.</p>
+<p>The owner of an LLC is called a <dfn>member</dfn>. Oliden LLC has one member: you. Below is the complete sequence, with the values that you enter.</p>
+
+<div class="box example">
+  <span class="label">Worked example: Oliden LLC, filed on 5 October 2026</span>
+  <ol class="steps">
+    <li><strong>Check the name.</strong> Open the New Jersey business name search and enter "Oliden". On 2026-09-29 the search answered <span class="quoted">Oliden is available!</span>.
+      <span class="why">New Jersey requires that a name is <dfn>distinguishable</dfn> from every name already on record in the state. Distinguishable means: not the same and not nearly the same. The search reads that record.</span></li>
+    <li><strong>File the Certificate of Formation.</strong> Open the New Jersey Business Formation portal. Choose "Domestic Limited Liability Company". Enter the name <strong>Oliden LLC</strong> and your home address as the main address. Enter yourself as the <dfn>registered agent</dfn>, the person who receives legal documents for the company, at the same address. Enter a business purpose ("development and publication of software applications") and the industry code 513210 (Software Publishers). Pay <strong>$100</strong> by card.
+      <span class="why">The <dfn>Certificate of Formation</dfn> is the one document that creates the company. The fee is $100 for every for-profit entity, as the state page "Getting Registered" states. The state gives the company a 10-digit Entity ID. Keep the approved certificate as a PDF; the bank and Apple ask for it.</span></li>
+    <li><strong>Get the Employer Identification Number.</strong> Open the free IRS EIN Assistant. Choose "Limited Liability Company", 1 member, state New Jersey, reason "Started a new business". Enter yourself as the responsible party with your Social Security number. Enter 0 employees. Choose "Receive letter online". Cost: <strong>$0</strong>. The number arrives at once.
+      <span class="why">The <dfn>Employer Identification Number</dfn> (EIN) is the federal tax number of the company. Your Social Security number is your own tax number in the same way. The IRS states that most new single-member LLCs need one, and banks require one to open a company account. Only the IRS site is free; the paid sites in search results file the same free form.</span></li>
+    <li><strong>Register for state tax with form NJ-REG.</strong> Open the New Jersey business registration portal. Enter the Entity ID, the EIN, the name, and the start date. Answer "No" to employees, "No" to sales tax collection, and "No" to payroll withholding. Cost: <strong>$0</strong>. Deadline: <strong>4 December 2026</strong>, which is 60 days after 5 October 2026.
+      <span class="why">The state form says that <span class="quoted">form NJ-REG must be submitted within 60 days of filing the new business entity</span>. The state then issues the <dfn>Business Registration Certificate</dfn> (BRC), a document that proves the registration. Leave every "register for this tax" box empty, because each box creates a filing duty that the company does not have.</span></li>
+    <li><strong>Every following year: file the annual report.</strong> The first one is due on <strong>31 October 2027</strong>, and then on the last day of October every year. Cost: <strong>$75</strong>.
+      <span class="why">The <dfn>annual report</dfn> is a yearly confirmation of the address and the registered agent, with a fee. The state page says the report is due on the last day of the month in which you formed the company. A company that skips the report for two consecutive years can lose its charter.</span></li>
+  </ol>
+  <p><strong>Result:</strong> three filings, $100 in total, about one hour of work. The state keeps three facts about the company: its name, its address with a registered agent, and its tax registration.</p>
+</div>
+
+<p>Two things belong to the same week but are not state filings. First, open a company bank account with the certificate and the EIN, and pay every company cost from it. Second, sign a one-page operating agreement, see "Words that you will hear". Neither is filed with the state.</p>
+
+<h2 id="rule">2. The rule: an LLC is a separate legal person, and the state must know three things about it</h2>
+<p>The example above follows one rule. New Jersey creates an LLC when it knows three things. The first is a distinguishable name. The second is an address with an agent who accepts legal documents. The third is a tax registration. Each filing in section 1 supplies one of these facts.</p>
+<p>The registered agent receives legal documents for the company, for example a court summons. The New Jersey statute states who may serve. The agent is <span class="quoted">an individual who is a resident of this State</span>, or a business <span class="quoted">with authority to transact business in this State</span>. You are a resident, so you can be the agent yourself.</p>
+<p>The address of the agent is the <dfn>registered office</dfn>. It must be a street address in New Jersey, and it becomes public record. Companies that do not want a home address in public record pay a commercial agent, but this page assumes your home address.</p>
+
+<figure class="diagram">
+  <p class="fig-title">Each filing produces one document, and the next filing or the bank needs that document.</p>
+  <p class="fig-sub">The three filings of section 1, in order, with the document that each one produces.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 700 250" role="img" aria-label="Diagram of a sequence. The Certificate of Formation, 100 dollars, filed with New Jersey, produces the Entity ID. The EIN application, 0 dollars, filed with the IRS, produces the EIN. Form NJ-REG, 0 dollars, filed with New Jersey within 60 days, produces the Business Registration Certificate. The Entity ID and the EIN are needed for NJ-REG and for the bank account.">
+    <defs>
+      <marker id="arrow-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/>
+      </marker>
+    </defs>
+    <rect class="node" x="20" y="30" width="190" height="78" rx="8"/>
+    <text class="node-name" x="115" y="55" text-anchor="middle">Certificate of Formation</text>
+    <text class="node-value" x="115" y="76" text-anchor="middle">New Jersey · US$100</text>
+    <text class="node-value" x="115" y="96" text-anchor="middle">gives: Entity ID</text>
+
+    <rect class="node" x="255" y="30" width="190" height="78" rx="8"/>
+    <text class="node-name" x="350" y="55" text-anchor="middle">EIN application</text>
+    <text class="node-value" x="350" y="76" text-anchor="middle">IRS · $0</text>
+    <text class="node-value" x="350" y="96" text-anchor="middle">gives: EIN</text>
+
+    <rect class="node" x="490" y="30" width="190" height="78" rx="8"/>
+    <text class="node-name" x="585" y="55" text-anchor="middle">Form NJ-REG</text>
+    <text class="node-value" x="585" y="76" text-anchor="middle">New Jersey · $0 · 60 days</text>
+    <text class="node-value" x="585" y="96" text-anchor="middle">gives: Business Reg. Cert.</text>
+
+    <line class="arrow" x1="212" y1="69" x2="252" y2="69" marker-end="url(#arrow-head)"/>
+    <line class="arrow" x1="447" y1="69" x2="487" y2="69" marker-end="url(#arrow-head)"/>
+
+    <rect class="node" x="255" y="170" width="190" height="56" rx="8"/>
+    <text class="node-name" x="350" y="194" text-anchor="middle">Company bank account</text>
+    <text class="node-value" x="350" y="214" text-anchor="middle">needs: certificate + EIN</text>
+    <path class="arrow" d="M 115 110 V 198 H 252" marker-end="url(#arrow-head)"/>
+    <path class="arrow" d="M 350 110 V 167" marker-end="url(#arrow-head)"/>
+    <text class="arrow-label" x="180" y="150" text-anchor="middle">Entity ID + EIN</text>
+    <text class="arrow-label" x="180" y="167" text-anchor="middle">go to NJ-REG too</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is one filing or one account. Each arrow means "the document from this box is needed for the next box". Start at the top left and follow the arrows.</p>
+</figure>
+
+<h3>Single-member LLC compared with the alternative</h3>
+<p>The alternative to an LLC is no company at all. Then you publish the app as an individual, which the law calls a sole proprietorship. The two cases differ in one feature: whether a separate legal person exists.</p>
+<div class="compare">
+  <div>
+    <h4>No company (sole proprietorship)</h4>
+    <p>You sign the Apple contract yourself. Your own name is the seller name on the App Store.</p>
+    <p>A creditor of the business can take your personal savings.</p>
+    <p>State cost: $0. Apple enrolment: individual.</p>
+  </div>
+  <div>
+    <h4>Oliden LLC (single-member LLC)</h4>
+    <p>The company signs the Apple contract. "Oliden LLC" is the seller name.</p>
+    <p>A creditor of the company can take only the money of the company, if you keep the money separate.</p>
+    <p>State cost: $100, then $75 per year. Apple enrolment: organization.</p>
+  </div>
+</div>
+<p>The principle: the state fee buys the separation between your money and the money of the business. The separation holds only if you keep it. If you pay personal costs from the company account, a court can ignore the separation. Lawyers call this "piercing the veil".</p>
+
+<h2 id="data">3. The cost: US$100 in the first year, then US$75 per year, compared with no company</h2>
+<p>The table shows the state and federal costs of the company alone, without Apple. Apple charges $99 per membership year in both cases, so it does not change the difference.</p>
+<div class="table-wrap">
+<table>
+  <caption>Oliden LLC costs US$100 in the first year and US$75 in each later year; no company costs US$0</caption>
+  <thead>
+    <tr><th>Item</th><th>Who receives it</th><th class="num">First year (US$)</th><th class="num">Each later year (US$)</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Certificate of Formation</th><td>New Jersey</td><td class="num">100</td><td class="num">0</td></tr>
+    <tr><th scope="row">Employer Identification Number</th><td>IRS</td><td class="num">0</td><td class="num">0</td></tr>
+    <tr><th scope="row">Form NJ-REG</th><td>New Jersey</td><td class="num">0</td><td class="num">0</td></tr>
+    <tr><th scope="row">Annual report</th><td>New Jersey</td><td class="num">0</td><td class="num">75</td></tr>
+    <tr class="highlight"><th scope="row">Total for Oliden LLC</th><td></td><td class="num">100</td><td class="num">75</td></tr>
+    <tr><th scope="row">Total for no company</th><td></td><td class="num">0</td><td class="num">0</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one cost. The first-year column contains the one-time filing. The later-year column repeats every year. Over 5 years the company costs $100 + 4 × $75 = $400.</p>
+<p>The first annual report is due in the formation month of the following year, so the first year has no annual report. If you form the company in October 2026, the first report is due on 31 October 2027.</p>
+
+<h2 id="name">4. The name: Oliden is free in New Jersey, but OLIDEN is a federal trademark in another field</h2>
+<p>Two different systems check a company name, and they answer two different questions.</p>
+<p>The first system is the state record. New Jersey requires that the name is distinguishable from every name on record in the state, see section 1. The statute also requires that the name contains "limited liability company" or the abbreviation "L.L.C." or "LLC". So the legal name is "Oliden LLC". The state search on 2026-09-29 reported that Oliden is available. This check is complete.</p>
+<p>The second system is the federal <dfn>trademark</dfn> register. A trademark is a name or sign that identifies the source of goods or services. A registered trademark gives its owner the right to stop others from using a confusingly similar name for related goods. The state does not check trademarks when it accepts a company name. So a name can be available in New Jersey and still conflict with a trademark.</p>
+<p>The trademark register contains the word mark <strong>OLIDEN</strong>, registered on 15 September 2020 (serial number 88729909), owned by Oliden Technology, LLC of Stafford, Texas. The registration covers class 9 and class 42, for oil and gas well downhole survey and measurement equipment, and for drilling measurement services. A separate company named Oliden LLC also exists in Windsor, California, formed in January 2023. Its business is not stated in the record that this page found.</p>
+<div class="table-wrap">
+<table>
+  <caption>The two checks answer different questions, and only the first one is complete for Oliden</caption>
+  <thead>
+    <tr><th>Check</th><th>Question it answers</th><th>Result for Oliden</th><th>Confidence</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">New Jersey name record</th><td>Can the state create a company with this name?</td><td>Available on 2026-09-29</td><td><span class="conf high">High</span></td></tr>
+    <tr><th scope="row">Federal trademark register</th><td>Can someone stop you from using the name for your goods?</td><td>OLIDEN is registered for oil-well tools, classes 9 and 42</td><td><span class="conf medium">Medium</span></td></tr>
+    <tr><th scope="row">Other state records</th><td>Does the same name exist elsewhere?</td><td>Oliden LLC exists in California</td><td><span class="conf low">Low</span></td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one check. The last column is the confidence label, explained in the sources section.</p>
+<p>What this means for you. A trademark conflict exists only when a buyer could confuse the two sources. A sleep app for consumers and a drilling tool for oil companies are far apart. So the risk that the Texas company can stop you from using "Oliden" is low. No number is available, because only a court decides such a case. Two practical consequences follow:</p>
+<ul>
+  <li>The New Jersey filing can go ahead. The state will accept "Oliden LLC".</li>
+  <li>If you later want to register "Oliden" as your own trademark for software, the examiner will compare it with the existing OLIDEN mark. Class 9 is the same class, because class 9 covers both measurement instruments and software. Expect questions. A trademark attorney can estimate the chance in one hour. If you want a name with no existing mark at all, the earlier candidate Aimolita had none.</li>
+</ul>
+
+<h2 id="mistake">5. Wrong idea corrected: a single-member LLC does not change your income tax</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "The company pays its own tax at a company rate, so an LLC reduces my tax."</p>
+  <p><strong>Correct:</strong> the IRS treats a single-member LLC as a <dfn>disregarded entity</dfn>. This means that, for income tax, the IRS ignores the company and taxes you directly. The IRS page states that an LLC with one member is treated as <span class="quoted">an entity disregarded as separate from its owner</span>. The profit of Oliden LLC goes on Schedule C of your own Form 1040, added to your salary. The profit is also subject to self-employment tax.</p>
+  <p><strong>Why the wrong idea fails:</strong> the liability protection of an LLC comes from state law. The tax treatment comes from federal law, and federal law gives a single-member LLC no tax of its own by default. The LLC changes who signs contracts and who owes debts. It does not change how much income tax you pay.</p>
+</div>
+<p>The same rule has a practical effect on the Apple tax form. The IRS states that a disregarded LLC must give the owner's Social Security number, not the EIN of the LLC, on a Form W-9. So the W-9 in App Store Connect shows your own name on line 1 and "Oliden LLC" on line 2. The taxpayer number on the form is your Social Security number.</p>
+
+<h2 id="limits">6. Limits: the employer clause, fees that change, and what this page is not</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>The employer clause comes first.</strong> Many employment contracts contain an invention-assignment clause. Such a clause can give the employer the rights to software that you write, even at home. An LLC cannot own code that your employer already owns. Get written confirmation from your employer before you pay the $100.</li>
+    <li><strong>Fees and forms change.</strong> The formation fee was $125 before 1 July 2026 and is $100 now. Trust the fee shown on the state page on the day you file.</li>
+    <li><strong>Processing time is not verified.</strong> The state pages that this page cites do not state how many days the online formation takes. No number is available.</li>
+    <li><strong>The trademark search used a secondary database.</strong> The OLIDEN registration details come from an aggregator of the federal register, not from the register itself. Confirm them in the trademark search of the United States Patent and Trademark Office (USPTO) before you rely on them.</li>
+    <li><strong>This page is not legal or tax advice.</strong> It explains the public filings and cites the state and federal pages. The employer clause and the trademark question are the two points where one hour with a lawyer is worth the fee.</li>
+    <li><strong>Insurance is not covered.</strong> An LLC limits liability, but it does not replace insurance. This page does not evaluate insurance.</li>
+  </ul>
+</div>
+
+<h2 id="words">7. Words that you will hear</h2>
+<p>These terms belong to the weeks after the formation. They are not part of the three filings, but you will meet them.</p>
+<dl class="glossary">
+  <dt>Operating agreement</dt>
+  <dd>A written contract between the members of an LLC about ownership and management. With one member it is a one-page statement: you own 100%, you manage the company, the tax treatment is disregarded entity. Nobody files it, but banks ask for it, and it supports the separation between you and the company.</dd>
+  <dt>NAICS code</dt>
+  <dd>A six-digit industry code of the North American Industry Classification System. The state and the IRS ask for it. For an app publisher the code is 513210, Software Publishers.</dd>
+  <dt>D-U-N-S number</dt>
+  <dd>A free nine-digit company identifier issued by Dun and Bradstreet. Apple requires it to enrol an organization. Apple says to allow up to 5 business days to receive it, plus 2 business days for Apple to see it. Apply after the Certificate of Formation is approved, because the number is registered to the legal entity.</dd>
+  <dt>Apple Developer Program, organization enrolment</dt>
+  <dd>The membership that lets the company publish apps. It costs 99 US dollars per membership year. Apple requires four things. These are a legal entity, a D-U-N-S number, a working website on a domain of the company, and a person who can bind the company. As the owner you have that authority. The LLC is the legal entity that makes this enrolment possible.</dd>
+  <dt>Form W-9</dt>
+  <dd>The IRS form that tells Apple your taxpayer number. For a disregarded LLC, the IRS requires the owner's Social Security number, see section 5.</dd>
+  <dt>Schedule C and self-employment tax</dt>
+  <dd>Schedule C is the part of your personal tax return that reports the profit of the business. Self-employment tax is the Social Security and Medicare tax on that profit, which an employer would otherwise withhold. Both follow from the disregarded-entity rule in section 5.</dd>
+  <dt>Marketplace facilitator</dt>
+  <dd>A platform that sells on behalf of many sellers and collects the sales tax itself. Apple acts as one for the App Store. This is why the NJ-REG form in section 1 answers "No" to sales tax collection. Confidence: Medium, see the sources.</dd>
+  <dt>Beneficial ownership information (BOI) report</dt>
+  <dd>A federal report about the owners of a company that FinCEN required from 2024. FinCEN's page now states that US companies are exempt. Oliden LLC files nothing.</dd>
+  <dt>Pass-through</dt>
+  <dd>Another word for the same rule as disregarded entity: the profit passes through the company to your own tax return.</dd>
+</dl>
+
+<h2 id="check">8. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>You file the Certificate of Formation on 20 November 2026. What is the last day for form NJ-REG, and when is the first annual report due?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>NJ-REG by 19 January 2027. First annual report by 30 November 2027.</strong></p>
+          <p>NJ-REG is due within 60 days of the formation. 20 November plus 60 days is 19 January. The annual report is due on the last day of the formation month in the following year, so 30 November 2027. A typical wrong answer is 31 December 2027, because people expect a calendar-year deadline.</p>
+        </div>
+      </details>
+    </li>
+    <li>The New Jersey search says that a name is available. Does this mean that nobody can stop you from using the name?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>No.</strong> The state search checks only the state record of company names. A federal trademark is a separate right, and the state does not check it. For Oliden, the state record is free, but the trademark register contains OLIDEN for oil-well tools. See section 4.</p>
+        </div>
+      </details>
+    </li>
+    <li>Oliden LLC earns US$5,000 of profit in 2027. Who pays the income tax on it, and on which form?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>You do, on Schedule C of your own Form 1040.</strong> The IRS treats a single-member LLC as a disregarded entity. The company files no income tax return of its own. The typical wrong answer is "the company pays at a corporate rate". That is true only after a tax election, and this page assumes you do not make one.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">9. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>Three online filings create and register Oliden LLC: Certificate of Formation ($100), EIN ($0), and NJ-REG ($0) within 60 days.</li>
+    <li>The company then costs $75 per year for the annual report, due on the last day of the formation month.</li>
+    <li>You can be your own registered agent at your home address, because you live in New Jersey.</li>
+    <li>"Oliden" is available in the New Jersey record. OLIDEN is a registered federal trademark for oil-well tools, which matters only if you want your own trademark.</li>
+    <li>A single-member LLC is a disregarded entity: it protects your personal money but does not change your income tax.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>Annual report</dt>
+  <dd>A yearly confirmation of the address and the registered agent of the company, filed with New Jersey with a fee of US$75.</dd>
+  <dt>Business Registration Certificate (BRC)</dt>
+  <dd>The document that New Jersey issues after form NJ-REG. It proves that the company is registered for state tax.</dd>
+  <dt>Certificate of Formation</dt>
+  <dd>The one document that creates a New Jersey LLC. Fee: US$100.</dd>
+  <dt>Disregarded entity</dt>
+  <dd>The default federal tax treatment of a single-member LLC: the IRS ignores the company and taxes the owner directly.</dd>
+  <dt>Distinguishable</dt>
+  <dd>The state requirement for a company name: not the same and not nearly the same as a name already on record.</dd>
+  <dt>Employer Identification Number (EIN)</dt>
+  <dd>The federal tax number of a company, issued free by the IRS.</dd>
+  <dt>Limited liability company (LLC)</dt>
+  <dd>A company created by state filing, which is a legal person separate from its owner. The creditors of the company cannot take the personal property of the owner.</dd>
+  <dt>Member</dt>
+  <dd>An owner of an LLC.</dd>
+  <dt>Registered agent</dt>
+  <dd>The person who receives legal documents for the company. In New Jersey, a resident individual or a business authorized in the state.</dd>
+  <dt>Registered office</dt>
+  <dd>The New Jersey street address of the registered agent. It is public record.</dd>
+  <dt>Trademark</dt>
+  <dd>A name or sign that identifies the source of goods or services. A registered trademark lets its owner stop confusingly similar use for related goods.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or a source with limits. <span class="conf low">Low</span> = not verified, or sources disagree. <span class="conf given">Given</span> = a value from your message or an example value.</p>
+<ol class="sources">
+  <li><span class="conf given">Given</span> The company name Oliden LLC, the single owner, and the New Jersey home address come from your request. The formation date 5 October 2026 is an example value.</li>
+  <li><span class="conf high">High</span> Formation fee US$100 for all for-profit entities, and the two-step order (certificate, then NJ-REG). New Jersey Division of Revenue, <span class="quoted">Getting Registered</span>, <a href="https://www.nj.gov/treasury/revenue/gettingregistered.shtml">nj.gov/treasury/revenue/gettingregistered.shtml</a>, read on 2026-09-29.</li>
+  <li><span class="conf high">High</span> NJ-REG within 60 days, and annual reports in the anniversary month: form NJ-REG instructions (PDF), <a href="https://www.nj.gov/treasury/revenue/pdf/Legacy-Reg-Form-0825.pdf">nj.gov/treasury/revenue/pdf/Legacy-Reg-Form-0825.pdf</a>, text extracted from the downloaded PDF on 2026-09-29.</li>
+  <li><span class="conf high">High</span> Annual report fee US$75, due on the last day of the formation month: <span class="quoted">Taxes and Annual Report</span>, <a href="https://business.nj.gov/pages/filings-and-accounting">business.nj.gov/pages/filings-and-accounting</a>. Revocation after two consecutive missed reports: <a href="https://www.nj.gov/treasury/revenue/reinstate.shtml">nj.gov/treasury/revenue/reinstate.shtml</a>. Both read on 2026-09-29 through a tool that summarises the page; the quoted sentences were returned verbatim.</li>
+  <li><span class="conf high">High</span> Name rules (section 8) and registered agent rules (section 14): New Jersey Revised Uniform Limited Liability Company Act, P.L. 2012, chapter 50, <a href="https://pub.njleg.gov/bills/2012/PL12/50_.PDF">pub.njleg.gov/bills/2012/PL12/50_.PDF</a>, text extracted from the downloaded PDF on 2026-09-29.</li>
+  <li><span class="conf high">High</span> "Oliden is available!": New Jersey Business Name Availability search, <a href="https://www.njportal.com/DOR/BusinessNameSearch/Search/Availability">njportal.com/DOR/BusinessNameSearch</a>, run in the browser on 2026-09-29 with the query "Oliden".</li>
+  <li><span class="conf high">High</span> Disregarded entity, Schedule C, self-employment tax, EIN need, and the W-9 rule: IRS, <span class="quoted">Single member limited liability companies</span>, <a href="https://www.irs.gov/businesses/small-businesses-self-employed/single-member-limited-liability-companies">irs.gov</a>. Read on 2026-09-29. The quoted sentence was returned verbatim.</li>
+  <li><span class="conf medium">Medium</span> OLIDEN trademark, serial 88729909, registered 15 September 2020, classes 9 and 42, owner Oliden Technology, LLC: aggregator page <a href="https://www.ipqwery.com/ipowner/en/owner/ip/982352-oliden-technology-llc.html">ipqwery.com</a>, read on 2026-09-29. Not confirmed in the USPTO register itself.</li>
+  <li><span class="conf low">Low</span> Oliden LLC in Windsor, California, formed 21 January 2023: from a web search summary of <a href="https://www.bizprofile.net/ca/windsor/oliden-llc">bizprofile.net</a>; the page itself refused the request. Not verified.</li>
+  <li><span class="conf high">High</span> D-U-N-S number requirement and timing (5 + 2 business days). Organization requirements and the fee of 99 US dollars. Apple, <a href="https://developer.apple.com/support/D-U-N-S/">developer.apple.com/support/D-U-N-S</a> and <a href="https://developer.apple.com/programs/enroll/">developer.apple.com/programs/enroll</a>, read on 2026-09-29.</li>
+  <li><span class="conf high">High</span> US companies exempt from beneficial ownership reporting: FinCEN, <a href="https://www.fincen.gov/boi">fincen.gov/boi</a>, read on 2026-09-29.</li>
+  <li><span class="conf medium">Medium</span> Fee reduction from US$125 to US$100 on 1 July 2026: web search results from formation-service pages, consistent with the state page above. Not verified in a state notice.</li>
+  <li><span class="conf medium">Medium</span> Apple collects sales tax as a marketplace facilitator: from the setup checklist of 21 September 2026, not re-verified on 2026-09-29.</li>
+  <li><span class="conf high">High</span> Calculated: the totals in section 3 and the dates in sections 1 and 8, computed with a script on 2026-09-29.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
