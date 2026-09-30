@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Tesla FSD Works</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: FSD, H100, L2, HW3, HW4, AI4, AI5, SAE, NHTSA, USD, US, GPU, CPU, NVIDIA, MLIR, CVPR, ICCV, PE24031, EA26002, PE25012, SEC, RegNet, BiFPN, HydraNet, MuZero, AlphaZero, Tesla, Cortex -->
+<h1>How does Tesla FSD convert camera images into steering and acceleration commands, quickly and correctly?</h1>
+<p class="meta">Written 2026-09-29 · Reading time: about 30 minutes · You need to know: what a program is, and that a neural network is a function that learns from examples</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>FSD (Full Self-Driving) uses cameras as its only sensors for driving. A car has 7 or 8 cameras, and each camera delivers about 36 images per second.</p>
+  <p><strong>The design that Tesla published in 2021 and 2022</strong> has 3 stages. Perception converts the images into one 3D description of the road. The planner chooses a path every 50 ms. The controller produces the commands for steering and acceleration.</p>
+  <p><strong>The design since version 12 (2024)</strong> is one neural network. The input is the camera video. The output is 2 values: the next steering and the next acceleration. The network learned from millions of video clips of human driving.</p>
+  <p><strong>Fast:</strong> one perception network needs about 10 ms on the computer of the car. <strong>Correct:</strong> this is not proven. The driver is responsible at all times, and the US road safety agency investigates FSD in 2 open cases.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>You want to explain the mechanism to other people. The page uses public information only.</li>
+    <li>Tesla did not publish the internal structure of the current network. So part A describes the last design that Tesla explained in detail.</li>
+    <li>The question arrived in Chinese. So the glossary gives the Chinese term for each technical term.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <p><strong>Part A: the published design of 2021 and 2022</strong></p>
+  <ol>
+    <li><a href="#a-example">At 50 km/h, the car receives a new image every 0.39 m</a></li>
+    <li><a href="#a-capture">Capture: the network receives raw sensor values</a></li>
+    <li><a href="#a-perception">Perception: 8 images become one 3D description</a></li>
+    <li><a href="#a-plan">Planning and control: one trajectory every 50 ms</a></li>
+    <li><a href="#a-check">Check your understanding of part A</a></li>
+  </ol>
+  <p><strong>Part B: the end-to-end design since version 12</strong></p>
+  <ol start="6">
+    <li><a href="#b-example">About 1.5 billion input values become 2 output values</a></li>
+    <li><a href="#b-rule">One network replaces the 3 stages, and it learns by imitation</a></li>
+    <li><a href="#b-train">Training selects the data, and a simulator tests the result</a></li>
+    <li><a href="#b-mistake">Wrong idea corrected: the current system has no list of driving rules</a></li>
+    <li><a href="#b-check">Check your understanding of part B</a></li>
+  </ol>
+  <p><strong>Part C: fast and correct</strong></p>
+  <ol start="11">
+    <li><a href="#c-fast">Fast: each network needs about 10 ms</a></li>
+    <li><a href="#c-correct">Correct: the numbers of Tesla, and their limits</a></li>
+    <li><a href="#c-check">Check your understanding of part C</a></li>
+  </ol>
+  <p><strong>All parts together</strong></p>
+  <ol start="14">
+    <li><a href="#limits">Limits of this page</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<!-- ============================== PART A ============================== -->
+<p class="part">Part A: the published design of 2021 and 2022</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer for part A</span>
+  <p>The system is a chain, and each stage reduces the amount of data. Millions of pixel values become a 3D description. The 3D description becomes one path. The path becomes 2 commands.</p>
+</div>
+
+<h2 id="a-example">1. At 50 km/h, the car receives a new image every 0.39 m</h2>
+<p>Tesla presented this design at two public events: AI Day on 19 August 2021, and AI Day on 30 September 2022. The example uses the times from these events. The speed of 50 km/h is an example value. The example needs one term. The <dfn>planner</dfn> is the program that chooses the path of the car.</p>
+
+<div class="box example">
+  <span class="label">Worked example: one cycle of the system at 50 km/h</span>
+  <ol class="steps">
+    <li>Speed: 50 km/h ÷ 3.6 = <strong>13.89 m/s</strong>.
+      <span class="why">1 m/s is 3.6 km/h. All times of the system are in fractions of a second, so you need metres per second.</span></li>
+    <li>Time between 2 images: 1,000 ms ÷ 36 = <strong>27.8 ms</strong>.
+      <span class="why">Each camera delivers about 36 images per second.</span></li>
+    <li>Distance between 2 images: 13.89 m/s × 0.0278 s = <strong>0.39 m</strong>.
+      <span class="why">Distance is speed multiplied by time.</span></li>
+    <li>Distance during one run of a perception network: 13.89 m/s × 0.010 s = <strong>0.14 m</strong>.
+      <span class="why">Tesla stated about 10 ms for one run of the network that describes the 3D space.</span></li>
+    <li>Distance between 2 decisions of the planner: 13.89 m/s × 0.050 s = <strong>0.69 m</strong>.
+      <span class="why">Tesla stated that the planner must decide every 50 ms.</span></li>
+  </ol>
+  <p><strong>Result:</strong> at 50 km/h, the description of the road is renewed every 0.39 m, and the plan every 0.69 m.</p>
+</div>
+
+<h2 id="a-capture">2. Capture: the network receives raw sensor values</h2>
+<p>All calculations run on a computer in the car. The main tool is the <dfn>neural network</dfn>. A neural network is a function with millions of adjustable numbers, which are named parameters. Training sets the parameters, so that the function gives the wanted output for many example inputs.</p>
+<p>A camera of the hardware generation HW3 delivers images of 1280 × 960 pixels. Each pixel value has 12 bits. So one pixel has 4,096 possible levels of brightness.</p>
+<p>A normal camera sends its data through an <dfn>image signal processor</dfn> (ISP). An image signal processor is a circuit that makes the picture pleasant for a human eye. It also reduces each value to 8 bits, which means 256 levels. Tesla removed this step in 2022. The network receives the 12-bit values directly. Tesla names them "photon counts".</p>
+<ul>
+  <li><strong>More information:</strong> 4,096 ÷ 256 = 16 times more levels. This helps in strong sunlight and at night.</li>
+  <li><strong>Less time:</strong> the image signal processor needed about 1.6 ms for each camera. For 8 cameras, this is about 13 ms.</li>
+</ul>
+<p>Tesla removed the radar from new cars in May 2021, and the ultrasonic sensors from October 2022.</p>
+
+<h2 id="a-perception">3. Perception: 8 images become one 3D description</h2>
+<p>An image is flat. Driving needs positions in space: where is the lane, where is the other car, how fast does it move. Perception performs this conversion in 5 steps. With the cameras as step 1, these are the steps 2 to 6 of the complete chain.</p>
+
+<p><strong>Step 2, rectification.</strong> Each camera is mounted with a small error of position and angle. This step converts each image to the view of one standard virtual camera. So the network sees the same geometry in every car.</p>
+<p><strong>Step 3, backbone.</strong> A <dfn>feature</dfn> is a number that the network calculates from a region of the image. It describes a property of the region, for example "an edge" or "a part of a wheel". The <dfn>backbone</dfn> is the first part of the network, which calculates the features. Tesla used a network type with the name RegNet. A second network type, BiFPN, combines the features of small and large image regions.</p>
+<p><strong>Step 4, transformer.</strong> A <dfn>transformer</dfn> is a network type in which each output position selects the input data that it needs. This selection is named attention.</p>
+<p>The output of step 4 is the <dfn>BEV</dfn>. The BEV is a map of the surroundings as seen from above, with the car in the centre. BEV is the short form of <span class="quoted">bird's-eye view</span>. Tesla also names it "vector space". Each cell of the map asks all 8 images: "which features belong to my position?"</p>
+<p>Tesla gave the reason for this step. Before, each camera had its own detection, and C++ code joined the results. This failed for a large vehicle near the car, because it appears in up to 5 of the 8 cameras. No single camera sees all of it.</p>
+<p><strong>Step 5, video module.</strong> The <dfn>video module</dfn> is the part of the network that stores features of earlier moments. It stores one set every 27 ms, and one set after each fixed distance. So a car that is hidden behind a truck for a short time stays in the description.</p>
+<p><strong>Step 6, output heads.</strong> An output head is a small network that produces one kind of result. Tesla described 3 main results in 2022:</p>
+<ul>
+  <li>The <dfn>occupancy network</dfn> divides the space around the car into small cubes. One cube is a <dfn>voxel</dfn>, which is the 3D form of a pixel. For each voxel, the network gives the probability that an object fills it. It also gives the motion of the voxel. The network needs no name for the object. So it also sees an object of an unknown kind.</li>
+  <li>The lanes network writes the lanes as a graph, point after point. It works in the way a language model writes a sentence, word after word.</li>
+  <li>The objects network gives the moving objects, each with position, speed, and acceleration.</li>
+</ul>
+
+<h2 id="a-plan">4. Planning and control: one trajectory every 50 ms</h2>
+<p>A <dfn>trajectory</dfn> is a path with time: the position, the speed, and the acceleration of the car for each moment of the next seconds. The planner chooses one trajectory. In 2021, Tesla stated a planning period of the next 10 to 15 seconds.</p>
+<p>The planner of 2022 worked in 3 steps.</p>
+<ol>
+  <li><strong>Create candidates.</strong> The planner starts from the lanes, the occupancy, and the moving objects. It creates several possible trajectories. For each one, it predicts how the other road users react. Tesla names this method "interaction search". It is a <dfn>tree search</dfn>: each choice opens a branch with the next choices.</li>
+  <li><strong>Score each candidate.</strong> The score has 4 terms: a collision check, a comfort analysis, the probability that a human driver intervenes, and the similarity to human driving. Neural networks calculate the last 2 terms.</li>
+  <li><strong>Choose the best candidate.</strong> The planner sends this trajectory to the last stage.</li>
+</ol>
+<p>The <dfn>controller</dfn> is the program that converts the trajectory into commands for the steering, the brakes, and the motor. It measures the difference between the planned motion and the real motion, and it corrects this difference.</p>
+<p><strong>Why the planner also needs neural networks.</strong> A classical calculation of one candidate needed 1 to 5 ms. In 50 ms, this gives 10 to 50 candidates. A small neural network needed about 0.1 ms for the same task. In 50 ms, this gives at most 500 candidates. These are upper limits, because the planner also does other work in the 50 ms.</p>
+
+<p><strong>The complete chain.</strong> The diagram shows all 8 steps of part A in their order.</p>
+
+<figure class="diagram">
+  <p class="fig-title">The published design has 8 steps: 1 for capture, 5 for perception, 1 for planning, and 1 for control.</p>
+  <p class="fig-sub">Design that Tesla presented in 2021 and 2022. The text at the right side states the output of each step.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 680 676" role="img" aria-label="Diagram of a chain with 8 steps from top to bottom. Cameras deliver raw sensor values. Rectification converts them to a standard virtual camera. The backbone extracts features. The transformer converts the features to the bird's-eye view. The video module adds memory. The output heads give occupancy, lanes, and moving objects. The planner gives one trajectory every 50 milliseconds. The controller gives the commands for steering and acceleration.">
+    <defs>
+      <marker id="arrow-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/>
+      </marker>
+    </defs>
+    <rect class="node" x="20" y="20" width="270" height="56" rx="8"/>
+    <text class="node-name" x="155" y="44" text-anchor="middle">1. Cameras</text>
+    <text class="node-value" x="155" y="64" text-anchor="middle">stage: capture</text>
+    <text x="310" y="44" font-size="14">Raw sensor values: 1280 × 960 pixels,</text>
+    <text x="310" y="63" font-size="14">12 bit, about 36 images per second</text>
+    <line class="arrow" x1="155" y1="78" x2="155" y2="99" marker-end="url(#arrow-head)"/>
+
+    <rect class="node" x="20" y="102" width="270" height="56" rx="8"/>
+    <text class="node-name" x="155" y="126" text-anchor="middle">2. Rectification</text>
+    <text class="node-value" x="155" y="146" text-anchor="middle">stage: perception</text>
+    <text x="310" y="126" font-size="14">Images as if one standard</text>
+    <text x="310" y="145" font-size="14">virtual camera made them</text>
+    <line class="arrow" x1="155" y1="160" x2="155" y2="181" marker-end="url(#arrow-head)"/>
+
+    <rect class="node" x="20" y="184" width="270" height="56" rx="8"/>
+    <text class="node-name" x="155" y="208" text-anchor="middle">3. Backbone</text>
+    <text class="node-value" x="155" y="228" text-anchor="middle">stage: perception</text>
+    <text x="310" y="208" font-size="14">Features of each image,</text>
+    <text x="310" y="227" font-size="14">at several scales</text>
+    <line class="arrow" x1="155" y1="242" x2="155" y2="263" marker-end="url(#arrow-head)"/>
+
+    <rect class="node" x="20" y="266" width="270" height="56" rx="8"/>
+    <text class="node-name" x="155" y="290" text-anchor="middle">4. Transformer</text>
+    <text class="node-value" x="155" y="310" text-anchor="middle">stage: perception</text>
+    <text x="310" y="290" font-size="14">Features in the BEV:</text>
+    <text x="310" y="309" font-size="14">one 3D space for all cameras</text>
+    <line class="arrow" x1="155" y1="324" x2="155" y2="345" marker-end="url(#arrow-head)"/>
+
+    <rect class="node" x="20" y="348" width="270" height="56" rx="8"/>
+    <text class="node-name" x="155" y="372" text-anchor="middle">5. Video module</text>
+    <text class="node-value" x="155" y="392" text-anchor="middle">stage: perception</text>
+    <text x="310" y="372" font-size="14">Features with memory:</text>
+    <text x="310" y="391" font-size="14">a hidden object stays in the description</text>
+    <line class="arrow" x1="155" y1="406" x2="155" y2="427" marker-end="url(#arrow-head)"/>
+
+    <rect class="node" x="20" y="430" width="270" height="56" rx="8"/>
+    <text class="node-name" x="155" y="454" text-anchor="middle">6. Output heads</text>
+    <text class="node-value" x="155" y="474" text-anchor="middle">stage: perception</text>
+    <text x="310" y="454" font-size="14">Occupancy, lanes, moving objects.</text>
+    <text x="310" y="473" font-size="14">About 10 ms for one network</text>
+    <line class="arrow" x1="155" y1="488" x2="155" y2="509" marker-end="url(#arrow-head)"/>
+
+    <rect class="node" x="20" y="512" width="270" height="56" rx="8"/>
+    <text class="node-name" x="155" y="536" text-anchor="middle">7. Planner</text>
+    <text class="node-value" x="155" y="556" text-anchor="middle">stage: planning</text>
+    <text x="310" y="536" font-size="14">One trajectory for the next seconds.</text>
+    <text x="310" y="555" font-size="14">One decision every 50 ms</text>
+    <line class="arrow" x1="155" y1="570" x2="155" y2="591" marker-end="url(#arrow-head)"/>
+
+    <rect class="node" x="20" y="594" width="270" height="56" rx="8"/>
+    <text class="node-name" x="155" y="618" text-anchor="middle">8. Controller</text>
+    <text class="node-value" x="155" y="638" text-anchor="middle">stage: control</text>
+    <text x="310" y="618" font-size="14">Commands for steering</text>
+    <text x="310" y="637" font-size="14">and acceleration</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is one step. Each arrow means "sends its output to". Start at the top. The text at the right side of a box is the output of that step.</p>
+  <p class="fig-source">Source: Tesla AI Day 2021 (steps 1 to 6 and 8) and Tesla AI Day 2022 (times, step 7).</p>
+</figure>
+
+<h2 id="a-check">5. Check your understanding of part A</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>A car drives at 100 km/h. How far does it move between 2 camera images?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>0.77 m.</strong></p>
+          <p>100 km/h ÷ 3.6 = 27.78 m/s. The time between 2 images is 1,000 ms ÷ 36 = 27.8 ms. So the distance is 27.78 × 0.0278 = 0.77 m. The typical wrong answer uses the 50 ms of the planner and gives 1.39 m.</p>
+        </div>
+      </details>
+    </li>
+    <li>Why does the occupancy network see an object of an unknown kind, for example a fallen tree?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Because it answers only one question for each voxel: is this space filled?</strong></p>
+          <p>It does not need the name of the object. A network that detects only known classes, for example "car" or "pedestrian", has no class for the tree. The typical wrong answer is "because it has seen all kinds of objects in training".</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================== PART B ============================== -->
+<p class="part">Part B: the end-to-end design since version 12</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer for part B</span>
+  <p>Since version 12, one neural network performs perception, planning, and a large part of control together. Nobody writes the driving rules. The network learns the behaviour from video clips of human drivers, and Tesla selects these clips.</p>
+</div>
+
+<h2 id="b-example">6. About 1.5 billion input values become 2 output values</h2>
+<p>Ashok Elluswamy leads the FSD software at Tesla. In October 2025 he published the size of the problem. The example follows his numbers.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the size of the input and of the output</span>
+  <ol class="steps">
+    <li>Pixels per second: 7 cameras × 36 images × 5,000,000 pixels = <strong>1,260,000,000</strong>.
+      <span class="why">The current cameras have about 5 megapixels. Elluswamy counts 7 cameras.</span></li>
+    <li>Pixels in the memory of the network: 1,260,000,000 × 30 s = <strong>37,800,000,000</strong>.
+      <span class="why">The network uses the video of the last 30 seconds, because driving needs the recent past.</span></li>
+    <li>Input tokens: 37,800,000,000 ÷ 25 = <strong>1,512,000,000</strong>, which is about 1.5 billion.
+      <span class="why">The network does not read single pixels. It reads squares of 5 × 5 = 25 pixels. One such unit of input is a <dfn>token</dfn>.</span></li>
+    <li>Output: <strong>2 values</strong>, the next steering and the next acceleration.
+      <span class="why">These 2 values are sufficient to move the car.</span></li>
+  </ol>
+  <p><strong>Result:</strong> the network reduces about 1.5 billion values to 2 values. Elluswamy states "around 2 billion", because he adds the navigation map and the motion data of the car.</p>
+</div>
+
+<h2 id="b-rule">7. One network replaces the 3 stages, and it learns by imitation</h2>
+<p>An <dfn>end-to-end neural network</dfn> is one network from the first input to the last output. Training adjusts all its parameters together, for one goal: the correct driving command.</p>
+
+<figure class="diagram">
+  <p class="fig-title">The design of 2022 passes 2 defined results between 3 stages, and the end-to-end design has no defined result inside.</p>
+  <p class="fig-sub">Left: design of 2022. Right: design since version 12, which reached customers in 2024.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 680 400" role="img" aria-label="Two diagrams side by side. Left: camera video enters the perception networks. They send lanes, occupancy, and objects to the planner. The planner sends a trajectory to the controller. The controller gives steering and acceleration. Right: camera video, speed, and navigation enter one neural network, which gives steering and acceleration.">
+    <defs>
+      <marker id="arrow-head-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/>
+      </marker>
+    </defs>
+    <text x="170" y="18" text-anchor="middle" font-size="15" style="font-weight:600">Design of 2022</text>
+    <text x="510" y="18" text-anchor="middle" font-size="15" style="font-weight:600">End-to-end design</text>
+
+    <text class="arrow-label" x="170" y="42" text-anchor="middle">camera video</text>
+    <line class="arrow" x1="170" y1="48" x2="170" y2="67" marker-end="url(#arrow-head-2)"/>
+    <rect class="node" x="50" y="70" width="240" height="50" rx="8"/>
+    <text class="node-name" x="170" y="100" text-anchor="middle">Perception networks</text>
+    <line class="arrow" x1="170" y1="122" x2="170" y2="167" marker-end="url(#arrow-head-2)"/>
+    <text class="arrow-label" x="182" y="149">lanes, occupancy, objects</text>
+    <rect class="node" x="50" y="170" width="240" height="50" rx="8"/>
+    <text class="node-name" x="170" y="200" text-anchor="middle">Planner: code and networks</text>
+    <line class="arrow" x1="170" y1="222" x2="170" y2="267" marker-end="url(#arrow-head-2)"/>
+    <text class="arrow-label" x="182" y="249">trajectory</text>
+    <rect class="node" x="50" y="270" width="240" height="50" rx="8"/>
+    <text class="node-name" x="170" y="300" text-anchor="middle">Controller: code</text>
+    <line class="arrow" x1="170" y1="322" x2="170" y2="359" marker-end="url(#arrow-head-2)"/>
+    <text class="arrow-label" x="170" y="382" text-anchor="middle">steering, acceleration</text>
+
+    <text class="arrow-label" x="510" y="42" text-anchor="middle">camera video, speed, navigation</text>
+    <line class="arrow" x1="510" y1="48" x2="510" y2="67" marker-end="url(#arrow-head-2)"/>
+    <rect class="node" x="390" y="70" width="240" height="250" rx="8"/>
+    <text class="node-name" x="510" y="190" text-anchor="middle">One neural network</text>
+    <text class="node-value" x="510" y="212" text-anchor="middle">trained as one unit</text>
+    <line class="arrow" x1="510" y1="322" x2="510" y2="359" marker-end="url(#arrow-head-2)"/>
+    <text class="arrow-label" x="510" y="382" text-anchor="middle">steering, acceleration</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is a program. Each arrow means "sends its output to". The text next to an arrow is the data that passes.</p>
+  <p class="fig-source">Source: Tesla AI Day 2022 (left). Article of Ashok Elluswamy, 24 October 2025 (right).</p>
+</figure>
+
+<p><dfn>Imitation learning</dfn> is a training method in which the network learns to copy the actions of an expert. Here the expert is a human driver. For each moment of a video clip, the network receives the video and predicts the command. Training reduces the difference between this prediction and the action of the human driver.</p>
+
+<div class="compare">
+  <div>
+    <h4>Design of 2022</h4>
+    <p>Engineers define what passes between the stages: lanes, occupancy, objects.</p>
+    <p>Engineers write the scoring rules of the planner in C++.</p>
+    <p>An error is visible at the border between 2 stages.</p>
+  </div>
+  <div>
+    <h4>End-to-end design</h4>
+    <p>The network decides by itself what it passes from one layer to the next.</p>
+    <p>The behaviour comes from the training data.</p>
+    <p>An error has no visible place. Tesla adds extra outputs to inspect the network.</p>
+  </div>
+</div>
+<p><strong>The principle:</strong> the design of 2022 can only pass what the engineers defined. Chickens that want to cross the road and geese that stay at the side need different reactions. A list of object classes cannot express this intention. An end-to-end network can pass it, because it is not limited to a list.</p>
+<p>Tesla states 2 more reasons. Human values are difficult to write as code. And one network has a constant run time.</p>
+<p>Elluswamy also writes that other companies do not all agree with this approach.</p>
+
+<h2 id="b-train">8. Training selects the data, and a simulator tests the result</h2>
+<p>The network copies what it sees. Therefore the selection of the data decides the quality. Tesla describes 6 tools.</p>
+<div class="table-wrap">
+<table>
+  <caption>The 6 tools that Tesla uses to train and to test the network</caption>
+  <thead>
+    <tr><th>Tool</th><th>What it does</th><th>Published number</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Selection of good drivers</th><td>Human reviewers graded the video clips. Only clips with good handling of the situation entered the training.</td><td>10 million clips analysed by early 2023</td></tr>
+    <tr><th scope="row"><dfn>Data engine</dfn></th><td>A repeated process. It finds the cases where the network fails, collects similar clips from the customer cars, and adds them to the training.</td><td>The customer cars drive the equivalent of 500 years per day</td></tr>
+    <tr><th scope="row"><dfn>Shadow mode</dfn></th><td>A new network runs in customer cars without control of the car. The car reports the cases where the network and the driver disagree.</td><td>7 rounds for one release in 2021</td></tr>
+    <tr><th scope="row"><dfn>World simulator</dfn></th><td>A second neural network generates the video that the cameras would see after each command. So Tesla tests a new network without a real car.</td><td>8 cameras, 24 images per second, more than 6 minutes</td></tr>
+    <tr><th scope="row">Training computer Cortex</th><td>Adjusts the parameters of the network with the selected clips.</td><td>About 50,000 graphics processors of the type NVIDIA H100, end of 2024</td></tr>
+    <tr><th scope="row"><dfn>Reinforcement learning</dfn></th><td>A training method with a score in place of an example. The network drives in the simulator and receives a score for each result. Training increases the score.</td><td>Named in the release notes of version 14.3.3, May 2026</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one tool. Column 2 is also the definition of the term. Column 3 gives a number that Tesla or a named source published.</p>
+<p>Imitation learning cannot be better than its examples. Reinforcement learning can find behaviour that is better than the human examples.</p>
+
+<h2 id="b-mistake">9. Wrong idea corrected: the current system has no list of driving rules</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "The system first recognises and names every object. Then a list of rules decides: if the light is red, stop."</p>
+  <p><strong>Correct:</strong> in the current design, recognition and decision are not separate programs. One network converts the video into commands. The behaviour at a red light comes from many clips in which human drivers stopped.</p>
+  <p><strong>Why the wrong idea fails:</strong> it describes the older design. Tesla stated that version 12 replaced over 300,000 lines of C++ code for driving on city streets. Two limits apply. The statement is about city streets, and highways followed later. And program code remains around the network: the release notes of version 13 name a <span class="quoted">"redesigned controller"</span>.</p>
+</div>
+
+<h2 id="b-check">10. Check your understanding of part B</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>Tesla trains the network only with clips of drivers who handled the situation well. Why is this selection necessary?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Because imitation learning copies the behaviour in the data.</strong></p>
+          <p>The network has no own idea of good driving. If the data contains drivers who do not stop completely at a stop sign, the network learns the same action. The typical wrong answer is "to reduce the amount of data".</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================== PART C ============================== -->
+<p class="part">Part C: fast and correct</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer for part C</span>
+  <p>Speed comes from a computer made for neural networks, and from the removal of steps. Tesla did not publish the total reaction time. Tesla reports 5.3 million miles per major collision with FSD active. This number includes the corrections of the human driver.</p>
+</div>
+
+<h2 id="c-fast">11. Fast: each network needs about 10 ms</h2>
+<p>The <dfn>photon-to-control latency</dfn> is the reaction time of the complete system. It starts when light reaches the camera. It ends when the command reaches the steering, the brakes, or the motor. Tesla measures this time, but it did not publish its value. It published the parts in the table.</p>
+<div class="table-wrap">
+<table>
+  <caption>Tesla published the times of the parts, and only relative changes of the total</caption>
+  <thead>
+    <tr><th>Item</th><th class="num">Value</th><th>Statement</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Time between 2 camera images</th><td class="num">27.8 ms</td><td>AI Day 2021</td></tr>
+    <tr><th scope="row">Time saved without the image signal processor</th><td class="num">about 13 ms</td><td>Podcast 2021</td></tr>
+    <tr><th scope="row">One run of the occupancy network</th><td class="num">about 10 ms</td><td>AI Day 2022</td></tr>
+    <tr><th scope="row">One run of the lanes network</th><td class="num">below 10 ms</td><td>AI Day 2022</td></tr>
+    <tr><th scope="row">Period of the planner</th><td class="num">50 ms</td><td>AI Day 2022</td></tr>
+    <tr class="highlight"><th scope="row">Photon-to-control latency, total</th><td class="num">not published</td><td></td></tr>
+    <tr><th scope="row">Change of the total in version 13</th><td class="num">divided by 2</td><td>Release notes 2024</td></tr>
+    <tr><th scope="row">Change of the reaction time in version 14.3.3</th><td class="num">20% faster</td><td>Release notes 2026</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one published statement. The highlighted row is the value that an article needs and that Tesla did not publish. Do not add the rows, because several steps run at the same time.</p>
+<p><strong>The computer.</strong> The computer of 2019, with the name HW3, contains 2 chips that Tesla designed. Each chip has 2 accelerators for neural networks. One accelerator performs 36 trillion (36,000,000,000,000) operations per second. So the 4 accelerators together perform 144 trillion operations per second. The computer used 72 W in measured driving. The 2 chips also give redundancy: when one chip fails, the other chip continues.</p>
+<p>The current computer, AI4, has been in new cars since 2023. Tesla did not publish its number of operations per second.</p>
+
+<h2 id="c-correct">12. Correct: the numbers of Tesla, and their limits</h2>
+<p>Tesla publishes a safety report. A major collision in this report is a collision in which an airbag or a similar device deployed.</p>
+
+<figure>
+  <p class="fig-title">Tesla reports 5.3 million miles per major collision with FSD active, and 2.2 million for manual driving with active safety.</p>
+  <p class="fig-sub">Miles driven per major collision, in million miles. Values that Tesla published in February 2026. A longer bar means fewer collisions.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 680 256" role="img" aria-label="Bar chart of miles per major collision. FSD active: 5.30 million miles. Manual driving in a Tesla with active safety: 2.18 million. Manual driving in a Tesla without active safety: 0.86 million. Average of the United States, estimated by Tesla: 0.66 million.">
+    <line class="grid" x1="376.7" y1="20" x2="376.7" y2="222"/>
+    <line class="grid" x1="503.3" y1="20" x2="503.3" y2="222"/>
+    <line class="grid" x1="630" y1="20" x2="630" y2="222"/>
+    <line class="axis" x1="250" y1="20" x2="250" y2="222"/>
+    <text class="axis-label" x="250" y="242" text-anchor="middle">0</text>
+    <text class="axis-label" x="376.7" y="242" text-anchor="middle">2</text>
+    <text class="axis-label" x="503.3" y="242" text-anchor="middle">4</text>
+    <text class="axis-label" x="630" y="242" text-anchor="middle">6</text>
+
+    <rect x="250" y="30" width="335.7" height="30" fill="var(--s1)"/>
+    <text x="240" y="50" text-anchor="end" font-size="14">FSD active</text>
+    <text x="594" y="50" font-size="14" style="font-weight:600">5.30</text>
+
+    <rect x="250" y="80" width="137.8" height="30" fill="var(--s2)" fill-opacity="0.22" stroke="var(--s2)" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="240" y="100" text-anchor="end" font-size="14">Manual, with active safety</text>
+    <text x="396" y="100" font-size="14" style="font-weight:600">2.18</text>
+
+    <rect x="250" y="130" width="54.2" height="30" fill="var(--s2)" fill-opacity="0.22" stroke="var(--s2)" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="240" y="150" text-anchor="end" font-size="14">Manual, no active safety</text>
+    <text x="313" y="150" font-size="14" style="font-weight:600">0.86</text>
+
+    <rect x="250" y="180" width="41.8" height="30" fill="var(--s2)" fill-opacity="0.22" stroke="var(--s2)" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="240" y="200" text-anchor="end" font-size="14">US average, estimated</text>
+    <text x="300" y="200" font-size="14" style="font-weight:600">0.66</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each bar is one group of driving. The full bar is driving with FSD active. The 3 bars with a dashed border are driving by a human. "Manual" means a Tesla that a human drives. "Active safety" means functions such as automatic emergency braking.</p>
+  <p class="fig-source">Source: Tesla safety report, values as reported by Teslarati on 19 February 2026. Exact values: 5,300,676; 2,175,763; 855,132; 660,164 miles.</p>
+</figure>
+
+<p><strong>Two ratios from the same numbers.</strong> Against the US average: 5,300,676 ÷ 660,164 = 8.0. Against manual driving in a Tesla with active safety: 5,300,676 ÷ 2,175,763 = 2.4. The second comparison uses the same cars and the same kind of owners. So it is the more equal comparison.</p>
+<p><strong>Four limits of these numbers.</strong></p>
+<ol>
+  <li><strong>The driver corrects the system.</strong> FSD has the full name FSD (Supervised). It is a system of <dfn>SAE Level 2</dfn>. SAE is the engineering organisation that defined 6 levels of driving automation, from 0 to 5. At Level 2, the system steers and accelerates, and the human driver is responsible at all times. So the number measures the system and the driver together.</li>
+  <li><strong>Tesla measures its own product.</strong> No independent organisation confirmed the numbers.</li>
+  <li><strong>The US average is an estimate by Tesla.</strong> Tesla writes that its method needs assumptions, and that the average can be higher or lower.</li>
+  <li><strong>Tesla does not judge who caused a collision.</strong></li>
+</ol>
+<p>A camera in the cabin observes the driver. This <dfn>driver monitoring system</dfn> checks that the driver looks at the road. After several warnings, it stops FSD for the remainder of the trip.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>The US road safety agency has 2 open investigations of FSD</caption>
+  <thead>
+    <tr><th>Case</th><th>Subject</th><th>Opened</th><th class="num">Vehicles</th><th>Reported</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">EA26002</th><td>Collisions in reduced visibility: sun glare, fog, dust</td><td>18 March 2026</td><td class="num">3,203,754</td><td>9 crashes, 1 death</td></tr>
+    <tr><th scope="row">PE25012</th><td>Violations of traffic law: red lights, wrong lane, wrong direction</td><td>7 October 2025</td><td class="num">2,882,566</td><td>58 incidents, 14 crashes, 23 injuries</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one investigation of the agency NHTSA (National Highway Traffic Safety Administration). "Vehicles" is the estimated number of cars with the system. An investigation is not a proof of a defect.</p>
+<p>Case EA26002 shows a weak point of a system with cameras only. The agency wrote that the system did not detect that the cameras saw badly, or it warned the driver only directly before the crash. In each of the 9 crashes, FSD lost or never detected the vehicle in front.</p>
+<p><strong>Without a driver.</strong> Tesla operates a separate taxi service with the name Robotaxi. Since 22 January 2026, a part of its cars in Austin, Texas, drives without an employee inside.</p>
+
+<h2 id="c-check">13. Check your understanding of part C</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>An article states: "FSD is 8 times safer than a human driver." Which 2 facts must the article add?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>The human driver supervises FSD, and the comparison with similar cars gives 2.4.</strong></p>
+          <p>The factor 8.0 compares with an average of all US cars, which Tesla estimated. The number measures the system and the driver together. The typical wrong conclusion is that the car would reach the same number without a driver.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================ ALL PARTS ============================ -->
+<p class="part">All parts together</p>
+
+<h2 id="limits">14. Limits of this page</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>The inside of the current network is not public.</strong> Nobody outside Tesla knows if it still contains the steps of part A. Tesla states only that the network can produce such results as extra outputs.</li>
+    <li><strong>The total reaction time is not public.</strong> The same is true for the rate of the commands to the steering, the brakes, and the motor.</li>
+    <li><strong>The subject changes fast.</strong> The newest version that I found is 14.3.10, of September 2026. The state of case PE25012 after February 2026 is not verified.</li>
+  </ul>
+</div>
+
+<h2 id="recap">15. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>Capture: 7 or 8 cameras, about 36 images per second, raw 12-bit sensor values.</li>
+    <li>Design of 2022: perception, then a planner with a period of 50 ms, then a controller.</li>
+    <li>Design since version 12: one end-to-end neural network reduces about 1.5 billion input values to 2 output values.</li>
+    <li>The network learns by imitation of selected human drivers.</li>
+    <li>Each perception network needs about 10 ms. The total reaction time is not published.</li>
+    <li>FSD (Supervised) is SAE Level 2. The safety numbers include the human driver, and 2 investigations are open.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>Backbone <span lang="zh">(主干网络)</span></dt>
+  <dd>The first part of a neural network, which calculates the features of an image.</dd>
+  <dt>BEV, <span class="quoted">bird's-eye view</span> <span lang="zh">(鸟瞰图)</span></dt>
+  <dd>A map of the surroundings as seen from above, with the car in the centre.</dd>
+  <dt>Controller <span lang="zh">(控制器)</span></dt>
+  <dd>The program that converts a trajectory into commands for the steering, the brakes, and the motor.</dd>
+  <dt>Data engine <span lang="zh">(数据引擎)</span></dt>
+  <dd>The repeated process that finds failures, collects similar clips from customer cars, and trains again.</dd>
+  <dt>Driver monitoring system <span lang="zh">(驾驶员监控系统)</span></dt>
+  <dd>The camera and the software that check the attention of the driver.</dd>
+  <dt>End-to-end neural network <span lang="zh">(端到端神经网络)</span></dt>
+  <dd>One network from the first input to the last output, trained as one unit.</dd>
+  <dt>Feature <span lang="zh">(特征)</span></dt>
+  <dd>A number that the network calculates from a region of the image, and that describes a property of the region.</dd>
+  <dt>Image signal processor, ISP <span lang="zh">(图像信号处理器)</span></dt>
+  <dd>A circuit that converts raw sensor values into a picture for a human eye.</dd>
+  <dt>Imitation learning <span lang="zh">(模仿学习)</span></dt>
+  <dd>A training method in which the network learns to copy the actions of an expert.</dd>
+  <dt>Neural network <span lang="zh">(神经网络)</span></dt>
+  <dd>A function with many adjustable parameters, which training sets from examples.</dd>
+  <dt>Occupancy network <span lang="zh">(占用网络)</span></dt>
+  <dd>A network that gives, for each voxel, the probability that an object fills it.</dd>
+  <dt>Photon-to-control latency <span lang="zh">(光子到控制延迟)</span></dt>
+  <dd>The time from the light at the camera to the command at the steering, the brakes, or the motor.</dd>
+  <dt>Planner <span lang="zh">(规划器)</span></dt>
+  <dd>The program that chooses one trajectory.</dd>
+  <dt>Reinforcement learning <span lang="zh">(强化学习)</span></dt>
+  <dd>A training method in which the network receives a score for the result of its actions.</dd>
+  <dt>SAE Level 2 <span lang="zh">(L2 级辅助驾驶)</span></dt>
+  <dd>The level of automation at which the system steers and accelerates, and the human driver is responsible at all times.</dd>
+  <dt>Shadow mode <span lang="zh">(影子模式)</span></dt>
+  <dd>A test in which a new network runs in customer cars without control of the car.</dd>
+  <dt>Token <span lang="zh">(词元)</span></dt>
+  <dd>One unit of input or output of a network, for example a square of 5 × 5 pixels.</dd>
+  <dt>Trajectory <span lang="zh">(轨迹)</span></dt>
+  <dd>A path with time: position, speed, and acceleration for each moment of the next seconds.</dd>
+  <dt>Transformer <span lang="zh">(Transformer 模型)</span></dt>
+  <dd>A network type in which each output position selects the input data that it needs. The selection is named attention <span lang="zh">(注意力机制)</span>.</dd>
+  <dt>Tree search <span lang="zh">(树搜索)</span></dt>
+  <dd>A search in which each choice opens a branch with the next choices.</dd>
+  <dt>Video module <span lang="zh">(视频模块)</span></dt>
+  <dd>The part of the network that stores features of earlier moments.</dd>
+  <dt>Voxel <span lang="zh">(体素)</span></dt>
+  <dd>A small cube of space. It is the 3D form of a pixel.</dd>
+  <dt>World simulator <span lang="zh">(世界模拟器)</span></dt>
+  <dd>A neural network that generates the video which the cameras would see after each command.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p class="sources">Confidence labels on this page: <span class="conf high">High</span> = read in the original document, or in the text record of the original video. <span class="conf medium">Medium</span> = text of Tesla, read on the website of another organisation. <span class="conf given">Given</span> = an example value. The text records of the videos are automatic, and research assistants of the same kind as me read them.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> Cameras, steps 2 to 6 of the diagram, planning period of 10 to 15 seconds: Tesla AI Day, 19 August 2021, video. <a href="https://www.youtube.com/watch?v=j0z4FweCy4M">youtube.com</a></li>
+  <li><span class="conf high">High</span> Raw 12-bit input, occupancy network, lanes network, and all values of the planner. Source: Tesla AI Day, 30 September 2022, video. <a href="https://www.youtube.com/watch?v=ODSJsviD_SU">youtube.com</a></li>
+  <li><span class="conf high">High</span> Time of the image signal processor, definition of the latency: Elon Musk in the Lex Fridman Podcast number 252, December 2021. <a href="https://www.youtube.com/watch?v=DxREm3s1scA">youtube.com</a></li>
+  <li><span class="conf high">High</span> Computer HW3: Tesla Autonomy Day, 22 April 2019, video. <a href="https://www.youtube.com/watch?v=Ucp0TTmvqOE">youtube.com</a></li>
+  <li><span class="conf high">High</span> Removal of radar and ultrasonic sensors: Tesla support page, archive copies of 15 June 2021 and 9 October 2022. <a href="https://web.archive.org/web/20221009222211/https://www.tesla.com/support/transitioning-tesla-vision">web.archive.org</a></li>
+  <li><span class="conf high">High</span> End-to-end design, token calculation, 500 years per day, world simulator: Ashok Elluswamy, "Tesla's approach to Autonomy", 24 October 2025. <a href="https://x.com/aelluswamy/status/1981644831790379245">x.com</a></li>
+  <li><span class="conf high">High</span> Selection of good drivers, 10 million clips: Walter Isaacson, extract of the book "Elon Musk", 9 September 2023. <a href="https://www.cnbc.com/2023/09/09/ai-for-cars-walter-isaacson-biography-of-elon-musk-excerpt.html">cnbc.com</a></li>
+  <li><span class="conf high">High</span> Shadow mode, 7 rounds: Andrej Karpathy, talk at the conference CVPR, June 2021. <a href="https://www.youtube.com/watch?v=NSDTZQdo6H8">youtube.com</a></li>
+  <li><span class="conf medium">Medium</span> Release notes of versions 12, 13.2, 14.3.3, and 14.3.10: Not a Tesla App. <a href="https://www.notateslaapp.com/software-updates/version/2024.39.10/release-notes">notateslaapp.com</a></li>
+  <li><span class="conf high">High</span> Training computer Cortex: letter of Tesla to its shareholders for the fourth quarter of 2024. <a href="https://www.sec.gov/Archives/edgar/data/1318605/000162828025002993/exhibit991.htm">sec.gov</a></li>
+  <li><span class="conf medium">Medium</span> Miles per major collision: Teslarati, 19 February 2026. The method text is from the Tesla safety report, archive copy of 7 September 2026. <a href="https://www.teslarati.com/tesla-fsd-supervised-8-billion-miles/">teslarati.com</a></li>
+  <li><span class="conf high">High</span> Investigation EA26002: NHTSA, 18 March 2026. <a href="https://static.nhtsa.gov/odi/inv/2026/INOA-EA26002-10023.pdf">nhtsa.gov</a></li>
+  <li><span class="conf high">High</span> Investigation PE25012 and the statement on SAE Level 2: NHTSA, 7 October 2025. <a href="https://static.nhtsa.gov/odi/inv/2025/INOA-PE25012-19171.pdf">nhtsa.gov</a></li>
+  <li><span class="conf medium">Medium</span> Driver monitoring: release notes of version 12.4.3. Robotaxi dates: Electrek and Teslarati. <a href="https://www.teslarati.com/tesla-launches-robotaxi-rides-in-austin-with-no-safety-monitor/">teslarati.com</a></li>
+  <li><span class="conf high">High</span> All distances, ratios, and token numbers: calculated with a program from the values of the sources.</li>
+  <li><span class="conf given">Given</span> The speed of 50 km/h is an example value.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
