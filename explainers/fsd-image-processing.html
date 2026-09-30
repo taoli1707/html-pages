@@ -1,0 +1,2078 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FSD Image Processing</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: FSD, HW3, ISP, BEV, RegNet, BiFPN, HDR, MLP, CVPR, EfficientDet, Tesla, HydraNet, NeRF, HTML -->
+<h1>How does FSD convert the raw pixel values of 8 cameras into one 3D description of the road?</h1>
+<p class="meta">Written 2026-09-29 · Main path: about 28 minutes · Complete page: about 35 minutes · You need to know: what a matrix is, and that a neural network is a function that learns from examples</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>Each of the 8 cameras delivers 1,280 × 960 raw sensor values, 36 times per second. Together this is about 354 million values per second. The network reduces these values in 4 stages.</p>
+  <p><strong>Stage 1, convolution:</strong> a small matrix (a kernel) slides over the image and calculates one number for each position. Many such matrices in many layers turn pixels into <strong>features</strong>. A feature is a number that describes a small region: an edge, a wheel, a lane mark.</p>
+  <p><strong>Stage 2, several scales:</strong> the features exist at 4 resolutions, from 320 × 240 positions down to 40 × 30. A second network (BiFPN) mixes the resolutions.</p>
+  <p><strong>Stage 3, attention:</strong> a grid on the road, seen from above, asks all 8 images which features belong to each cell. The answer is a weighted sum of image features. This step converts 8 flat images into one 3D space.</p>
+  <p><strong>Stage 4, memory and output:</strong> the space is aligned with the earlier frames, and output networks read it as occupied cubes (voxels), lanes, and objects. The occupancy network runs in about 10 ms.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>The page describes the perception network that Tesla explained at AI Day 2021 and AI Day 2022. The network of version 12 and later is end-to-end and its inside is not public. Tesla stated that it still produces the same kinds of intermediate results as extra outputs.</li>
+    <li>The kernel values, the focal length, the grid sizes, and the attention weights are example values. They show the mechanism. The sources section lists which numbers are from Tesla.</li>
+    <li>You asked for animation. The three animated figures are sets of numbered frames. You step through them with buttons, and every frame is also readable without the buttons.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li class="core"><a href="#example">One example: a 3 × 3 kernel finds an edge in a 6 × 6 image</a></li>
+    <li class="core"><a href="#capture">Capture: 8 cameras give 354 million raw values per second, and no image signal processor touches them</a></li>
+    <li class="core"><a href="#projection">Geometry: a point at 10 m lands at pixel (820, 435), and at 40 m at (685, 468.75)</a></li>
+    <li class="core"><a href="#attention">Attention: each cell of the road grid takes a weighted sum of image features</a></li>
+    <li class="core"><a href="#mistake">Wrong idea corrected: the cameras are not fused after detection, but before</a></li>
+    <li class="core"><a href="#limits">Limits: the current network is not public, and the example numbers are not Tesla's</a></li>
+    <li class="core"><a href="#check">Check your understanding</a></li>
+    <li><a href="#backbone">More detail: the backbone gives 76,800 to 1,200 positions per stride, and BiFPN mixes them</a></li>
+    <li><a href="#video">More detail: the space is aligned over time, and voxels are read out in 10 ms</a></li>
+    <li class="core"><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One example: a 3 × 3 kernel finds an edge in a 6 × 6 image</h2>
+<p>The first operation of the network is the <dfn>convolution</dfn>. A convolution slides a small matrix over the image. At each position, it multiplies each pixel under the matrix with the matrix value at the same place, and it adds the 9 products. The small matrix is the <dfn>kernel</dfn>. Training sets the values of the kernel.</p>
+<p>The example uses a kernel that finds a vertical edge. Its values are the values of the Sobel operator, a classical edge kernel. So you can check the result by hand.</p>
+<p>The image has 6 × 6 pixels. The left half has the value 10, the right half has the value 90. So there is one vertical edge between column 3 and column 4.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the kernel at the first 4 positions of row 1</span>
+  <ol class="steps">
+    <li>Position 1 (columns 1 to 3): all 9 pixels are 10. Products: −10, 0, 10, −20, 0, 20, −10, 0, 10. Sum = <strong>0</strong>.
+      <span class="why">The left column of the kernel is negative and the right column is positive. When both sides have the same brightness, the products cancel.</span></li>
+    <li>Position 2 (columns 2 to 4): the right column of the window is 90. Products: −10, 0, 90, −20, 0, 180, −10, 0, 90. Sum = <strong>320</strong>.
+      <span class="why">The right side is brighter than the left side by 80. The kernel weights of the two sides are 1, 2, 1, so the sum is 80 × 4 = 320.</span></li>
+    <li>Position 3 (columns 3 to 5): the left column is 10, the right column is 90. Sum = <strong>320</strong>.
+      <span class="why">The middle column is multiplied by 0, so the middle value does not matter.</span></li>
+    <li>Position 4 (columns 4 to 6): all 9 pixels are 90. Sum = <strong>0</strong>.
+      <span class="why">Same as position 1: equal brightness on both sides gives 0.</span></li>
+  </ol>
+  <p><strong>Result:</strong> the output row is 0, 320, 320, 0. The output is large exactly where the edge is. The other 3 rows give the same values, because every row of the image is the same. So the output is a 4 × 4 map of "how strong is a vertical edge here".</p>
+</div>
+
+<figure class="diagram frames" id="fig-conv">
+  <p class="fig-title">One kernel slides over the image and writes one number per position, and the number is large only at the edge.</p>
+  <p class="fig-sub">Four frames, one for each position of the kernel in row 1. Image values and kernel values are example values.</p>
+  <div class="frames-controls"></div>
+  <div class="frame">
+<p class="frame-title">Frame 1 of 4: the kernel at position 1, sum 0</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 680 320" role="img" aria-label="Frame 1 of 4 of the convolution. A 6 by 6 image, the 3 by 3 kernel window at position 1 of row 1, the 9 products, and the output grid with the sum 0.">
+<defs><marker id="ah-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">Image, 6 × 6 pixels</text>
+<rect x="20" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="37.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="71.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="105.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="37.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="71.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="105.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="37.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="71.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="105.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="44" width="102" height="102" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+<text x="280" y="24" font-size="14" style="font-weight:600">Pixel × kernel value</text>
+<rect x="280" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="71.0" text-anchor="middle" font-size="13">-10</text>
+<rect x="324" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="71.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="71.0" text-anchor="middle" font-size="13">10</text>
+<rect x="280" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="115.0" text-anchor="middle" font-size="13">-20</text>
+<rect x="324" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="115.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="115.0" text-anchor="middle" font-size="13">20</text>
+<rect x="280" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="159.0" text-anchor="middle" font-size="13">-10</text>
+<rect x="324" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="159.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="159.0" text-anchor="middle" font-size="13">10</text>
+<text x="280" y="202" font-size="13">Sum of the 9 products:</text>
+<text x="280" y="224" font-size="14" style="font-weight:600">Sum = 0</text>
+<text x="480" y="24" font-size="14" style="font-weight:600">Output, 4 × 4 values</text>
+<rect x="480" y="44" width="40" height="40" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="500.0" y="69.0" text-anchor="middle" font-size="13">0</text>
+<rect x="520" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<line class="arrow" x1="230" y1="95.0" x2="272" y2="110.0" marker-end="url(#ah-a)"/>
+<line class="arrow" x1="416" y1="110.0" x2="500.0" y2="90" marker-end="url(#ah-a)"/>
+<text x="20" y="274" font-size="13">Kernel (3 × 3): −1 0 1 / −2 0 2 / −1 0 1</text>
+<text x="20" y="294" font-size="13">Frame 1: the kernel is at column 1. Output position: row 1, column 1.</text>
+</svg>
+</div>
+</div>
+<div class="frame">
+<p class="frame-title">Frame 2 of 4: the kernel at position 2, sum 320</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 680 320" role="img" aria-label="Frame 2 of 4 of the convolution. A 6 by 6 image, the 3 by 3 kernel window at position 2 of row 1, the 9 products, and the output grid with the sum 320.">
+<defs><marker id="ah-a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">Image, 6 × 6 pixels</text>
+<rect x="20" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="71.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="105.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="139.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="71.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="105.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="139.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="71.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="105.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="139.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="54" y="44" width="102" height="102" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+<text x="280" y="24" font-size="14" style="font-weight:600">Pixel × kernel value</text>
+<rect x="280" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="71.0" text-anchor="middle" font-size="13">-10</text>
+<rect x="324" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="71.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="71.0" text-anchor="middle" font-size="13">90</text>
+<rect x="280" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="115.0" text-anchor="middle" font-size="13">-20</text>
+<rect x="324" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="115.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="115.0" text-anchor="middle" font-size="13">180</text>
+<rect x="280" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="159.0" text-anchor="middle" font-size="13">-10</text>
+<rect x="324" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="159.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="159.0" text-anchor="middle" font-size="13">90</text>
+<text x="280" y="202" font-size="13">Sum of the 9 products:</text>
+<text x="280" y="224" font-size="14" style="font-weight:600">Sum = 320</text>
+<text x="480" y="24" font-size="14" style="font-weight:600">Output, 4 × 4 values</text>
+<rect x="480" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<text x="500.0" y="69.0" text-anchor="middle" font-size="13">0</text>
+<rect x="520" y="44" width="40" height="40" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="540.0" y="69.0" text-anchor="middle" font-size="13">320</text>
+<rect x="560" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<line class="arrow" x1="230" y1="95.0" x2="272" y2="110.0" marker-end="url(#ah-a1)"/>
+<line class="arrow" x1="416" y1="110.0" x2="540.0" y2="90" marker-end="url(#ah-a1)"/>
+<text x="20" y="274" font-size="13">Kernel (3 × 3): −1 0 1 / −2 0 2 / −1 0 1</text>
+<text x="20" y="294" font-size="13">Frame 2: the kernel is at column 2. Output position: row 1, column 2.</text>
+</svg>
+</div>
+</div>
+<div class="frame">
+<p class="frame-title">Frame 3 of 4: the kernel at position 3, sum 320</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 680 320" role="img" aria-label="Frame 3 of 4 of the convolution. A 6 by 6 image, the 3 by 3 kernel window at position 3 of row 1, the 9 products, and the output grid with the sum 320.">
+<defs><marker id="ah-a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">Image, 6 × 6 pixels</text>
+<rect x="20" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="105.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="139.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="173.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="105.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="139.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="173.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="105.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="139.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="173.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="88" y="44" width="102" height="102" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+<text x="280" y="24" font-size="14" style="font-weight:600">Pixel × kernel value</text>
+<rect x="280" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="71.0" text-anchor="middle" font-size="13">-10</text>
+<rect x="324" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="71.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="71.0" text-anchor="middle" font-size="13">90</text>
+<rect x="280" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="115.0" text-anchor="middle" font-size="13">-20</text>
+<rect x="324" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="115.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="115.0" text-anchor="middle" font-size="13">180</text>
+<rect x="280" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="159.0" text-anchor="middle" font-size="13">-10</text>
+<rect x="324" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="159.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="159.0" text-anchor="middle" font-size="13">90</text>
+<text x="280" y="202" font-size="13">Sum of the 9 products:</text>
+<text x="280" y="224" font-size="14" style="font-weight:600">Sum = 320</text>
+<text x="480" y="24" font-size="14" style="font-weight:600">Output, 4 × 4 values</text>
+<rect x="480" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<text x="500.0" y="69.0" text-anchor="middle" font-size="13">0</text>
+<rect x="520" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<text x="540.0" y="69.0" text-anchor="middle" font-size="13">320</text>
+<rect x="560" y="44" width="40" height="40" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="580.0" y="69.0" text-anchor="middle" font-size="13">320</text>
+<rect x="600" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<line class="arrow" x1="230" y1="95.0" x2="272" y2="110.0" marker-end="url(#ah-a2)"/>
+<line class="arrow" x1="416" y1="110.0" x2="580.0" y2="90" marker-end="url(#ah-a2)"/>
+<text x="20" y="274" font-size="13">Kernel (3 × 3): −1 0 1 / −2 0 2 / −1 0 1</text>
+<text x="20" y="294" font-size="13">Frame 3: the kernel is at column 3. Output position: row 1, column 3.</text>
+</svg>
+</div>
+</div>
+<div class="frame">
+<p class="frame-title">Frame 4 of 4: the kernel at position 4, sum 0</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 680 320" role="img" aria-label="Frame 4 of 4 of the convolution. A 6 by 6 image, the 3 by 3 kernel window at position 4 of row 1, the 9 products, and the output grid with the sum 0.">
+<defs><marker id="ah-a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">Image, 6 × 6 pixels</text>
+<rect x="20" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="44" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="66.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="139.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="173.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="44" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="207.0" y="66.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="78" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="100.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="139.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="173.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="78" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="207.0" y="100.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="112" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="134.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="139.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="173.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="112" width="34" height="34" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="207.0" y="134.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="168.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="146" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="168.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="202.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="180" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="202.0" text-anchor="middle" font-size="13">90</text>
+<rect x="20" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="37.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="54" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="71.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="88" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="105.0" y="236.0" text-anchor="middle" font-size="13">10</text>
+<rect x="122" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="139.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="156" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="173.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="190" y="214" width="34" height="34" fill="none" stroke="var(--border)"/>
+<text x="207.0" y="236.0" text-anchor="middle" font-size="13">90</text>
+<rect x="122" y="44" width="102" height="102" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+<text x="280" y="24" font-size="14" style="font-weight:600">Pixel × kernel value</text>
+<rect x="280" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="71.0" text-anchor="middle" font-size="13">-90</text>
+<rect x="324" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="71.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="44" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="71.0" text-anchor="middle" font-size="13">90</text>
+<rect x="280" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="115.0" text-anchor="middle" font-size="13">-180</text>
+<rect x="324" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="115.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="88" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="115.0" text-anchor="middle" font-size="13">180</text>
+<rect x="280" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="302.0" y="159.0" text-anchor="middle" font-size="13">-90</text>
+<rect x="324" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="346.0" y="159.0" text-anchor="middle" font-size="13">0</text>
+<rect x="368" y="132" width="44" height="44" fill="none" stroke="var(--border)"/>
+<text x="390.0" y="159.0" text-anchor="middle" font-size="13">90</text>
+<text x="280" y="202" font-size="13">Sum of the 9 products:</text>
+<text x="280" y="224" font-size="14" style="font-weight:600">Sum = 0</text>
+<text x="480" y="24" font-size="14" style="font-weight:600">Output, 4 × 4 values</text>
+<rect x="480" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<text x="500.0" y="69.0" text-anchor="middle" font-size="13">0</text>
+<rect x="520" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<text x="540.0" y="69.0" text-anchor="middle" font-size="13">320</text>
+<rect x="560" y="44" width="40" height="40" fill="none" stroke="var(--border)"/>
+<text x="580.0" y="69.0" text-anchor="middle" font-size="13">320</text>
+<rect x="600" y="44" width="40" height="40" fill="var(--accent-soft)" stroke="var(--border)"/>
+<text x="620.0" y="69.0" text-anchor="middle" font-size="13">0</text>
+<rect x="480" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="84" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="124" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="480" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="520" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="560" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<rect x="600" y="164" width="40" height="40" fill="none" stroke="var(--border)"/>
+<line class="arrow" x1="230" y1="95.0" x2="272" y2="110.0" marker-end="url(#ah-a3)"/>
+<line class="arrow" x1="416" y1="110.0" x2="620.0" y2="90" marker-end="url(#ah-a3)"/>
+<text x="20" y="274" font-size="13">Kernel (3 × 3): −1 0 1 / −2 0 2 / −1 0 1</text>
+<text x="20" y="294" font-size="13">Frame 4: the kernel is at column 4. Output position: row 1, column 4.</text>
+</svg>
+</div>
+</div>
+  <p class="fig-read"><strong>How to read this figure:</strong> the left grid is the image. The square with the thick border is the kernel window. The middle grid shows the 9 products. The right grid is the output, and the highlighted cell receives the sum. Each frame moves the window one column to the right.</p>
+  <p class="fig-source">Source: calculated with a program from the example values.</p>
+</figure>
+
+<p>Three facts about this example transfer to the real network.</p>
+<ul>
+  <li><strong>The output is smaller than the input.</strong> A 3 × 3 kernel on a 6 × 6 image gives 4 × 4 outputs. Real networks also skip positions. A <dfn>stride</dfn> of 2 means that the kernel moves 2 pixels per step. Then the output has half the width and half the height.</li>
+  <li><strong>One kernel gives one map.</strong> A layer has many kernels, for example 64, and gives 64 maps. Each map is a <dfn>feature map</dfn>: a grid in which each number describes the region around one position. Each number is a <dfn>feature</dfn>. The edge strength of the example is one feature.</li>
+  <li><strong>Layers stack.</strong> The next layer applies its kernels to the feature maps, not to pixels. So the second layer sees edges, and a deep layer sees a wheel or a lane mark. Training sets all kernel values.</li>
+</ul>
+
+<h2 id="capture">2. Capture: 8 cameras give 354 million raw values per second, and no image signal processor touches them</h2>
+<p>Tesla stated the input format at AI Day 2021. Each of the 8 cameras delivers images of 1,280 × 960 pixels with 12 bits per pixel, 36 times per second. In 2022 Tesla added that the network receives the raw sensor values, which Tesla names "photon counts".</p>
+
+<div class="box example">
+  <span class="label">Worked example: the size of the raw input</span>
+  <ol class="steps">
+    <li>Pixels per image: 1,280 × 960 = <strong>1,228,800</strong>.</li>
+    <li>Bytes per image: 1,228,800 × 12 bits ÷ 8 = <strong>1,843,200 bytes</strong>, about 1.8 MB.
+      <span class="why">A 12-bit value needs 1.5 bytes. Real memory stores it in 2 bytes, so the real size is larger.</span></li>
+    <li>Values per second, 8 cameras: 1,228,800 × 36 × 8 = <strong>353,894,400</strong>, about 354 million.</li>
+    <li>Levels per pixel: 2<sup>12</sup> = <strong>4,096</strong>. A normal 8-bit image has 2<sup>8</sup> = 256 levels. The ratio is 16.
+      <span class="why">Tesla states the same ratio: 4 bits more give 16 times the dynamic range.</span></li>
+  </ol>
+</div>
+
+<p>A normal camera sends its sensor values through an image signal processor (ISP). The image signal processor is a circuit that converts sensor values into a picture for a human eye. It corrects colours, reduces noise, applies a tone curve, and compresses the 12 bits to 8 bits. Tesla removed this circuit from the path to the network in 2022. Tesla stated two reasons. The network receives 16 times more levels, and the time of the image signal processor is saved.</p>
+
+<p><strong>Rectification.</strong> Each camera is mounted with a small error of angle and position, and each lens distorts the image in its own way. <dfn>Rectification</dfn> is a fixed transformation that converts each image to the image of one standard virtual camera. So the network sees the same geometry in every car.</p>
+<p>The example camera of section 3 shows the size of the effect. A tilt of 1 degree moves every pixel by about 15.7 pixels. A tilt of 0.1 degree moves it by 1.6 pixels.</p>
+
+<h2 id="projection">3. Geometry: a point at 10 m lands at pixel (820, 435), and at 40 m at (685, 468.75)</h2>
+<p>A camera image is a flat projection of 3D space. The <dfn>pinhole camera model</dfn> is the formula of this projection. It uses one number, the <dfn>focal length</dfn> f, in pixels: the distance from the lens to the image plane, measured in pixel widths. With the centre of the image at (c<sub>x</sub>, c<sub>y</sub>), a point at (X, Y, Z) in front of the camera lands at the pixel:</p>
+<pre><code>u = f × X ÷ Z + c_x
+v = f × Y ÷ Z + c_y</code></pre>
+<p>X is the distance to the right of the camera axis, Y is the distance below the axis, and Z is the distance ahead. The example uses f = 900 pixels and the image centre (640, 480). Tesla did not publish the focal length of its cameras. The value 900 is an example value.</p>
+
+<div class="box example">
+  <span class="label">Worked example: one point at 4 distances</span>
+  <ol class="steps">
+    <li>Point at X = 2 m, Y = −0.5 m, Z = 10 m: u = 900 × 2 ÷ 10 + 640 = <strong>820</strong>. v = 900 × (−0.5) ÷ 10 + 480 = <strong>435</strong>.
+      <span class="why">Y is negative, so the point is above the axis, and v is smaller than the centre value 480.</span></li>
+    <li>Same point at Z = 20 m: u = 900 × 2 ÷ 20 + 640 = <strong>730</strong>. v = <strong>457.5</strong>.
+      <span class="why">Doubling the distance halves the offset from the centre: 180 became 90.</span></li>
+    <li>Same point at Z = 40 m: u = <strong>685</strong>. v = <strong>468.75</strong>.</li>
+    <li>Same point at Z = 5 m: u = <strong>1,000</strong>. v = <strong>390</strong>.
+      <span class="why">At 2.5 m the point would be at u = 1,360, outside the image of 1,280 pixels.</span></li>
+  </ol>
+  <p><strong>Result:</strong> a far point lies near the centre of the image. A near point lies far from the centre. The formula divides by Z, so the image gives no direct value of Z. Two points at (2, −0.5, 10) and (4, −1, 20) land on the same pixel.</p>
+</div>
+
+<figure class="diagram frames" id="fig-proj">
+  <p class="fig-title">The same point moves toward the centre of the image when its distance grows.</p>
+  <p class="fig-sub">Four frames, for Z = 5, 10, 20, and 40 m. Focal length 900 pixels and image centre (640, 480) are example values.</p>
+  <div class="frames-controls"></div>
+  <div class="frame">
+<p class="frame-title">Frame 1 of 4: Z = 5 m, pixel (1,000, 390)</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 700 340" role="img" aria-label="Frame 1 of 4 of the projection. Top view with the camera and the point at Z = 5 metres, and the image with the projected pixel at (1,000, 390).">
+<defs><marker id="ah-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">Top view: the car and the point</text>
+<line class="axis" x1="60.0" y1="140.0" x2="300.0" y2="140.0"/>
+<line class="grid" x1="60.0" y1="60.0" x2="60.0" y2="220.0"/>
+<text class="axis-label" x="60.0" y="236.0" text-anchor="middle">0 m</text>
+<line class="grid" x1="117.14285714285714" y1="60.0" x2="117.14285714285714" y2="220.0"/>
+<text class="axis-label" x="117.14285714285714" y="236.0" text-anchor="middle">10 m</text>
+<line class="grid" x1="174.28571428571428" y1="60.0" x2="174.28571428571428" y2="220.0"/>
+<text class="axis-label" x="174.28571428571428" y="236.0" text-anchor="middle">20 m</text>
+<line class="grid" x1="231.42857142857142" y1="60.0" x2="231.42857142857142" y2="220.0"/>
+<text class="axis-label" x="231.42857142857142" y="236.0" text-anchor="middle">30 m</text>
+<line class="grid" x1="288.57142857142856" y1="60.0" x2="288.57142857142856" y2="220.0"/>
+<text class="axis-label" x="288.57142857142856" y="236.0" text-anchor="middle">40 m</text>
+<text class="axis-label" x="60.0" y="254.0" text-anchor="start">Z: distance ahead of the camera</text>
+<rect class="node" x="46.0" y="130.0" width="14" height="20"/>
+<text x="44.0" y="174.0" font-size="13" text-anchor="start">camera</text>
+<circle cx="88.57142857142857" cy="86.66666666666666" r="6" fill="var(--s1)"/>
+<text x="88.57142857142857" y="74.66666666666666" font-size="13" text-anchor="middle">X = 2 m, Z = 5 m</text>
+<line class="arrow" x1="60.0" y1="140.0" x2="82.57142857142857" y2="88.66666666666666" stroke-dasharray="4 4"/>
+<text x="370" y="24" font-size="14" style="font-weight:600">Image: 1,280 × 960 pixels</text>
+<rect x="370" y="40" width="320.0" height="240.0" fill="none" stroke="var(--muted)"/>
+<line class="grid" x1="530.0" y1="40" x2="530.0" y2="280.0"/>
+<line class="grid" x1="370" y1="160.0" x2="690.0" y2="160.0"/>
+<text class="axis-label" x="534.0" y="52">centre (640, 480)</text>
+<circle cx="620.0" cy="137.5" r="6" fill="var(--s1)"/>
+<text x="620.0" y="125.5" font-size="13" text-anchor="middle">u = 1000, v = 390</text>
+<text x="370" y="302.0" font-size="13">u = 900 × 2 ÷ 5 + 640 = 1000</text>
+<text x="370" y="322.0" font-size="13">v = 900 × (−0.5) ÷ 5 + 480 = 390</text>
+</svg>
+</div>
+</div>
+<div class="frame">
+<p class="frame-title">Frame 2 of 4: Z = 10 m, pixel (820, 435)</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 700 340" role="img" aria-label="Frame 2 of 4 of the projection. Top view with the camera and the point at Z = 10 metres, and the image with the projected pixel at (820, 435).">
+<defs><marker id="ah-b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">Top view: the car and the point</text>
+<line class="axis" x1="60.0" y1="140.0" x2="300.0" y2="140.0"/>
+<line class="grid" x1="60.0" y1="60.0" x2="60.0" y2="220.0"/>
+<text class="axis-label" x="60.0" y="236.0" text-anchor="middle">0 m</text>
+<line class="grid" x1="117.14285714285714" y1="60.0" x2="117.14285714285714" y2="220.0"/>
+<text class="axis-label" x="117.14285714285714" y="236.0" text-anchor="middle">10 m</text>
+<line class="grid" x1="174.28571428571428" y1="60.0" x2="174.28571428571428" y2="220.0"/>
+<text class="axis-label" x="174.28571428571428" y="236.0" text-anchor="middle">20 m</text>
+<line class="grid" x1="231.42857142857142" y1="60.0" x2="231.42857142857142" y2="220.0"/>
+<text class="axis-label" x="231.42857142857142" y="236.0" text-anchor="middle">30 m</text>
+<line class="grid" x1="288.57142857142856" y1="60.0" x2="288.57142857142856" y2="220.0"/>
+<text class="axis-label" x="288.57142857142856" y="236.0" text-anchor="middle">40 m</text>
+<text class="axis-label" x="60.0" y="254.0" text-anchor="start">Z: distance ahead of the camera</text>
+<rect class="node" x="46.0" y="130.0" width="14" height="20"/>
+<text x="44.0" y="174.0" font-size="13" text-anchor="start">camera</text>
+<circle cx="117.14285714285714" cy="86.66666666666666" r="6" fill="var(--s1)"/>
+<text x="117.14285714285714" y="74.66666666666666" font-size="13" text-anchor="middle">X = 2 m, Z = 10 m</text>
+<line class="arrow" x1="60.0" y1="140.0" x2="111.14285714285714" y2="88.66666666666666" stroke-dasharray="4 4"/>
+<text x="370" y="24" font-size="14" style="font-weight:600">Image: 1,280 × 960 pixels</text>
+<rect x="370" y="40" width="320.0" height="240.0" fill="none" stroke="var(--muted)"/>
+<line class="grid" x1="530.0" y1="40" x2="530.0" y2="280.0"/>
+<line class="grid" x1="370" y1="160.0" x2="690.0" y2="160.0"/>
+<text class="axis-label" x="534.0" y="52">centre (640, 480)</text>
+<circle cx="575.0" cy="148.75" r="6" fill="var(--s1)"/>
+<text x="575.0" y="136.75" font-size="13" text-anchor="middle">u = 820, v = 435</text>
+<text x="370" y="302.0" font-size="13">u = 900 × 2 ÷ 10 + 640 = 820</text>
+<text x="370" y="322.0" font-size="13">v = 900 × (−0.5) ÷ 10 + 480 = 435</text>
+</svg>
+</div>
+</div>
+<div class="frame">
+<p class="frame-title">Frame 3 of 4: Z = 20 m, pixel (730, 457.5)</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 700 340" role="img" aria-label="Frame 3 of 4 of the projection. Top view with the camera and the point at Z = 20 metres, and the image with the projected pixel at (730, 457.5).">
+<defs><marker id="ah-b2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">Top view: the car and the point</text>
+<line class="axis" x1="60.0" y1="140.0" x2="300.0" y2="140.0"/>
+<line class="grid" x1="60.0" y1="60.0" x2="60.0" y2="220.0"/>
+<text class="axis-label" x="60.0" y="236.0" text-anchor="middle">0 m</text>
+<line class="grid" x1="117.14285714285714" y1="60.0" x2="117.14285714285714" y2="220.0"/>
+<text class="axis-label" x="117.14285714285714" y="236.0" text-anchor="middle">10 m</text>
+<line class="grid" x1="174.28571428571428" y1="60.0" x2="174.28571428571428" y2="220.0"/>
+<text class="axis-label" x="174.28571428571428" y="236.0" text-anchor="middle">20 m</text>
+<line class="grid" x1="231.42857142857142" y1="60.0" x2="231.42857142857142" y2="220.0"/>
+<text class="axis-label" x="231.42857142857142" y="236.0" text-anchor="middle">30 m</text>
+<line class="grid" x1="288.57142857142856" y1="60.0" x2="288.57142857142856" y2="220.0"/>
+<text class="axis-label" x="288.57142857142856" y="236.0" text-anchor="middle">40 m</text>
+<text class="axis-label" x="60.0" y="254.0" text-anchor="start">Z: distance ahead of the camera</text>
+<rect class="node" x="46.0" y="130.0" width="14" height="20"/>
+<text x="44.0" y="174.0" font-size="13" text-anchor="start">camera</text>
+<circle cx="174.28571428571428" cy="86.66666666666666" r="6" fill="var(--s1)"/>
+<text x="174.28571428571428" y="74.66666666666666" font-size="13" text-anchor="middle">X = 2 m, Z = 20 m</text>
+<line class="arrow" x1="60.0" y1="140.0" x2="168.28571428571428" y2="88.66666666666666" stroke-dasharray="4 4"/>
+<text x="370" y="24" font-size="14" style="font-weight:600">Image: 1,280 × 960 pixels</text>
+<rect x="370" y="40" width="320.0" height="240.0" fill="none" stroke="var(--muted)"/>
+<line class="grid" x1="530.0" y1="40" x2="530.0" y2="280.0"/>
+<line class="grid" x1="370" y1="160.0" x2="690.0" y2="160.0"/>
+<text class="axis-label" x="534.0" y="52">centre (640, 480)</text>
+<circle cx="552.5" cy="154.375" r="6" fill="var(--s1)"/>
+<text x="552.5" y="142.375" font-size="13" text-anchor="middle">u = 730, v = 457.5</text>
+<text x="370" y="302.0" font-size="13">u = 900 × 2 ÷ 20 + 640 = 730</text>
+<text x="370" y="322.0" font-size="13">v = 900 × (−0.5) ÷ 20 + 480 = 457.5</text>
+</svg>
+</div>
+</div>
+<div class="frame">
+<p class="frame-title">Frame 4 of 4: Z = 40 m, pixel (685, 468.75)</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 700 340" role="img" aria-label="Frame 4 of 4 of the projection. Top view with the camera and the point at Z = 40 metres, and the image with the projected pixel at (685, 468.75).">
+<defs><marker id="ah-b3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">Top view: the car and the point</text>
+<line class="axis" x1="60.0" y1="140.0" x2="300.0" y2="140.0"/>
+<line class="grid" x1="60.0" y1="60.0" x2="60.0" y2="220.0"/>
+<text class="axis-label" x="60.0" y="236.0" text-anchor="middle">0 m</text>
+<line class="grid" x1="117.14285714285714" y1="60.0" x2="117.14285714285714" y2="220.0"/>
+<text class="axis-label" x="117.14285714285714" y="236.0" text-anchor="middle">10 m</text>
+<line class="grid" x1="174.28571428571428" y1="60.0" x2="174.28571428571428" y2="220.0"/>
+<text class="axis-label" x="174.28571428571428" y="236.0" text-anchor="middle">20 m</text>
+<line class="grid" x1="231.42857142857142" y1="60.0" x2="231.42857142857142" y2="220.0"/>
+<text class="axis-label" x="231.42857142857142" y="236.0" text-anchor="middle">30 m</text>
+<line class="grid" x1="288.57142857142856" y1="60.0" x2="288.57142857142856" y2="220.0"/>
+<text class="axis-label" x="288.57142857142856" y="236.0" text-anchor="middle">40 m</text>
+<text class="axis-label" x="60.0" y="254.0" text-anchor="start">Z: distance ahead of the camera</text>
+<rect class="node" x="46.0" y="130.0" width="14" height="20"/>
+<text x="44.0" y="174.0" font-size="13" text-anchor="start">camera</text>
+<circle cx="288.57142857142856" cy="86.66666666666666" r="6" fill="var(--s1)"/>
+<text x="288.57142857142856" y="74.66666666666666" font-size="13" text-anchor="middle">X = 2 m, Z = 40 m</text>
+<line class="arrow" x1="60.0" y1="140.0" x2="282.57142857142856" y2="88.66666666666666" stroke-dasharray="4 4"/>
+<text x="370" y="24" font-size="14" style="font-weight:600">Image: 1,280 × 960 pixels</text>
+<rect x="370" y="40" width="320.0" height="240.0" fill="none" stroke="var(--muted)"/>
+<line class="grid" x1="530.0" y1="40" x2="530.0" y2="280.0"/>
+<line class="grid" x1="370" y1="160.0" x2="690.0" y2="160.0"/>
+<text class="axis-label" x="534.0" y="52">centre (640, 480)</text>
+<circle cx="541.25" cy="157.1875" r="6" fill="var(--s1)"/>
+<text x="541.25" y="145.1875" font-size="13" text-anchor="middle">u = 685, v = 468.75</text>
+<text x="370" y="302.0" font-size="13">u = 900 × 2 ÷ 40 + 640 = 685</text>
+<text x="370" y="322.0" font-size="13">v = 900 × (−0.5) ÷ 40 + 480 = 468.75</text>
+</svg>
+</div>
+</div>
+  <p class="fig-read"><strong>How to read this figure:</strong> the left part is a top view. The camera is at the left, and Z grows to the right. The right part is the camera image at one quarter of its size. The dot is the pixel of the point. The two lines below the image are the calculation of the frame.</p>
+  <p class="fig-source">Source: calculated with a program from the pinhole formula and the example values.</p>
+</figure>
+
+<p>The network needs the reverse direction: from a position on the road to the image features that describe it. The formula gives the reverse only in part. A cell of the road grid has a known X and Z, but its content can have any height Y. So the cell corresponds to a vertical line segment in the image, not to one pixel.</p>
+<p>Take the cell at X = 2 m and Z = 10 m. All heights from 2 m above the camera to 0.5 m below it lie on the column u = 820, between v = 300 and v = 525. The next section shows how the network selects along this line.</p>
+
+<h2 id="attention">4. Attention: each cell of the road grid takes a weighted sum of image features</h2>
+<p>The output space of the network is the <dfn>BEV</dfn>, the short form of <span class="quoted">bird's-eye view</span>. The BEV is a grid on the road, seen from above, with the car at a fixed position. Tesla also names it "vector space". An example grid with cells of 0.5 m and a side of 100 m has 200 × 200 = 40,000 cells. Tesla did not publish the size of its grid.</p>
+<p><dfn>Attention</dfn> is the operation that fills each cell. Attention works with three kinds of vectors. A <strong>query</strong> is a vector that says what one output position needs. A <strong>key</strong> is a vector that says what one input position offers. A <strong>value</strong> is the content of that input position. The operation compares the query with every key, converts the comparison scores into weights, and returns the weighted sum of the values.</p>
+<p>The formula from the paper "Attention Is All You Need" (2017) is:</p>
+<pre><code>Attention(Q, K, V) = softmax(Q × Kᵀ ÷ √d) × V</code></pre>
+<p>Q, K, and V are the matrices of all queries, keys, and values. d is the length of one query vector. The softmax function converts a list of scores into positive weights with the sum 1. Each weight is e<sup>score</sup> divided by the sum of all e<sup>score</sup>. The division by √d keeps the scores small, so that the softmax does not put all weight on one key.</p>
+
+<div class="box example">
+  <span class="label">Worked example: one query, 3 keys, d = 16</span>
+  <ol class="steps">
+    <li>Scores, query × key: 8, 2, −4.
+      <span class="why">The score is the dot product of the query vector and the key vector. A large score means that the key matches the query.</span></li>
+    <li>Scaled scores: 8 ÷ 4 = 2, 2 ÷ 4 = 0.5, −4 ÷ 4 = −1.
+      <span class="why">√16 = 4.</span></li>
+    <li>e<sup>2</sup> = 7.389, e<sup>0.5</sup> = 1.649, e<sup>−1</sup> = 0.368. Sum = 9.406.</li>
+    <li>Weights: 7.389 ÷ 9.406 = <strong>0.786</strong>, 1.649 ÷ 9.406 = <strong>0.175</strong>, 0.368 ÷ 9.406 = <strong>0.039</strong>.
+      <span class="why">The sum of the weights is 1.000.</span></li>
+    <li>Output: 0.786 × value 1 + 0.175 × value 2 + 0.039 × value 3. With the example values 0.9, 0.4, and 0.1, the output is <strong>0.781</strong>.
+      <span class="why">The output is mostly the value of the best matching key.</span></li>
+  </ol>
+</div>
+
+<p>Tesla described the use at AI Day 2021 in three steps.</p>
+<ol>
+  <li><strong>Queries from the grid.</strong> Each BEV cell receives a positional encoding: a vector of sine and cosine values of its X and Z. A small network (an MLP, a multilayer perceptron) converts the encoding into the query.</li>
+  <li><strong>Keys and values from the images.</strong> Each position of each feature map of each camera receives its own positional encoding. Two small networks convert the feature and the encoding into a key and a value.</li>
+  <li><strong>Multiplicative attention.</strong> Each query is compared with all keys of all 8 cameras. The cell receives the weighted sum of the values.</li>
+</ol>
+<p>Tesla did not state that the network applies the projection formula of section 3. The network learns the correspondence during training. The query of the cell at (2 m, 10 m) learns to give high scores to the keys near column 820. The formula explains why the correct keys lie on one column. The positional encodings make the match possible, because a key without a position could not be matched to a place.</p>
+
+<figure class="diagram frames" id="fig-bev">
+  <p class="fig-title">One cell of the road grid takes its content from the image features on its own column, with learned weights.</p>
+  <p class="fig-sub">Four frames. The grid has 1 m cells and shows 8 m × 12 m. The three weights are the example values of the worked example above. Real attention gives a weight to every feature position of all 8 cameras.</p>
+  <div class="frames-controls"></div>
+  <div class="frame">
+<p class="frame-title">Frame 1 of 4: one cell of the grid is the query</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 680 320" role="img" aria-label="Frame 1 of 4 of the attention. Left: the BEV grid with the query cell at X = 2 metres, Z = 10 metres. Right: the front camera image. The cell is marked.">
+<defs><marker id="ah-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">BEV grid, 1 m cells, car at the bottom</text>
+<rect x="40" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="228" width="32" height="10" fill="var(--muted)"/>
+<text x="104" y="256" font-size="13" text-anchor="middle">car, front camera at Z = 0</text>
+<text class="axis-label" x="40" y="274">X = −4 m</text>
+<text class="axis-label" x="168" y="274" text-anchor="end">X = +4 m</text>
+<text class="axis-label" x="35" y="50" text-anchor="end">12 m</text>
+<text class="axis-label" x="35" y="232" text-anchor="end">0 m</text>
+<rect x="128.0" y="64.0" width="16" height="16" fill="none" stroke="var(--accent)" stroke-width="2"/>
+<text x="174" y="50" font-size="13">query cell</text>
+<text x="174" y="66" font-size="13">X = 2 m, Z = 10 m</text>
+<text x="330" y="24" font-size="14" style="font-weight:600">Front camera image, feature positions</text>
+<rect x="330" y="40" width="320.0" height="240.0" fill="none" stroke="var(--muted)"/>
+<circle cx="535.0" cy="126.25" r="4.0" fill="var(--muted)"/>
+<circle cx="535.0" cy="148.75" r="4.0" fill="var(--muted)"/>
+<circle cx="535.0" cy="166.75" r="4.0" fill="var(--muted)"/>
+<circle cx="370.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="370.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="370.0" cy="240.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="240.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="240.0" r="3" fill="var(--grid)"/>
+<text x="20" y="302" font-size="13">Frame 1: one cell of the BEV grid is the query.</text>
+</svg>
+</div>
+</div>
+<div class="frame">
+<p class="frame-title">Frame 2 of 4: the cell corresponds to one image column</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 680 320" role="img" aria-label="Frame 2 of 4 of the attention. Left: the BEV grid with the query cell at X = 2 metres, Z = 10 metres. Right: the front camera image. A dashed line shows the column u = 820.">
+<defs><marker id="ah-c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">BEV grid, 1 m cells, car at the bottom</text>
+<rect x="40" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="228" width="32" height="10" fill="var(--muted)"/>
+<text x="104" y="256" font-size="13" text-anchor="middle">car, front camera at Z = 0</text>
+<text class="axis-label" x="40" y="274">X = −4 m</text>
+<text class="axis-label" x="168" y="274" text-anchor="end">X = +4 m</text>
+<text class="axis-label" x="35" y="50" text-anchor="end">12 m</text>
+<text class="axis-label" x="35" y="232" text-anchor="end">0 m</text>
+<rect x="128.0" y="64.0" width="16" height="16" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+<text x="174" y="50" font-size="13">query cell</text>
+<text x="174" y="66" font-size="13">X = 2 m, Z = 10 m</text>
+<line class="arrow" x1="104" y1="228" x2="136" y2="80.0" stroke-dasharray="4 4"/>
+<text x="330" y="24" font-size="14" style="font-weight:600">Front camera image, feature positions</text>
+<rect x="330" y="40" width="320.0" height="240.0" fill="none" stroke="var(--muted)"/>
+<line x1="535.0" y1="115.0" x2="535.0" y2="171.25" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="525.0" y="185.25" font-size="13" text-anchor="end">u = 820: all heights of the cell</text>
+<circle cx="535.0" cy="126.25" r="4.0" fill="var(--muted)"/>
+<circle cx="535.0" cy="148.75" r="4.0" fill="var(--muted)"/>
+<circle cx="535.0" cy="166.75" r="4.0" fill="var(--muted)"/>
+<circle cx="370.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="370.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="370.0" cy="240.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="240.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="240.0" r="3" fill="var(--grid)"/>
+<text x="20" y="302" font-size="13">Frame 2: the position of the cell corresponds to one column of the image.</text>
+</svg>
+</div>
+</div>
+<div class="frame">
+<p class="frame-title">Frame 3 of 4: attention gives each feature a weight</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 680 320" role="img" aria-label="Frame 3 of 4 of the attention. Left: the BEV grid with the query cell at X = 2 metres, Z = 10 metres. Right: the front camera image. Three features on the column have the weights 0.786, 0.175, and 0.039.">
+<defs><marker id="ah-c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">BEV grid, 1 m cells, car at the bottom</text>
+<rect x="40" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="228" width="32" height="10" fill="var(--muted)"/>
+<text x="104" y="256" font-size="13" text-anchor="middle">car, front camera at Z = 0</text>
+<text class="axis-label" x="40" y="274">X = −4 m</text>
+<text class="axis-label" x="168" y="274" text-anchor="end">X = +4 m</text>
+<text class="axis-label" x="35" y="50" text-anchor="end">12 m</text>
+<text class="axis-label" x="35" y="232" text-anchor="end">0 m</text>
+<rect x="128.0" y="64.0" width="16" height="16" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+<text x="174" y="50" font-size="13">query cell</text>
+<text x="174" y="66" font-size="13">X = 2 m, Z = 10 m</text>
+<line class="arrow" x1="104" y1="228" x2="136" y2="80.0" stroke-dasharray="4 4"/>
+<text x="330" y="24" font-size="14" style="font-weight:600">Front camera image, feature positions</text>
+<rect x="330" y="40" width="320.0" height="240.0" fill="none" stroke="var(--muted)"/>
+<line x1="535.0" y1="115.0" x2="535.0" y2="171.25" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="525.0" y="185.25" font-size="13" text-anchor="end">u = 820: all heights of the cell</text>
+<circle cx="535.0" cy="126.25" r="15.0" fill="var(--s1)"/>
+<text x="553.0" y="131.25" font-size="13">weight 0.786</text>
+<circle cx="535.0" cy="148.75" r="6.4" fill="var(--s1)"/>
+<text x="553.0" y="153.75" font-size="13">weight 0.175</text>
+<circle cx="535.0" cy="166.75" r="4.5" fill="var(--s1)"/>
+<text x="553.0" y="171.75" font-size="13">weight 0.039</text>
+<circle cx="370.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="370.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="370.0" cy="240.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="240.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="240.0" r="3" fill="var(--grid)"/>
+<text x="20" y="302" font-size="13">Frame 3: attention gives each image feature a weight. Three features get 0.786, 0.175, 0.039.</text>
+</svg>
+</div>
+</div>
+<div class="frame">
+<p class="frame-title">Frame 4 of 4: the weighted sum fills the cell</p>
+<div class="fig-scroll">
+<svg viewBox="0 0 680 320" role="img" aria-label="Frame 4 of 4 of the attention. Left: the BEV grid with the query cell at X = 2 metres, Z = 10 metres. Right: the front camera image. An arrow carries the weighted sum into the cell.">
+<defs><marker id="ah-c3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="20" y="24" font-size="14" style="font-weight:600">BEV grid, 1 m cells, car at the bottom</text>
+<rect x="40" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="40" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="56" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="72" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="88" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="104" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="120" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="136" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="152" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="168" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="184" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="200" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="40" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="56" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="72" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="104" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="120" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="136" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="152" y="216" width="16" height="16" fill="none" stroke="var(--grid)"/>
+<rect x="88" y="228" width="32" height="10" fill="var(--muted)"/>
+<text x="104" y="256" font-size="13" text-anchor="middle">car, front camera at Z = 0</text>
+<text class="axis-label" x="40" y="274">X = −4 m</text>
+<text class="axis-label" x="168" y="274" text-anchor="end">X = +4 m</text>
+<text class="axis-label" x="35" y="50" text-anchor="end">12 m</text>
+<text class="axis-label" x="35" y="232" text-anchor="end">0 m</text>
+<rect x="128.0" y="64.0" width="16" height="16" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+<text x="174" y="50" font-size="13">query cell</text>
+<text x="174" y="66" font-size="13">X = 2 m, Z = 10 m</text>
+<line class="arrow" x1="104" y1="228" x2="136" y2="80.0" stroke-dasharray="4 4"/>
+<text x="330" y="24" font-size="14" style="font-weight:600">Front camera image, feature positions</text>
+<rect x="330" y="40" width="320.0" height="240.0" fill="none" stroke="var(--muted)"/>
+<line x1="535.0" y1="115.0" x2="535.0" y2="171.25" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="525.0" y="185.25" font-size="13" text-anchor="end">u = 820: all heights of the cell</text>
+<circle cx="535.0" cy="126.25" r="15.0" fill="var(--s1)"/>
+<text x="553.0" y="131.25" font-size="13">weight 0.786</text>
+<circle cx="535.0" cy="148.75" r="6.4" fill="var(--s1)"/>
+<text x="553.0" y="153.75" font-size="13">weight 0.175</text>
+<circle cx="535.0" cy="166.75" r="4.5" fill="var(--s1)"/>
+<text x="553.0" y="171.75" font-size="13">weight 0.039</text>
+<circle cx="370.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="370.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="370.0" cy="240.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="450.0" cy="240.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="80.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="160.0" r="3" fill="var(--grid)"/>
+<circle cx="610.0" cy="240.0" r="3" fill="var(--grid)"/>
+<text x="20" y="302" font-size="13">Frame 4: the weighted sum of the features is written into the cell.</text>
+<line class="arrow" x1="525.0" y1="148.75" x2="150.0" y2="74" marker-end="url(#ah-c3)"/>
+<text x="330" y="100" font-size="13" text-anchor="middle">0.786×f₁ + 0.175×f₂ + 0.039×f₃</text>
+</svg>
+</div>
+</div>
+  <p class="fig-read"><strong>How to read this figure:</strong> the left part is the BEV grid from above, with the car at the bottom. The right part is the image of the front camera at one quarter of its size. Small grey dots are feature positions with a weight near 0. The dashed line is the column that corresponds to the cell. The size of a blue dot shows its weight. The arrow in frame 4 means "the weighted sum is written into".</p>
+  <p class="fig-source">Source: structure from Tesla AI Day 2021. Weights and positions calculated from the example values.</p>
+</figure>
+
+<p>Tesla gave one reason for this design at AI Day 2021. Before, each camera detected objects alone, and program code joined the detections. A large truck near the car appears in up to 5 of the 8 cameras, so the joined result was poor. With attention, the fusion happens on features, before any detection.</p>
+<p><strong>The 3D queries of 2022.</strong> At AI Day 2022 Tesla described the same operation for the <dfn>occupancy network</dfn>. The occupancy network is the output network that gives, for each small cube of space, the probability that an object fills it. Its queries are 3D positions (X, Y, Z) instead of 2D cells. Tesla stated: <span class="quoted">"We construct a set of 3D position queries along with the image space features as keys and values fit into an attention module"</span>.</p>
+
+<h2 id="mistake">5. Wrong idea corrected: the cameras are not fused after detection, but before</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "Each camera detects the cars and lanes in its own image. Then a program combines the 8 lists of detections into one map."</p>
+  <p><strong>Correct:</strong> the 8 images are combined at the feature level, before any detection. The attention step of section 5 reads features from all cameras at the same time. The detection happens once, in the BEV.</p>
+  <p><strong>Why the wrong idea fails:</strong> it describes the design of Tesla before 2021. An object that spans several cameras gives several partial detections, and no rule joins them well. Also, a detection in one image has no distance. The fusion of features with positional encodings lets the network learn the distance from all cameras together.</p>
+</div>
+
+<h2 id="limits">6. Limits: the current network is not public, and the example numbers are not Tesla's</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>The current network is end-to-end.</strong> Since version 12 (2024), one network converts the video into driving commands, and Tesla did not publish its inside. The stages of this page are the last design that Tesla explained.</li>
+    <li><strong>Many numbers are examples.</strong> The kernel, the focal length, the grid sizes, the strides, and the attention weights show the mechanism. Tesla published the camera format, the 12 bits, the 27 ms, the 1 m, and the 10 ms.</li>
+    <li><strong>The sources are recordings.</strong> The facts of 2021 and 2022 come from an automatic transcript and from a written summary of the videos. I did not watch the videos.</li>
+    <li><strong>The page covers perception only.</strong> The planner and the controller are not on this page.</li>
+  </ul>
+</div>
+
+<h2 id="check">7. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>Apply the kernel of section 1 to a 6 × 6 image in which the left half is 90 and the right half is 10. What is the output row?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>0, −320, −320, 0.</strong></p>
+          <p>The image is mirrored, so the difference between the right side and the left side is −80 instead of 80. The sum is −80 × 4 = −320. The typical wrong answer is 0, 320, 320, 0: the kernel measures the direction of the edge, not only its presence.</p>
+        </div>
+      </details>
+    </li>
+    <li>Use f = 900 and the centre (640, 480). On which pixel does a point at X = −3 m, Y = 0, Z = 15 m land?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>(460, 480).</strong></p>
+          <p>u = 900 × (−3) ÷ 15 + 640 = −180 + 640 = 460. v = 900 × 0 ÷ 15 + 480 = 480. The point is on the axis in height, so v is the centre value. The typical wrong answer forgets the sign: u = 820.</p>
+        </div>
+      </details>
+    </li>
+    <li>Why does a BEV cell correspond to a vertical line in the image, and not to one pixel?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Because the cell fixes X and Z, but not Y.</strong></p>
+          <p>The pixel column u depends on X and Z only. The row v depends on Y and Z. The content of the cell can have any height, so v can take any value along the column. The typical wrong answer is "because of lens distortion". Distortion is removed by rectification before this step.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="backbone">8. More detail: the backbone gives 76,800 to 1,200 positions per stride, and BiFPN mixes them</h2>
+<p>The <dfn>backbone</dfn> is the first part of the network. It applies many convolution layers to the rectified image and produces feature maps. Tesla uses one backbone per camera, of the type RegNet. RegNet is a family of networks from the paper "Designing Network Design Spaces" (2020). The family is defined by a few numbers. The width and the depth of each stage follow a simple rule. So Tesla can choose a size that fits the computer of the car.</p>
+<p></p>
+<p>A RegNet has 4 stages. Each stage halves the width and the height of the feature map, and increases the number of maps. The result is a feature pyramid: the same image described at several scales. The next table gives the sizes for the input of 1,280 × 960 pixels. The strides 4, 8, 16, and 32 are the standard strides of this network family. Tesla did not publish its exact values.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Each stage of the backbone divides the number of positions by 4</caption>
+  <thead>
+    <tr><th>Stage</th><th class="num">Stride</th><th class="num">Width (positions)</th><th class="num">Height (positions)</th><th class="num">Positions</th><th>What one feature describes</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Input</th><td class="num">1</td><td class="num">1,280</td><td class="num">960</td><td class="num">1,228,800</td><td>One pixel</td></tr>
+    <tr><th scope="row">1</th><td class="num">4</td><td class="num">320</td><td class="num">240</td><td class="num">76,800</td><td>A region of about 4 × 4 pixels: edges, colours</td></tr>
+    <tr><th scope="row">2</th><td class="num">8</td><td class="num">160</td><td class="num">120</td><td class="num">19,200</td><td>Lane marks, small parts of objects</td></tr>
+    <tr><th scope="row">3</th><td class="num">16</td><td class="num">80</td><td class="num">60</td><td class="num">4,800</td><td>Wheels, signs, pedestrians</td></tr>
+    <tr class="highlight"><th scope="row">4</th><td class="num">32</td><td class="num">40</td><td class="num">30</td><td class="num">1,200</td><td>Whole cars, the layout of the scene</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one stage of the backbone. "Stride" is the number of input pixels between two neighbouring positions of the feature map. "Positions" is width × height. The last column is a typical meaning of the features at this stage. It is not a statement of Tesla.</p>
+
+<p>The stages have opposite strengths. Stage 1 knows where a lane mark is, to 4 pixels, but a feature there sees only a small region. Stage 4 knows that a car is present, but only to 32 pixels. </p>
+<p><dfn>BiFPN</dfn> is a network that mixes the stages. BiFPN is the short form of "bidirectional feature pyramid network", from the paper "EfficientDet" (2020). It passes information from the large scale to the small scale and back, several times, with learned weights for each connection. After BiFPN, a feature at stage 1 also knows that it is part of a car.</p>
+
+<figure class="diagram">
+  <p class="fig-title">The backbone produces 4 feature maps of different sizes, and BiFPN passes information in both directions between them.</p>
+  <p class="fig-sub">Sizes for one camera image of 1,280 × 960 pixels with the strides of the table above.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 680 300" role="img" aria-label="Diagram. The image of 1,280 by 960 pixels enters stage 1, which outputs a map of 320 by 240 positions. Stage 2 outputs 160 by 120, stage 3 outputs 80 by 60, stage 4 outputs 40 by 30. Arrows connect each stage to the next. On the right, BiFPN connects all four maps with arrows in both directions.">
+    <defs>
+      <marker id="ah-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/>
+      </marker>
+    </defs>
+    <rect class="node" x="20" y="120" width="150" height="60" rx="8"/>
+    <text class="node-name" x="95" y="145" text-anchor="middle">Image</text>
+    <text class="node-value" x="95" y="165" text-anchor="middle">1,280 × 960 pixels</text>
+    <line class="arrow" x1="172" y1="150" x2="208" y2="150" marker-end="url(#ah-p)"/>
+    <rect class="node" x="210" y="20" width="200" height="50" rx="8"/>
+    <text class="node-name" x="310" y="41" text-anchor="middle">Stage 1, stride 4</text>
+    <text class="node-value" x="310" y="59" text-anchor="middle">320 × 240 positions</text>
+    <rect class="node" x="210" y="90" width="200" height="50" rx="8"/>
+    <text class="node-name" x="310" y="111" text-anchor="middle">Stage 2, stride 8</text>
+    <text class="node-value" x="310" y="129" text-anchor="middle">160 × 120 positions</text>
+    <rect class="node" x="210" y="160" width="200" height="50" rx="8"/>
+    <text class="node-name" x="310" y="181" text-anchor="middle">Stage 3, stride 16</text>
+    <text class="node-value" x="310" y="199" text-anchor="middle">80 × 60 positions</text>
+    <rect class="node" x="210" y="230" width="200" height="50" rx="8"/>
+    <text class="node-name" x="310" y="251" text-anchor="middle">Stage 4, stride 32</text>
+    <text class="node-value" x="310" y="269" text-anchor="middle">40 × 30 positions</text>
+    <path class="arrow" d="M 210 150 H 195 V 45 H 208" marker-end="url(#ah-p)"/>
+    <line class="arrow" x1="310" y1="72" x2="310" y2="88" marker-end="url(#ah-p)"/>
+    <line class="arrow" x1="310" y1="142" x2="310" y2="158" marker-end="url(#ah-p)"/>
+    <line class="arrow" x1="310" y1="212" x2="310" y2="228" marker-end="url(#ah-p)"/>
+    <text class="arrow-label" x="310" y="296" text-anchor="middle">each stage halves width and height</text>
+    <rect class="node" x="480" y="20" width="180" height="260" rx="8"/>
+    <text class="node-name" x="570" y="150" text-anchor="middle">BiFPN</text>
+    <text class="node-value" x="570" y="170" text-anchor="middle">mixes the 4 scales</text>
+    <line class="arrow" x1="412" y1="45" x2="478" y2="45" marker-end="url(#ah-p)" marker-start="url(#ah-p)"/>
+    <line class="arrow" x1="412" y1="115" x2="478" y2="115" marker-end="url(#ah-p)" marker-start="url(#ah-p)"/>
+    <line class="arrow" x1="412" y1="185" x2="478" y2="185" marker-end="url(#ah-p)" marker-start="url(#ah-p)"/>
+    <line class="arrow" x1="412" y1="255" x2="478" y2="255" marker-end="url(#ah-p)" marker-start="url(#ah-p)"/>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is a feature map or a network. A single arrow means "sends its output to". A double arrow means that information passes in both directions.</p>
+  <p class="fig-source">Source: structure from Tesla AI Day 2021 and the RegNet and EfficientDet papers. Sizes calculated from 1,280 × 960 and the strides.</p>
+</figure>
+
+<p>In 2021 the output of BiFPN went to several small networks, one per task: traffic lights, lane marks, objects. Tesla named this structure HydraNet. But each camera was still processed alone. Sections 3 and 4 show how the 8 outputs become one space.</p>
+
+<h2 id="video">9. More detail: the space is aligned over time, and voxels are read out in 10 ms</h2>
+<p>One frame is not enough. A car hidden behind a truck for one second is still there. A lane mark seen 10 m ago still counts. So the network keeps earlier features.</p>
+<ul>
+  <li><strong>2021: two queues.</strong> Tesla stored BEV features in two queues. The time queue received one entry every 27 ms. The space queue received one entry every 1 m of travel. A network then read both queues. The time queue helps when the car moves fast. The space queue helps when the car waits at a red light for a long time.</li>
+  <li><strong>2022: alignment with odometry.</strong> <dfn>Odometry</dfn> is the measured motion of the car: distance, heading, and speed from the wheels and the inertial sensors. Tesla stated that the 3D features are "aligned temporally using vehicle odometry". So the feature grid of 27 ms ago is shifted by the distance that the car moved. Then it is added to the new grid with learned weights.</li>
+</ul>
+<p>After the alignment, deconvolution layers increase the resolution of the 3D grid again. A deconvolution is the reverse of a stride: it makes the grid larger. Then the output networks read the grid.</p>
+<p>The main output of 2022 is the occupancy network of section 4. It divides the space around the car into <dfn>voxels</dfn>, which are small cubes. For each voxel it gives the probability that an object fills it, and the motion of the voxel, which Tesla names occupancy flow. A second output reads the grid at any (X, Y, Z) with a small network and gives finer geometry and the class of the object. Tesla stated that the occupancy network "runs about every 10 milliseconds" on the accelerator of the car.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Each stage reduces the number of values, and the meaning of one value grows</caption>
+  <thead>
+    <tr><th>Stage</th><th class="num">Values per 8-camera frame</th><th>What one value means</th><th>Source of the number</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Raw pixels</th><td class="num">9,830,400</td><td>Brightness of one pixel, 12 bits</td><td>Tesla: 1,280 × 960 × 8</td></tr>
+    <tr><th scope="row">Features, stage 1</th><td class="num">614,400</td><td>A region of 4 × 4 pixels</td><td>Stride 4, example</td></tr>
+    <tr><th scope="row">Features, stage 4</th><td class="num">9,600</td><td>A region of 32 × 32 pixels</td><td>Stride 32, example</td></tr>
+    <tr class="highlight"><th scope="row">BEV cells</th><td class="num">40,000</td><td>One cell of 0.5 m × 0.5 m on the road</td><td>Grid of 100 m, example</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one stage. The count is the number of positions, not the number of numbers: each position holds a vector of many features. The last column says which numbers are from Tesla and which are examples. The highlighted row is the stage where 8 images become one space.</p>
+
+<h2 id="recap">10. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>The input is raw: 8 cameras, 1,280 × 960 pixels, 12 bits, 36 images per second, without an image signal processor.</li>
+    <li>Convolution kernels turn pixels into features. A RegNet backbone gives feature maps at 4 strides, and BiFPN mixes the scales.</li>
+    <li>The pinhole formula links a road position to an image column, but not to a row.</li>
+    <li>Attention fills each cell of the BEV grid with a weighted sum of image features from all 8 cameras. The weights are learned.</li>
+    <li>The grid is aligned with earlier frames by odometry, and the occupancy network reads it as voxels in about 10 ms.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>Attention</dt>
+  <dd>An operation that compares a query with all keys. It converts the scores into weights with the softmax function and returns the weighted sum of the values.</dd>
+  <dt>Backbone</dt>
+  <dd>The first part of the network, which applies convolution layers to an image and produces feature maps.</dd>
+  <dt>BiFPN, bidirectional feature pyramid network</dt>
+  <dd>A network that mixes feature maps of different scales, in both directions, with learned weights.</dd>
+  <dt>BEV, <span class="quoted">bird's-eye view</span></dt>
+  <dd>A grid on the road, seen from above, with the car at a fixed position.</dd>
+  <dt>Convolution</dt>
+  <dd>The operation that slides a kernel over an image and writes the sum of the products at each position.</dd>
+  <dt>Feature</dt>
+  <dd>A number that the network calculates from a region of the image, and that describes a property of the region.</dd>
+  <dt>Feature map</dt>
+  <dd>A grid of features, one per position, produced by one kernel.</dd>
+  <dt>Focal length</dt>
+  <dd>The distance from the lens to the image plane, measured in pixel widths. The symbol is f.</dd>
+  <dt>Kernel</dt>
+  <dd>The small matrix of a convolution. Training sets its values.</dd>
+  <dt>Occupancy network</dt>
+  <dd>The output network that gives, for each voxel, the probability that an object fills it, and the motion of the voxel.</dd>
+  <dt>Odometry</dt>
+  <dd>The measured motion of the car: distance, heading, and speed.</dd>
+  <dt>Pinhole camera model</dt>
+  <dd>The formula that maps a 3D point to a pixel: u = f × X ÷ Z + c<sub>x</sub>, v = f × Y ÷ Z + c<sub>y</sub>.</dd>
+  <dt>Rectification</dt>
+  <dd>A fixed transformation that converts each camera image to the image of one standard virtual camera.</dd>
+  <dt>Stride</dt>
+  <dd>The number of input pixels between two neighbouring positions of a feature map.</dd>
+  <dt>Voxel</dt>
+  <dd>A small cube of space. It is the 3D form of a pixel.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source, or calculated and checked. <span class="conf medium">Medium</span> = one good source, or a source with limits. <span class="conf given">Given</span> = an example value.</p>
+<ol class="sources">
+  <li><span class="conf medium">Medium</span> Tesla AI Day, 19 August 2021. Facts taken from it: camera format, rectification, RegNet, BiFPN, HydraNet, the transformer with positional encodings, and the two queues. Read in the written summary of Kimbo Chen, 9 November 2021. I did not watch the video. <a href="https://kimbochen.github.io/blog/2021/11/09/tesla-ai-day-vision.html">kimbochen.github.io</a></li>
+  <li><span class="conf medium">Medium</span> Tesla AI Day, 30 September 2022. Facts taken from it: raw 12-bit input, 16 times the dynamic range, and the removal of the image signal processor. Also 3D queries, alignment with odometry, deconvolutions, occupancy flow, and the 10 ms. Read in an automatic transcript of the video, published as a GitHub gist. The transcript has recognition errors, for example "reglets" for RegNets. <a href="https://gist.github.com/L0rdCha0s/de22ae0c7e7a7a70b37ac9c1262e27e1">gist.github.com</a></li>
+  <li><span class="conf high">High</span> RegNet: Radosavovic, Kosaraju, Girshick, He, Dollár, "Designing Network Design Spaces", 2020. Abstract page opened. <a href="https://arxiv.org/abs/2003.13678">arxiv.org</a></li>
+  <li><span class="conf high">High</span> BiFPN: Tan, Pang, Le, "EfficientDet: Scalable and Efficient Object Detection", 2020. Abstract page opened. <a href="https://arxiv.org/abs/1911.09070">arxiv.org</a></li>
+  <li><span class="conf high">High</span> Attention formula: Vaswani and others, "Attention Is All You Need", 2017. Formula and the reason for the scaling read in the HTML version of the paper. <a href="https://arxiv.org/abs/1706.03762">arxiv.org</a></li>
+  <li><span class="conf high">High</span> All sums, pixel counts, projections, and softmax weights: calculated with a program from the values above.</li>
+  <li><span class="conf given">Given</span> Example values. The 6 × 6 image and the Sobel kernel. The focal length of 900 pixels and the image centre. The strides, the grid of 100 m with 0.5 m cells, and the scores 8, 2, −4.</li>
+</ol>
+
+<style>
+/* Stepped frames. Without JavaScript, all frames are visible in order. With JavaScript, buttons step through them. */
+.frames .frame { margin: 0 0 1rem; }
+.frames .frame-title { font-size: 1rem; font-style: italic; color: var(--muted); margin: 0 0 0.3rem; }
+.frames-controls { display: none; margin: 0 0 0.8rem; font-size: 1rem; }
+.frames.js .frames-controls { display: flex; flex-wrap: wrap; gap: 0.5rem 0.8rem; align-items: center; }
+.frames.js .frame { display: none; }
+.frames.js .frame.current { display: block; }
+.frames.js.all .frame { display: block; }
+.frames button {
+  font: inherit; font-size: 0.98rem; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 4px; padding: 0.25rem 0.7rem; cursor: pointer;
+}
+.frames button:disabled { color: var(--muted); cursor: default; }
+.frames .frame-count { color: var(--muted); font-style: italic; }
+</style>
+<script>
+document.querySelectorAll(".frames").forEach(function (fig) {
+  var frames = fig.querySelectorAll(".frame");
+  if (frames.length < 2) return;
+  var ctl = fig.querySelector(".frames-controls");
+  var i = 0;
+  var prev = document.createElement("button"); prev.textContent = "Previous frame";
+  var next = document.createElement("button"); next.textContent = "Next frame";
+  var all = document.createElement("button"); all.textContent = "Show all frames";
+  var count = document.createElement("span"); count.className = "frame-count";
+  ctl.appendChild(prev); ctl.appendChild(next); ctl.appendChild(count); ctl.appendChild(all);
+  function show() {
+    frames.forEach(function (f, k) { f.classList.toggle("current", k === i); });
+    count.textContent = "Frame " + (i + 1) + " of " + frames.length;
+    prev.disabled = i === 0; next.disabled = i === frames.length - 1;
+  }
+  prev.addEventListener("click", function () { if (i > 0) { i--; show(); } });
+  next.addEventListener("click", function () { if (i < frames.length - 1) { i++; show(); } });
+  all.addEventListener("click", function () {
+    var on = fig.classList.toggle("all");
+    all.textContent = on ? "Show one frame" : "Show all frames";
+    prev.disabled = on || i === 0; next.disabled = on || i === frames.length - 1;
+  });
+  fig.classList.add("js"); show();
+});
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll(".frames").forEach(function (f) { f.classList.add("all"); });
+});
+</script>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
