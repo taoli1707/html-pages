@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three Circles of Presence</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: TED, OBE, BYU -->
+<h1>What are the three circles of presence, and how does a leader use them?</h1>
+<p class="meta">Written 2026-09-30 · Reading time: about 23 minutes · You need to know: nothing special. You have sat in a team meeting.</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>The three circles are a model by Patsy Rodenburg, a British voice coach who trained actors for more than 40 years. She published it in 2008 in the book <span class="quoted">The Second Circle</span>. The model describes where your attention, breath, and voice go when you are with other people. Rodenburg calls this combination "energy".</p>
+  <p><strong>First circle:</strong> the energy goes inward, to yourself. <strong>Second circle:</strong> the energy goes to the specific person in front of you, and comes back. <strong>Third circle:</strong> the energy goes outward to everyone in general, with force. Rodenburg's claim is simple: presence is the second circle, and the other two circles are not presence.</p>
+  <p><strong>For a leader,</strong> the practical use is one habit. Before you speak or listen, notice which circle you are in, and move to the second circle. The model comes from theatre training, not from controlled studies. I found no experiment that tests it.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>You lead a team, or you want to lead one. You met the term "leadership presence" in a training or in feedback from a manager.</li>
+    <li>The word "energy" on this page has only Rodenburg's meaning: attention, breath, and voice, directed somewhere. It is not a physical quantity.</li>
+    <li>The team in the example is invented. The numbers in the example are example values.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#example">One example: the same 30-second announcement in three circles</a></li>
+    <li><a href="#rule">The rule: the circle is the direction of your energy</a></li>
+    <li><a href="#when">Second circle is the default; first and third have narrow uses</a></li>
+    <li><a href="#data">Why leaders hear about presence: 268 executives put it at 26% of promotion</a></li>
+    <li><a href="#mistake">Wrong idea corrected: more outward energy is not more presence</a></li>
+    <li><a href="#limits">Limits: a practitioner model, not a tested theory</a></li>
+    <li><a href="#words">Words that you will hear</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One example: the same 30-second announcement in three circles</h2>
+<p>You lead a team of 6 engineers. In the weekly meeting you must announce that the release moves 2 weeks later. The announcement takes about 30 seconds. The team will judge your <dfn>presence</dfn> in these 30 seconds. Presence is the state where your attention is on the people in front of you, and they can feel it.</p>
+<p>Rodenburg describes this state with one word and three names. The word is <dfn>energy</dfn>: your attention, your breath, and your voice, taken together and directed somewhere. The three names are the directions of the energy. In the <dfn>first circle</dfn> the energy goes inward, to yourself. In the <dfn>second circle</dfn> the energy goes to one specific person and comes back. In the <dfn>third circle</dfn> the energy goes outward to everyone in general, with force.</p>
+<p>Presence is the second circle. Here is the announcement, done in the second circle, step by step.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the announcement in the second circle</span>
+  <ol class="steps">
+    <li>Before you speak, put both feet flat on the floor and let your shoulders hang. Breathe out once, slowly.
+      <span class="why">Rodenburg starts every circle from the body. A slumped spine pulls you into the first circle. A rigid, lifted chest pushes you into the third circle. Feet on the floor and free shoulders are her signs of a second-circle body (book, pages 45 to 49).</span></li>
+    <li>Look at one person, for example the engineer who owns the release. Keep your eyes on that person.
+      <span class="why">Second-circle energy goes to one specific target and comes back. Eyes that scan the whole room send the energy to everyone in general, which is the third circle.</span></li>
+    <li>Say the fact in one sentence: "The release moves from 14 October to 28 October."
+      <span class="why">One clear sentence keeps the energy directed. A long, hedged sentence usually comes from the first circle, where you speak more to yourself than to the listener.</span></li>
+    <li>Stop. Wait about 3 seconds. Watch the faces.
+      <span class="why">The second circle is an exchange. The energy must come back before you send more. If you continue at once, you push, and you move into the third circle.</span></li>
+    <li>When the first question comes, look at the person who asked, and answer that person. Then look at the next person.
+      <span class="why">Listening is half of the exchange. In the second circle "we listen generously and attentively" (Listening Partnership, on Rodenburg's book).</span></li>
+  </ol>
+  <p><strong>Result:</strong> the team hears one clear fact, and each person who asks a question gets your full attention. This is what Rodenburg means with the sentence "In second circle you are noticed, heard, powerful and remembered."</p>
+</div>
+
+<p>Now the same announcement in the other two circles. The words can be the same. The direction of the energy is different, and the team feels the difference.</p>
+
+<div class="compare">
+  <div>
+    <h4>First circle: energy goes inward</h4>
+    <p>You look at your laptop. Your voice is low and drops at the end of the sentence. You add many qualifiers: "So, we probably need to, well, look at moving the date, maybe two weeks."</p>
+    <p><strong>What the team feels:</strong> you are in the room, but not with them. They are not sure what was decided. Some stop asking questions.</p>
+  </div>
+  <div>
+    <h4>Third circle: energy goes outward to everyone</h4>
+    <p>You stand, raise your voice, and scan the room. "Listen up, everyone. The release is moving. Two weeks. No discussion needed, we have a plan." You continue before anyone can react.</p>
+    <p><strong>What the team feels:</strong> pressure. Nobody was addressed personally, so nobody feels heard. Questions stay unspoken.</p>
+  </div>
+</div>
+
+<p>The two failed versions fail in opposite directions. In the first circle the energy does not reach the team. In the third circle the energy goes past the team. The second circle is the only version where the energy arrives at a person and returns.</p>
+
+<h2 id="rule">2. The rule: the circle is the direction of your energy</h2>
+<p>Rodenburg says that human energy moves between people in three basic ways, and she draws each way as a circle around you. You are always in one of the three circles when you are with other people, and you can move between them within seconds. Her full definitions are more exact than the short names in section 1.</p>
+<ul>
+  <li>The first circle is the circle of withdrawal. The energy goes inward. You absorb or block the energy of other people, and you draw all outside stimuli into yourself.</li>
+  <li>The second circle is the circle of connection. The energy goes to one specific object of attention, touches it, and the energy that you need comes back. Rodenburg's words for this are "the give and take of being present."</li>
+  <li>The third circle is the circle of force. The energy goes outward, either to nobody in particular or with force at a target, and the motive is control.</li>
+</ul>
+
+<figure class="diagram">
+  <p class="fig-title">Only in the second circle does the energy reach one person and come back.</p>
+  <p class="fig-sub">Each panel shows you and one other person. The arrows show the direction of the energy.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 720 250" role="img" aria-label="Diagram with three panels. First circle: a short arrow points back into the box labelled You, and does not reach the other person. Second circle: one arrow goes from You to the other person and one arrow comes back. Third circle: two arrows go from You past the other person, one above and one below.">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text class="node-name" x="120" y="28" text-anchor="middle" font-weight="650">First circle</text>
+<text class="axis-label" x="120" y="46" text-anchor="middle">energy goes inward</text>
+<rect class="node" x="18.0" y="110" width="78" height="44" rx="8"/>
+<text class="node-name" x="57" y="137" text-anchor="middle">You</text>
+<rect class="node" x="144" y="110" width="78" height="44" rx="8"/>
+<text class="node-name" x="183" y="130" text-anchor="middle">Other</text>
+<text class="node-name" x="183" y="146" text-anchor="middle">person</text>
+<line class="arrow" x1="140.0" y1="132.0" x2="102.0" y2="132.0" marker-end="url(#ah)"/>
+<text class="arrow-label" x="120" y="188" text-anchor="middle">The energy does not reach</text>
+<text class="arrow-label" x="120" y="206" text-anchor="middle">the other person.</text>
+<line class="grid" x1="240" y1="14" x2="240" y2="236"/>
+<text class="node-name" x="360" y="28" text-anchor="middle" font-weight="650">Second circle</text>
+<text class="axis-label" x="360" y="46" text-anchor="middle">energy goes out and comes back</text>
+<rect class="node" x="258.0" y="110" width="78" height="44" rx="8"/>
+<text class="node-name" x="297" y="137" text-anchor="middle">You</text>
+<rect class="node" x="384" y="110" width="78" height="44" rx="8"/>
+<text class="node-name" x="423" y="130" text-anchor="middle">Other</text>
+<text class="node-name" x="423" y="146" text-anchor="middle">person</text>
+<line class="arrow" x1="340.0" y1="124.0" x2="380.0" y2="124.0" marker-end="url(#ah)"/>
+<line class="arrow" x1="380.0" y1="140.0" x2="340.0" y2="140.0" marker-end="url(#ah)"/>
+<text class="arrow-label" x="360" y="188" text-anchor="middle">The energy reaches one person</text>
+<text class="arrow-label" x="360" y="206" text-anchor="middle">and comes back.</text>
+<line class="grid" x1="480" y1="14" x2="480" y2="236"/>
+<text class="node-name" x="600" y="28" text-anchor="middle" font-weight="650">Third circle</text>
+<text class="axis-label" x="600" y="46" text-anchor="middle">energy goes out to everyone</text>
+<rect class="node" x="498.0" y="110" width="78" height="44" rx="8"/>
+<text class="node-name" x="537" y="137" text-anchor="middle">You</text>
+<rect class="node" x="624" y="110" width="78" height="44" rx="8"/>
+<text class="node-name" x="663" y="130" text-anchor="middle">Other</text>
+<text class="node-name" x="663" y="146" text-anchor="middle">person</text>
+<line class="arrow" x1="580.0" y1="124.0" x2="714.0" y2="72.0" marker-end="url(#ah)"/>
+<line class="arrow" x1="580.0" y1="140.0" x2="714.0" y2="192.0" marker-end="url(#ah)"/>
+<text class="arrow-label" x="600" y="188" text-anchor="middle">The energy goes past</text>
+<text class="arrow-label" x="600" y="206" text-anchor="middle">the other person.</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each panel is one circle. Each arrow means "the energy moves in this direction". Compare where each arrow ends.</p>
+  <p class="fig-source">Source: the definitions of the three circles in Rodenburg's book, as summarised by Listening Partnership and Roffey Park. The drawing is my own.</p>
+</figure>
+
+<p>Rodenburg is a voice coach, so her descriptions of the circles are physical. The table below collects the signs of each circle from her body checklist and from the coaching sources. The row "What others feel" is the row that matters for a leader.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>The three circles differ in body, breath, eyes, voice, listening, and effect on others</caption>
+  <thead>
+    <tr><th>Sign</th><th>First circle</th><th>Second circle</th><th>Third circle</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Feet and spine</th><td>Feet not fully on the floor; spine slumped</td><td>Feet flat and parallel under the hips; spine straight but not held</td><td>Feet planted too firmly; spine rigid and lifted</td></tr>
+    <tr><th scope="row">Shoulders and head</th><td>Shoulders rounded; head down</td><td>Shoulders hang freely; head balanced on the spine</td><td>Shoulders pulled back; chest braced up</td></tr>
+    <tr><th scope="row">Breath</th><td>Shallow; the energy returns into you</td><td>Calm and low; the same amount goes out and comes in</td><td>Pushed out; more goes out than comes in</td></tr>
+    <tr><th scope="row">Eyes</th><td>On the floor, the laptop, or the phone</td><td>On one person at a time</td><td>Scanning the room; on nobody in particular</td></tr>
+    <tr><th scope="row">Voice</th><td>Quiet; sentences fall away</td><td>Directed to the listener; ends the sentence</td><td>Loud; general; "shouting at one another"</td></tr>
+    <tr><th scope="row">Listening</th><td>Absorbs, but does not respond</td><td>Listens, then responds to that person</td><td>Cannot listen; "their ears stop working"</td></tr>
+    <tr class="highlight"><th scope="row">What others feel</th><td>You are in the room but not with them; they stop trying</td><td>Noticed, heard; they can influence you</td><td>Pressure; it "takes the oxygen out of the room"</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each column is one circle. Find your own habit in a row, then read the second-circle cell in the same row. The body rows come from Rodenburg's checklist on pages 45 to 49 of the book, as quoted in a teaching plan of BYU. The quoted words in the other rows come from the sources in the last section.</p>
+
+<h2 id="when">3. Second circle is the default; first and third have narrow uses</h2>
+<p>Rodenburg says that we need all three circles and move between them. But she also says that every great performer, and every leader, should live in one circle all the time: the second circle. The first and the third circle have a place, but the place is narrow. The table below is a decision table for a leader.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>The second circle fits most leadership moments; the other two fit only rest and emergencies</caption>
+  <thead>
+    <tr><th>Situation</th><th>Circle that fits</th><th>Why</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">A one-to-one talk, a performance review, a difficult question</th><td>Second</td><td>The other person must feel heard before they accept your answer.</td></tr>
+    <tr class="highlight"><th scope="row">A team meeting, an announcement, a decision</th><td>Second, one person at a time</td><td>Energy to the whole room at once becomes the third circle. Address one person, then the next.</td></tr>
+    <tr><th scope="row">A crisis in the first minutes: a production outage, a safety event</th><td>Third, for a short time</td><td>Rodenburg allows the third circle "to respond to a crisis". One loud, general instruction stops the wrong action. Return to the second circle as soon as the instruction is given.</td></tr>
+    <tr><th scope="row">Rest, reflection, thinking alone after a hard day</th><td>First</td><td>Rodenburg names withdrawal "for reflection, or to rest" as a chosen use of the first circle. Do this alone, not in the meeting.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> find the row that matches your situation. The second column gives the circle. The highlighted rows are the normal work of a leader.</p>
+
+<p>Compare the two highlighted rows with the crisis row. In the crisis, you are allowed to push energy outward for one instruction. In the two normal rows, the same push destroys the exchange. The principle is: the circle must match the moment, and in leadership most moments need the exchange of the second circle.</p>
+
+<details class="optional">
+  <summary>How coaches use the model: notice your default circle first</summary>
+  <div>
+    <p>Coaching sources that use the model give the same first exercise. Notice which circle you fall into when you are tired, surprised, or attacked. This is your <dfn>default circle</dfn>. Your default circle is the circle that you return to without a decision. Rodenburg's book gives physical exercises to move from the default circle to the second circle: a body checklist, breathing exercises, and exercises with one object. The teaching plan of BYU (source 4) walks through the body checklist.</p>
+  </div>
+</details>
+
+<h2 id="data">4. Why leaders hear about presence: 268 executives put it at 26% of promotion</h2>
+<p>The word "presence" reaches engineers through a second route: the business term <dfn>executive presence</dfn>. Executive presence is the impression that you are leadership material, as judged by senior people. The economist Sylvia Ann Hewlett measured how much this impression counts.</p>
+
+<div class="box predict">
+  <span class="label">Guess first</span>
+  <p>Hewlett's team asked 268 senior executives what share of "what it takes to get promoted" is executive presence. Choose a number before you continue: about 10%, about 25%, or about 50%.</p>
+</div>
+
+<p><strong>Answer to the guess:</strong> the 268 executives put executive presence at 26% of what it takes to get promoted into a leadership position. Of the same 268 executives, 67% (about 180 of 268) named gravitas as the most important part of executive presence. Gravitas is explained in the section "Words that you will hear". These numbers come from a survey, so they measure opinion, not cause. The label is <span class="conf medium">Medium</span>, because I read them in a business-school summary and not in the original report.</p>
+
+<p>The link to Rodenburg's model is this. Hewlett's survey shows that senior people judge a leader by an impression. Rodenburg's model gives one concrete, physical description of the impression: the second circle. The survey does not test Rodenburg's model, and Rodenburg's book does not use the survey. The two sources come from different fields, and this page puts them side by side.</p>
+
+<h2 id="mistake">5. Wrong idea corrected: more outward energy is not more presence</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "Presence means a louder voice, bigger gestures, and visible confidence. To have more presence, push more energy outward."</p>
+  <p><strong>Correct:</strong> pushed outward energy is the third circle. Rodenburg says of the third circle: <span class="quoted">"it's an energy that takes the oxygen out of the room"</span>. The Roffey Park summary of her model says: "you cannot be present in this place". Presence is the second circle, where the energy goes to one person and comes back.</p>
+  <p><strong>Why the wrong idea fails:</strong> the third circle sends the energy past the target. The people in the room are not addressed as persons, so nobody feels heard. A person who feels pushed cannot exchange energy with you, and the exchange is the definition of presence. The wrong idea also has a second cost. A person in the third circle "cannot listen", so the leader loses the information that the team has.</p>
+</div>
+
+<h2 id="limits">6. Limits: a practitioner model, not a tested theory</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>No controlled study.</strong> The model comes from 40 years of work with actors. On 30 September 2026 I searched for experiments that test the three circles, and I found none. The claims about what others feel are the observations of coaches, not measurements.</li>
+    <li><strong>Secondary sources.</strong> I read Rodenburg's definitions in three coaching summaries and in a teaching plan that quotes pages 45 to 49 of the book. I did not read the full book. A definition on this page can differ in detail from the book.</li>
+    <li><strong>States, not types.</strong> The circles describe a state that lasts seconds or minutes. They are not personality types. A quiet person can be in the second circle, and a loud person can be in the first circle.</li>
+    <li><strong>The model covers the how, not the what.</strong> The second circle does not make a bad decision good. It only makes the decision heard and lets the team answer.</li>
+    <li><strong>Eye contact differs between cultures.</strong> The sign "eyes on one person" in the table is Rodenburg's European and American context. In some cultures, long direct eye contact with a senior person is impolite. The direction of attention is the point, not the eyes.</li>
+  </ul>
+</div>
+
+<h2 id="words">7. Words that you will hear</h2>
+<p>These terms appear in leadership trainings and in feedback about presence. They are not part of Rodenburg's model, but you will meet them next to it.</p>
+<dl class="glossary">
+  <dt>Executive presence</dt>
+  <dd>The impression, judged by senior people, that you are leadership material. Hewlett's survey divides it into gravitas, communication, and appearance. Relation to the main idea: Rodenburg's second circle is one physical way to produce this impression.</dd>
+  <dt>Gravitas</dt>
+  <dd>The impression of seriousness, calm, and good judgment under pressure. Relation to the main idea: a leader in the second circle stays calm and listens, which observers read as gravitas.</dd>
+  <dt>Charisma</dt>
+  <dd>A personal quality that attracts and moves other people. Relation to the main idea: coaches warn that charisma is often third-circle energy, which impresses but does not connect.</dd>
+  <dt>Active listening</dt>
+  <dd>A listening technique: you show attention, you repeat the main point of the speaker, and you ask questions. Relation to the main idea: active listening is what the second circle looks like during the listening half of the exchange.</dd>
+  <dt>Grounding, or centring</dt>
+  <dd>Exercises that bring attention to the feet, the breath, and the balance of the body. Relation to the main idea: Rodenburg's body checklist is a grounding exercise. Its goal is a second-circle body.</dd>
+  <dt>Authenticity</dt>
+  <dd>The impression that a leader shows who they really are. Relation to the main idea: one coaching source ties the two directly. It says: <span class="quoted">"It is virtually impossible to be an authentic leader unless you are in the second circle."</span></dd>
+</dl>
+
+<h2 id="check">8. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>A manager stands up in a meeting, speaks loudly, scans the room, and continues without a pause. A colleague says: "That manager has real presence." Which circle is the manager in, according to Rodenburg, and is the colleague right?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Third circle. The colleague is wrong in Rodenburg's terms.</strong></p>
+          <p>Loud voice, eyes on nobody in particular, and no pause are the signs of outward, general energy. Rodenburg calls this the third circle, and she says that you cannot be present there. The typical wrong answer is "second circle, because the manager is confident". Confidence is not the test. The test is: does the energy reach one person and come back? See <a href="#mistake">section 5</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>You must tell one engineer that their design was rejected. Name three physical things that you do before the first sentence, and give the reason for each.
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>Any three of these, from the worked example in <a href="#example">section 1</a>:</p>
+          <ol>
+            <li>Feet flat on the floor and shoulders free, because the body is the first place where the circle shows.</li>
+            <li>One slow breath out, because a pushed breath is the third circle and a shallow breath is the first circle.</li>
+            <li>Eyes on the engineer, because the second circle needs one specific target.</li>
+            <li>A pause after the fact, because the energy must come back before you send more.</li>
+          </ol>
+        </div>
+      </details>
+    </li>
+    <li>A database goes down during the meeting. You say loudly to the room: "Everyone stop all deployments now." Is this a mistake?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>No, if it stays short.</strong></p>
+          <p>Rodenburg allows the third circle "to respond to a crisis". One general, forceful instruction is the correct use. The mistake begins if you stay in the third circle after the instruction, because then nobody can tell you what they see in the logs. Return to the second circle: look at the engineer who is closest to the database and ask what they see. See <a href="#when">section 3</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>Hewlett's survey asked 268 senior executives about promotion. What share of "what it takes to get promoted" did they give to executive presence? What does this number not show?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>26%. It does not show cause.</strong></p>
+          <p>The number is the opinion of the executives about the share of promotion that presence explains. It is not a measurement of promotions. It also does not test Rodenburg's model. The typical wrong answer mixes this number with the 67% for gravitas, which is a different question. See <a href="#data">section 4</a>.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">9. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>Rodenburg's energy is attention, breath, and voice, directed somewhere. The circle is the direction.</li>
+    <li>First circle: inward. Second circle: to one person and back. Third circle: outward to everyone, with force.</li>
+    <li>Presence is the second circle. Louder and bigger is the third circle, and it is not presence.</li>
+    <li>For a leader: before you speak or listen, put the feet on the floor, breathe out, look at one person, say one sentence, and wait.</li>
+    <li>The model is a practitioner model from theatre. No controlled study tests it. A survey of 268 executives puts executive presence at 26% of promotion, but that survey is about the impression, not about the model.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>Default circle</dt>
+  <dd>The circle that you return to without a decision, for example when you are tired or attacked.</dd>
+  <dt>Energy</dt>
+  <dd>In Rodenburg's model: your attention, breath, and voice, taken together and directed somewhere. Not a physical quantity.</dd>
+  <dt>Executive presence</dt>
+  <dd>The impression, judged by senior people, that you are leadership material.</dd>
+  <dt>First circle</dt>
+  <dd>The circle of withdrawal. The energy goes inward, to yourself.</dd>
+  <dt>Presence</dt>
+  <dd>The state where your attention is on the people in front of you, and they can feel it. In Rodenburg's model, presence is the second circle.</dd>
+  <dt>Second circle</dt>
+  <dd>The circle of connection. The energy goes to one specific person or object and comes back.</dd>
+  <dt>Third circle</dt>
+  <dd>The circle of force. The energy goes outward to nobody in particular, or at a target with force, with the motive of control.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or sources with limits. <span class="conf low">Low</span> = not verified, or sources disagree. <span class="conf given">Given</span> = a value from your message or an example value.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> Patsy Rodenburg, <span class="quoted">The Second Circle: How to Use Positive Energy for Success in Every Situation</span>, W. W. Norton, New York, 2008. Published in the United Kingdom under the title <span class="quoted">Presence</span>. Bibliographic data verified in Open Library and Wikipedia on 30 September 2026. I did not read the full book.</li>
+  <li><span class="conf high">High</span> Rodenburg's biography: Wikipedia, <span class="quoted">Patsy Rodenburg</span>, read on 30 September 2026. She was Head of Voice at the Guildhall School of Music and Drama from 1981 to 2024. She was Director of Voice at Michael Howard Studios, New York, from 1982 to 2020. <a href="https://en.wikipedia.org/wiki/Patsy_Rodenburg">en.wikipedia.org/wiki/Patsy_Rodenburg</a></li>
+  <li><span class="conf medium">Medium</span> Listening Partnership, <span class="quoted">Discover Patsy Rodenburg's take on Presence</span>, a coaching summary of the book. Used for the definitions of the three circles, the uses of the first and third circle, and the sentence about performers and leaders. Read in the original text on 30 September 2026. <a href="https://www.listeningpartnership.com/insight/discover-patsy-rodenburgs-take-on-presence/">listeningpartnership.com</a></li>
+  <li><span class="conf medium">Medium</span> Brigham Young University theatre education database, <span class="quoted">Lesson 4 - The Circles of Energy</span>. Used for the body checklist of the second circle, which the lesson quotes from pages 45 to 49 of the book. Read in the original text on 30 September 2026. <a href="https://tedb.byu.edu/page-id-5832">tedb.byu.edu/page-id-5832</a></li>
+  <li><span class="conf medium">Medium</span> Teibel Education Consulting, <span class="quoted">The Three Circles of Energy: Authentically Connecting with Others</span>. Used for two quotations. I verified "takes the oxygen out of the room" in the original text. I saw "noticed, heard, powerful and remembered" only in a tool summary of the page. <a href="https://teibelinc.com/blog/circlesofenergy">teibelinc.com/blog/circlesofenergy</a></li>
+  <li><span class="conf medium">Medium</span> Leadership examples, "their ears stop working", and the sentence on authentic leaders: Generator Talent, <span class="quoted">Becoming a 'Second Circle' Leader</span>. Read in the original text on 30 September 2026. <a href="https://www.generatortalent.com/second-circle-leadership/">generatortalent.com</a></li>
+  <li><span class="conf medium">Medium</span> "You cannot be present in this place", "shouting at one another", and the circle of equality: Roffey Park Institute, <span class="quoted">The Power of Presence</span>. Read in the original text on 30 September 2026. <a href="https://www.roffeypark.com/articles/the-power-of-presence/">roffeypark.com</a></li>
+  <li><span class="conf medium">Medium</span> Ivey Business School, <span class="quoted">Executive presence: what it is and why it's important</span>, 2018. Used for the survey of 268 senior executives by Sylvia Ann Hewlett of the Center for Talent Innovation. The 26% and the 67% are read in this report. I did not open the original survey. <a href="https://www.ivey.uwo.ca/executive-education/insights/2018/04/executive-presence-what-it-is-and-why-its-important/">ivey.uwo.ca</a></li>
+  <li><span class="conf high">High</span> Rodenburg's talk <span class="quoted">Why I do theater</span>, filmed at Michael Howard Studios in October 2008, on TED. Not quoted on this page; listed as the shortest introduction to her thinking. <a href="https://www.ted.com/talks/patsy_rodenburg_why_i_do_theater">ted.com</a></li>
+  <li><span class="conf given">Given</span> The team of 6 engineers, the 2-week delay, the 30 seconds, and the dates are example values.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
