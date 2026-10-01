@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seven Habits Explained</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: NBC, FranklinCovey -->
+<h1>What are the seven habits of highly effective people, and how do you use them at work?</h1>
+<p class="meta">Written 2026-09-30 · Reading time: about 29 minutes · You need to know: nothing special. You have led, or been part of, a software team.</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>The seven habits are a model from the book <span class="quoted">The 7 Habits of Highly Effective People</span> by Stephen R. Covey, published in 1989. By 2014 the book had sold more than 25 million copies. Covey's claim is that effectiveness comes from character and principles, applied from the inside out, and not from techniques that you apply to other people.</p>
+  <p>The habits come in three groups. <strong>Habits 1 to 3</strong> make you independent. You choose your response, you decide the result that you want, and you spend your time on what is important. <strong>Habits 4 to 6</strong> make you work well with other people. You look for results that are good for both sides, you listen before you speak, and you combine different views. <strong>Habit 7</strong> renews your capacity, so that the other six habits continue to work.</p>
+  <p><strong>For an engineer</strong> the book has three tools that you will use most. The first is the Circle of Influence from habit 1. The second is the time matrix with its Quadrant II from habit 3. The third is the Emotional Bank Account from habits 4 and 5. The book is a self-help book. Its evidence is Covey's reading and his own experience, and I found no controlled study of its effect on adults.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>Your words were "seven habits of successful people". The title of the book says "highly effective people", and Covey means something specific with "effective". I assume that you mean this book, and the page uses Covey's word.</li>
+    <li>You lead a software team, or you want to lead one. The team, the bug, and the hours in the example are invented example values.</li>
+    <li>I did not read the full book for this page. The definitions come from the sources in the last section, and the page says where a source is a summary.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#example">One example: a data-loss bug, 10 days before the release, handled with the seven habits</a></li>
+    <li><a href="#rule">The rule: the habits move you from dependence to interdependence, from the inside out</a></li>
+    <li><a href="#data">The data: moving 14 hours into Quadrant II changes the week</a></li>
+    <li><a href="#mistake">Wrong idea corrected: habit 3 is not "do the urgent things first"</a></li>
+    <li><a href="#limits">Limits: a self-help model with little controlled evidence</a></li>
+    <li><a href="#words">Words that you will hear</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One example: a data-loss bug, 10 days before the release, handled with the seven habits</h2>
+<p>You lead a team of 5 engineers. The release is planned for 14 October, in 10 days. On Monday at 08:30 a customer reports a bug: in rare cases, the product deletes user data. At 09:00 the product manager writes that the release date cannot move. One engineer told you last week that they want to leave the team. Here is the week, one habit per step.</p>
+<p>Two of Covey's terms appear in the first step. The <dfn>Circle of Concern</dfn> is the set of all things that you care about. The <dfn>Circle of Influence</dfn> is the smaller set of things inside it that you can change. To be <dfn>proactive</dfn>, in Covey's meaning, is to take responsibility for your response, and to spend your energy inside the Circle of Influence.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the week, one habit per step</span>
+  <ol class="steps">
+    <li><strong>Habit 1, be proactive.</strong> Before you answer the product manager, you write two lists. You cannot change: the customer report, the calendar, the contract. You can change: the fix, the tests, the plan, and how you speak to the product manager. You work only on the second list.
+      <span class="why">Covey, after the psychiatrist Viktor Frankl, says that between a stimulus and your response lies your ability to choose the response. Energy spent on the first list, the Circle of Concern, changes nothing. Energy spent on the second list, the Circle of Influence, makes that circle larger.</span></li>
+    <li><strong>Habit 2, begin with the end in mind.</strong> You write the end as one sentence with three parts. "On 14 October we ship a release that cannot delete user data. The product manager trusts the team. Nobody on the team worked more than 40 hours in any week."
+      <span class="why">Covey says that all things are created twice: first in the mind, then in reality. Without a written end, the loudest email of the day decides the goal.</span></li>
+    <li><strong>Habit 3, put first things first.</strong> You classify the week's work by two questions: is it urgent, and is it important? You cancel 2 status meetings that others requested, and you stop reading the alert channel every 10 minutes. The freed hours go to a test that reproduces the bug, a design review of the fix, and two one-to-one talks. Section 3 shows the hours.
+      <span class="why">Covey's order is: do the urgent and important work first, then spend most of your time on work that is important but not urgent. He calls the cell of his table for this work <dfn>Quadrant II</dfn>. The test and the design review are Quadrant II work: not urgent today, but they prevent the next crisis.</span></li>
+    <li><strong>Habit 5, seek first to understand, then to be understood.</strong> In the meeting with the product manager you ask one question first: "Why can the date not move?" Then you repeat what you heard. A customer contract starts on 14 October, and the customer needs the login feature on that day. Only then do you describe the bug.
+      <span class="why">Covey's order of persuasion is: credibility first, then understanding of the other person, then logic. A person who feels understood is willing to listen. This step comes before habit 4 in time. You cannot propose a result that is good for both sides before you know what the other side needs.</span></li>
+    <li><strong>Habit 4, think win-win.</strong> You do not say "we need 2 more weeks", and you do not say "we ship with the bug". You propose: ship on 14 October with the code path that deletes data switched off, and ship the full fix on 21 October. The customer gets the login feature on time. The team gets one more week for the fix.
+      <span class="why">Covey says that a result that is good for both sides is a better long-term solution than a result where one side wins. A win for you and a loss for the product manager would cost trust, which you will need at the next release.</span></li>
+    <li><strong>Habit 6, synergize.</strong> In the team meeting you do not present your plan first. You ask the 5 engineers for options. The engineer who wants to leave knows the code path best, and proposes a switch that disables it in 2 hours of work. Your own plan needed 2 days.
+      <span class="why">Covey says that people who combine their strengths reach results that no one person could reach alone. The difference between the engineers is the source of the better option, not an obstacle.</span></li>
+    <li><strong>Habit 7, sharpen the saw.</strong> You keep the 2 hours of learning time on Friday afternoon, and you keep your sleep. You do not plan a 60-hour week for anybody.
+      <span class="why">Covey measures a person or a team by the balance between production and the capacity to produce. A 60-hour week raises production for one week and lowers the capacity for the next weeks. Section 2 explains this balance.</span></li>
+  </ol>
+  <p><strong>Result:</strong> the release ships on 14 October without the data-loss path, and the full fix ships on 21 October. The week had 18 hours of important but not urgent work instead of 4. The engineer who wanted to leave was the author of the solution. Whether that engineer stays is not decided by one week, and the book does not promise it.</p>
+</div>
+
+<p>The steps use the habits in the order 1, 2, 3, 5, 4, 6, 7. The book numbers habit 4 before habit 5, because habit 4 is the attitude and habit 5 is the skill. In a real conversation the listening of habit 5 comes first, and the proposal of habit 4 comes after it.</p>
+
+<h2 id="rule">2. The rule: the habits move you from dependence to interdependence, from the inside out</h2>
+<p>Covey's model has three ideas under the seven habits. The first idea is the <dfn>paradigm</dfn>. A paradigm is the map in your head that you use to see a situation. Covey says that lasting change starts with a change of the paradigm, not with a change of behaviour. This is what he calls change "from the inside out".</p>
+<p>In the example, the paradigm changed in step 1. The old paradigm was "the product manager is the problem". The new paradigm was "my response is the only thing that I control".</p>
+
+<p>The second idea is Covey's definition of <dfn>effectiveness</dfn>. Effectiveness is the balance between production (P), the results that you get today, and production capability (PC), the capacity that produces results in the future. Covey writes this balance as P/PC, and he says that the whole book rests on it.</p>
+<p>His example is a machine. If a factory runs a machine 24 hours a day and skips the maintenance, the output rises for a short time. Then the machine breaks, and the output falls to zero. The machine is the production capability. For a software team, the production capability is the health of the people, the test suite, and the trust between the people.</p>
+
+<p>The third idea is the <dfn>Maturity Continuum</dfn>. The Maturity Continuum is Covey's path of three stages. In dependence, other people take care of you. In independence, you take care of yourself. In interdependence, you and other people reach results together. The seven habits are placed on this path.</p>
+
+<figure class="diagram">
+  <p class="fig-title">Habits 1 to 3 move you to independence, and habits 4 to 6 move you to interdependence. Habit 7 keeps the capacity for all of them.</p>
+  <p class="fig-sub">The three boxes at the top are the stages of the Maturity Continuum. The sentence in each box is the attitude of that stage, in Covey's words.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 720 300" role="img" aria-label="Diagram. Three boxes in a row: dependence, independence, interdependence. An arrow from dependence to independence is labelled private victory, habits 1, 2, 3. An arrow from independence to interdependence is labelled public victory, habits 4, 5, 6. A wide box below, labelled renewal, habit 7, sharpen the saw, has dashed arrows up to all three stages.">
+<defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<rect class="node" x="20" y="40" width="190" height="60" rx="8"/>
+<text class="node-name" x="115.0" y="65" text-anchor="middle">Dependence</text>
+<text class="node-value" x="115.0" y="86" text-anchor="middle">"You take care of me."</text>
+<rect class="node" x="265" y="40" width="190" height="60" rx="8"/>
+<text class="node-name" x="360.0" y="65" text-anchor="middle">Independence</text>
+<text class="node-value" x="360.0" y="86" text-anchor="middle">"I take care of myself."</text>
+<rect class="node" x="510" y="40" width="190" height="60" rx="8"/>
+<text class="node-name" x="605.0" y="65" text-anchor="middle">Interdependence</text>
+<text class="node-value" x="605.0" y="86" text-anchor="middle">"We do it together."</text>
+<line class="arrow" x1="214" y1="70.0" x2="261" y2="70.0" marker-end="url(#ah2)"/>
+<text class="arrow-label" x="237.5" y="124" text-anchor="middle">Private victory</text>
+<text class="arrow-label" x="237.5" y="142" text-anchor="middle">Habits 1, 2, 3</text>
+<line class="arrow" x1="459" y1="70.0" x2="506" y2="70.0" marker-end="url(#ah2)"/>
+<text class="arrow-label" x="482.5" y="124" text-anchor="middle">Public victory</text>
+<text class="arrow-label" x="482.5" y="142" text-anchor="middle">Habits 4, 5, 6</text>
+<rect class="node" x="20" y="200" width="680" height="56" rx="8" stroke-dasharray="6 4"/>
+<text class="node-name" x="360.0" y="224" text-anchor="middle">Renewal: Habit 7, Sharpen the saw</text>
+<text class="node-value" x="360.0" y="244" text-anchor="middle">keeps the capacity for all six habits</text>
+<line class="arrow" x1="115.0" y1="196" x2="115.0" y2="104" marker-end="url(#ah2)" stroke-dasharray="6 4"/>
+<line class="arrow" x1="360.0" y1="196" x2="360.0" y2="104" marker-end="url(#ah2)" stroke-dasharray="6 4"/>
+<line class="arrow" x1="605.0" y1="196" x2="605.0" y2="104" marker-end="url(#ah2)" stroke-dasharray="6 4"/>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is a stage. Each solid arrow means "these habits move you from the left stage to the right stage". Each dashed arrow means "habit 7 supports this stage".</p>
+  <p class="fig-source">Source: the grouping of the habits in the book, as described by Wikipedia and by FranklinCovey (sources 2 and 4). The drawing is my own.</p>
+</figure>
+
+<p>Covey calls the first group the private victory and the second group the public victory. The order matters to him: you cannot keep an agreement with other people before you can keep an agreement with yourself. The table lists the seven habits with Covey's meaning and with the action from the example.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>The seven habits, Covey's meaning of each, and the action in the example</caption>
+  <thead>
+    <tr><th>Habit</th><th>Group</th><th>Covey's meaning</th><th>Action in the example</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">1. <span class="quoted">Be proactive</span></th><td>Private victory</td><td>Take responsibility for your response. Work inside the Circle of Influence.</td><td>Two lists: what I cannot change, what I can change.</td></tr>
+    <tr><th scope="row">2. <span class="quoted">Begin with the end in mind</span></th><td>Private victory</td><td>Decide the result before you act. All things are created twice.</td><td>One written sentence for 14 October.</td></tr>
+    <tr><th scope="row">3. <span class="quoted">Put first things first</span></th><td>Private victory</td><td>Spend most of your time on important work that is not urgent.</td><td>14 hours moved into Quadrant II.</td></tr>
+    <tr><th scope="row">4. <span class="quoted">Think win-win</span></th><td>Public victory</td><td>Look for results that are good for both sides.</td><td>Ship on time with the bad path switched off; fix one week later.</td></tr>
+    <tr><th scope="row">5. <span class="quoted">Seek first to understand, then to be understood</span></th><td>Public victory</td><td>Listen with empathy before you present your view.</td><td>"Why can the date not move?"</td></tr>
+    <tr><th scope="row">6. <span class="quoted">Synergize</span></th><td>Public victory</td><td>Combine different strengths to reach what nobody reaches alone.</td><td>Ask the 5 engineers for options before presenting a plan.</td></tr>
+    <tr><th scope="row">7. <span class="quoted">Sharpen the saw</span></th><td>Renewal</td><td>Renew the physical, mental, social, and spiritual capacity.</td><td>Keep the learning time and the sleep.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one habit. The third column is the meaning that Covey gives. The fourth column is the step of the worked example in section 1.</p>
+
+<p>Habits 4 and 5 use one more of Covey's terms. The <dfn>Emotional Bank Account</dfn> is Covey's picture for the amount of trust in one relationship. Each interaction is a deposit or a withdrawal. Covey lists several kinds of deposit. Five of them are: understanding the other person, attending to small things such as tone of voice, and keeping commitments. The other two are making expectations clear, and apologizing after a withdrawal. </p>
+<p>In the example, the question "Why can the date not move?" is a deposit. The sentence "we need 2 more weeks", said first, would be a withdrawal.</p>
+
+<h3>Compare the two ways to become effective that Covey contrasts</h3>
+<p>Covey calls the first way the personality ethic and the second way the character ethic. The book argues for the second way.</p>
+<div class="compare">
+  <div>
+    <h4>Personality ethic: techniques</h4>
+    <p>Learn methods that change how other people see you: how to speak, how to negotiate, how to appear confident.</p>
+    <p>Works for a short time. Fails when the other person notices the technique.</p>
+  </div>
+  <div>
+    <h4>Character ethic: principles</h4>
+    <p>Change the paradigm and the habits inside yourself: responsibility, a clear end, integrity, trust.</p>
+    <p>Slow. Covey's claim is that only this way lasts.</p>
+  </div>
+</div>
+<p>The principle after the comparison is the "inside out" rule. A technique applied from the outside, without the paradigm, becomes visible as a technique. Then the Emotional Bank Account loses a deposit instead of gaining one.</p>
+
+<h2 id="data">3. The data: moving 14 hours into Quadrant II changes the week</h2>
+<p>Habit 3 uses a table of four cells that Covey calls the time management matrix. The two questions are: is the task urgent, and is the task important? Urgent means that the task demands action now. Important means that the task contributes to the result that you wrote in habit 2. Quadrant II is the cell for tasks that are important but not urgent: planning, prevention, building relationships, learning. Covey says that effective people spend most of their time in this cell.</p>
+
+<div class="box predict">
+  <span class="label">Guess first</span>
+  <p>In the example week, before habit 3, the team lead worked 40 hours. How many of those hours were in Quadrant II? Choose a number before you continue: 4 hours, 12 hours, or 20 hours.</p>
+</div>
+
+<figure>
+  <p class="fig-title">After habit 3, Quadrant II grows from 4 hours to 18 hours, and the two unimportant quadrants shrink from 18 hours to 10 hours.</p>
+  <p class="fig-sub">Hours in a 40-hour week of the team lead in the example. Dashed bars: the week before habit 3. Solid bars: the planned week after habit 3. Example values.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 640 310" role="img" aria-label="Bar chart. Quadrant I: 18 hours before, 12 after. Quadrant II: 4 hours before, 18 after. Quadrant III: 14 hours before, 8 after. Quadrant IV: 4 hours before, 2 after.">
+<line class="axis" x1="60" y1="270" x2="620" y2="270"/>
+<line class="grid" x1="60" y1="207.5" x2="620" y2="207.5"/>
+<text class="axis-label" x="52" y="211.5" text-anchor="end">5 h</text>
+<line class="grid" x1="60" y1="145.0" x2="620" y2="145.0"/>
+<text class="axis-label" x="52" y="149.0" text-anchor="end">10 h</text>
+<line class="grid" x1="60" y1="82.5" x2="620" y2="82.5"/>
+<text class="axis-label" x="52" y="86.5" text-anchor="end">15 h</text>
+<line class="grid" x1="60" y1="20.0" x2="620" y2="20.0"/>
+<text class="axis-label" x="52" y="24.0" text-anchor="end">20 h</text>
+<text class="axis-label" x="52" y="274" text-anchor="end">0 h</text>
+<rect x="85.0" y="45.0" width="42" height="225.0" fill="var(--s2)" fill-opacity="0.35" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 3"/>
+<rect x="133.0" y="120.0" width="42" height="150.0" fill="var(--s1)"/>
+<text x="106.0" y="39.0" font-size="13" text-anchor="middle">18 h</text>
+<text x="154.0" y="114.0" font-size="13" text-anchor="middle" font-weight="650">12 h</text>
+<text class="axis-label" x="130.0" y="288" text-anchor="middle">I: urgent,</text>
+<text class="axis-label" x="130.0" y="304" text-anchor="middle">important</text>
+<rect x="225.0" y="220.0" width="42" height="50.0" fill="var(--s2)" fill-opacity="0.35" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 3"/>
+<rect x="273.0" y="45.0" width="42" height="225.0" fill="var(--s1)"/>
+<text x="246.0" y="214.0" font-size="13" text-anchor="middle">4 h</text>
+<text x="294.0" y="39.0" font-size="13" text-anchor="middle" font-weight="650">18 h</text>
+<text class="axis-label" x="270.0" y="288" text-anchor="middle">II: not urgent,</text>
+<text class="axis-label" x="270.0" y="304" text-anchor="middle">important</text>
+<rect x="365.0" y="95.0" width="42" height="175.0" fill="var(--s2)" fill-opacity="0.35" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 3"/>
+<rect x="413.0" y="170.0" width="42" height="100.0" fill="var(--s1)"/>
+<text x="386.0" y="89.0" font-size="13" text-anchor="middle">14 h</text>
+<text x="434.0" y="164.0" font-size="13" text-anchor="middle" font-weight="650">8 h</text>
+<text class="axis-label" x="410.0" y="288" text-anchor="middle">III: urgent,</text>
+<text class="axis-label" x="410.0" y="304" text-anchor="middle">not important</text>
+<rect x="505.0" y="220.0" width="42" height="50.0" fill="var(--s2)" fill-opacity="0.35" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 3"/>
+<rect x="553.0" y="245.0" width="42" height="25.0" fill="var(--s1)"/>
+<text x="526.0" y="214.0" font-size="13" text-anchor="middle">4 h</text>
+<text x="574.0" y="239.0" font-size="13" text-anchor="middle" font-weight="650">2 h</text>
+<text class="axis-label" x="550.0" y="288" text-anchor="middle">IV: neither</text>
+<text x="246.0" y="198.0" font-size="13" text-anchor="middle" fill="var(--s2)">Before</text>
+<text x="294.0" y="23.0" font-size="13" font-weight="650" text-anchor="middle" fill="var(--s1)">After</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each group of two bars is one quadrant. The left, dashed bar is the week before. The right, solid bar is the week after. The height is hours.</p>
+  <p class="fig-source">Source: example values, chosen for this page; the sums are checked with code, and each week has a total of 40 hours.</p>
+</figure>
+
+<p><strong>Answer to the guess:</strong> 4 hours of 40, which is 10%. After habit 3, Quadrant II has 18 hours of 40, which is 45%.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Exact hours for the chart above, with the tasks in each quadrant</caption>
+  <thead>
+    <tr><th>Quadrant</th><th>Tasks of the example</th><th class="num">Before (hours)</th><th class="num">After (hours)</th><th class="num">Change (hours)</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">I: urgent and important</th><td>The data-loss bug, the customer call, the hotfix</td><td class="num">18</td><td class="num">12</td><td class="num">−6</td></tr>
+    <tr class="highlight"><th scope="row">II: not urgent, important</th><td>Test that reproduces the bug, design review, two one-to-one talks, learning time</td><td class="num">4</td><td class="num">18</td><td class="num">+14</td></tr>
+    <tr><th scope="row">III: urgent, not important</th><td>Status meetings requested by others, the alert channel, email</td><td class="num">14</td><td class="num">8</td><td class="num">−6</td></tr>
+    <tr><th scope="row">IV: not urgent, not important</th><td>Reading news, meetings without a purpose</td><td class="num">4</td><td class="num">2</td><td class="num">−2</td></tr>
+    <tr><th scope="row">Total</th><td></td><td class="num">40</td><td class="num">40</td><td class="num">0</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one quadrant. The last column is the second-last column minus the third-last column. The highlighted row is the quadrant that Covey wants to grow.</p>
+
+<p>Where did the 14 hours come from? Here is the logic in three steps. First, the 8 hours from Quadrants III and IV came from saying no: two cancelled meetings and a closed alert channel. These hours were free on Monday.</p>
+<p>Second, the 6 hours from Quadrant I came later. The reproducing test found the bug on Tuesday instead of Thursday, so the crisis took fewer hours. Third, Covey's claim is that the second effect grows over weeks, because Quadrant II work prevents future crises. In the example, this claim is a plan, not a measurement.</p>
+
+<p>The book itself is a measurable object. The table below gives the numbers that you will hear about it.</p>
+<div class="table-wrap">
+<table>
+  <caption>The book in numbers</caption>
+  <thead>
+    <tr><th>Fact</th><th class="num">Value</th><th>Source and confidence</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">First publication</th><td class="num">1989</td><td>Wikipedia, source 2. High.</td></tr>
+    <tr><th scope="row">Copies sold by July 2012</th><td class="num">more than 20,000,000</td><td>Wikipedia, source 2, citing a 2012 news report. Medium.</td></tr>
+    <tr><th scope="row">Copies sold by 2014</th><td class="num">more than 25,000,000</td><td>NBC News, source 5, verified in the original text. Medium.</td></tr>
+    <tr><th scope="row">Author's life</th><td class="num">1932 to 2012</td><td>Wikipedia, source 3. High.</td></tr>
+    <tr><th scope="row">Named one of the 25 most influential business management books by Time</th><td class="num">2011</td><td>Wikipedia, source 2, citing Time. Medium.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one fact. The last column names the source and the confidence label. Sales numbers come from the publisher and could not be checked independently.</p>
+
+<h2 id="mistake">4. Wrong idea corrected: habit 3 is not "do the urgent things first"</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "Put first things first means: sort your tasks by deadline, and do the most urgent task first."</p>
+  <p><strong>Correct:</strong> Covey's first things are the important tasks, and most of them are not urgent. His order is: do the urgent and important tasks when they exist, then spend most of your time in Quadrant II, which is not urgent. He says that many people spend too much time in Quadrants III and IV instead.</p>
+  <p><strong>Why the wrong idea fails:</strong> urgency is often the priority of another person, not yours. A task sorted only by deadline is often a Quadrant III task: a status meeting that someone else requested. A week sorted by urgency leaves no time for the test and the design review. So the next crisis arrives, and the share of Quadrant I grows. In the example, the test that reproduced the bug was not urgent on Monday, and it saved 6 hours of crisis work.</p>
+</div>
+
+<h2 id="limits">5. Limits: a self-help model with little controlled evidence</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>The evidence is Covey's reading and experience.</strong> Covey studied American self-help books for his doctoral dissertation, and he worked as a teacher and consultant. The book presents principles, not measurements. Covey calls the principles universal. That is his claim, not a tested result.</li>
+    <li><strong>No controlled study with adults.</strong> On 30 September 2026 I searched for studies that test the seven habits against a control group. The studies that I found were in schools, and the summaries said that they did not use random assignment. I could not open them, so this point has the label Low.</li>
+    <li><strong>The habits are a framework, not a procedure.</strong> The book does not say how to switch off a code path or how to run a design review. It says which work deserves the hours.</li>
+    <li><strong>The example is one week.</strong> Covey's claim that Quadrant II time reduces crises is a claim about months. One week cannot show it.</li>
+    <li><strong>The names are trademarks.</strong> FranklinCovey, the company that sells trainings based on Covey's books, offers a course with the same name and marks the habit names as registered trademarks. A training at your company is a product of that company, and its content can differ from the book.</li>
+  </ul>
+</div>
+
+<h2 id="words">6. Words that you will hear</h2>
+<p>These terms appear in trainings and in conversations about the book. They are not needed for the main idea, but you will meet them next to it.</p>
+<dl class="glossary">
+  <dt>Eisenhower matrix</dt>
+  <dd>Another name for the four-cell table of urgent and important. The name refers to the American president Dwight Eisenhower. Relation to the main idea: Covey's time management matrix in habit 3 is the same table with Covey's advice about Quadrant II.</dd>
+  <dt>Personal mission statement</dt>
+  <dd>A written text of a few sentences that states who you want to be and what you want to contribute. Relation to the main idea: it is the tool of habit 2 for a whole life, where the example used one sentence for one release.</dd>
+  <dt>Paradigm shift</dt>
+  <dd>A change of the map in your head, after which the same facts look different. Relation to the main idea: Covey's "inside out" change starts with a paradigm shift.</dd>
+  <dt>Abundance mentality</dt>
+  <dd>The belief that there is enough success for everyone, so another person's win does not reduce yours. Relation to the main idea: Covey names it as the condition for habit 4. Its opposite is the scarcity mentality.</dd>
+  <dt>Win-win or no deal</dt>
+  <dd>Covey's rule for the case where no result is good for both sides: agree to make no agreement, instead of accepting a loss. Relation to the main idea: it is the limit case of habit 4.</dd>
+  <dt>Empathic listening</dt>
+  <dd>Listening with the intent to understand the other person's view and feelings, not with the intent to reply. Relation to the main idea: it is the skill of habit 5.</dd>
+  <dt>The Leader in Me</dt>
+  <dd>A programme by FranklinCovey, from Covey's 2008 book of the same name, that teaches the seven habits in schools. Relation to the main idea: the school studies that I found in the limits section are about this programme.</dd>
+</dl>
+
+<h2 id="check">7. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>A colleague says: "I am proactive. When an alert fires, I jump on it within one minute." Is this habit 1 in Covey's meaning?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Not by itself.</strong></p>
+          <p>Covey's "proactive" means choosing your response and working inside the Circle of Influence. Fast reaction to every alert is a reaction to a stimulus, and most alerts are Quadrant III: urgent, but not important. The typical wrong answer is "yes, because the colleague takes initiative". Initiative is part of the word in everyday English, but Covey's test is the choice of response, not the speed. See <a href="#example">section 1</a>, step 1.</p>
+        </div>
+      </details>
+    </li>
+    <li>Your week has 40 hours. You spend 20 hours on crises, 12 hours on meetings that others requested, 6 hours on a test suite, and 2 hours reading news. Which quadrant does Covey want you to grow, and what is its share now?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Quadrant II, which is now 6 hours of 40, or 15%.</strong></p>
+          <p>The test suite is important and not urgent, so it is Quadrant II. The crises are Quadrant I (20 hours, 50%). The requested meetings are Quadrant III (12 hours, 30%). The news is Quadrant IV (2 hours, 5%).</p>
+<p>Covey says: do the Quadrant I work, then move hours from Quadrants III and IV into Quadrant II. The typical wrong answer is Quadrant I, because it feels most important. See <a href="#data">section 3</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>Why does Covey number habit 4 (win-win) before habit 5 (understand first), when the worked example uses habit 5 first?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>Habit 4 is the attitude, and habit 5 is the skill that applies it in a conversation. The book orders the habits by what you must have, not by the order of a meeting. In a real meeting you listen first. You cannot propose a result that is good for both sides before you know what the other side needs. See the paragraph after the worked example in <a href="#example">section 1</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>A team ships on time for 6 months by working 55 hours per week. Covey would say that this team is not effective. Which of his definitions is the reason?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>The P/PC balance.</strong></p>
+          <p>Effectiveness is the balance between production (shipping on time) and production capability (the health of the people, the tests, the trust). 55-hour weeks raise production and reduce production capability, like a machine that runs without maintenance. The typical wrong answer names habit 3, because hours are involved. Habit 3 is about which work gets the hours; the P/PC balance is about the capacity itself. See <a href="#rule">section 2</a>.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">8. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>Covey's effectiveness is the balance between results today and the capacity to produce results tomorrow.</li>
+    <li>Habits 1 to 3 make you independent: choose your response, decide the end, spend the hours on important work. Habits 4 to 6 make you work with others: results for both sides, listen first, combine strengths. Habit 7 renews the capacity.</li>
+    <li>Change comes from the inside out: a paradigm first, then behaviour. A technique without the paradigm costs trust.</li>
+    <li>The most used tool is the time matrix. In the example, Quadrant II grew from 4 hours to 18 hours of 40. The hours came from cancelled meetings and from a test that shortened the crisis.</li>
+    <li>The book is a self-help book with more than 25 million copies sold by 2014. I found no controlled study of its effect on adults.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>Circle of Concern</dt>
+  <dd>The set of all things that you care about, including the things that you cannot change.</dd>
+  <dt>Circle of Influence</dt>
+  <dd>The subset of the Circle of Concern that you can change.</dd>
+  <dt>Effectiveness</dt>
+  <dd>Covey's definition: the balance between production (results today) and production capability (the capacity that produces results in the future). Written P/PC.</dd>
+  <dt>Emotional Bank Account</dt>
+  <dd>Covey's picture for the amount of trust in one relationship. Each interaction is a deposit or a withdrawal.</dd>
+  <dt>Maturity Continuum</dt>
+  <dd>Covey's path of three stages: dependence, independence, interdependence.</dd>
+  <dt>Paradigm</dt>
+  <dd>The map in your head that you use to see a situation.</dd>
+  <dt>Proactive</dt>
+  <dd>Covey's meaning: taking responsibility for your response, and spending your energy inside the Circle of Influence.</dd>
+  <dt>Quadrant II</dt>
+  <dd>The cell of the time management matrix for tasks that are important but not urgent.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or sources with limits. <span class="conf low">Low</span> = not verified, or sources disagree. <span class="conf given">Given</span> = a value from your message or an example value.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> Stephen R. Covey, <span class="quoted">The 7 Habits of Highly Effective People</span>, Free Press, New York, 1989. Bibliographic data verified in Wikipedia on 30 September 2026. I did not read the full book for this page.</li>
+  <li><span class="conf medium">Medium</span> Wikipedia, <span class="quoted">The 7 Habits of Highly Effective People</span>, read in the original text on 30 September 2026. Used for the description of each habit, the four quadrants and Covey's order, and the three groups of habits. Also used for the Time list of 2011 and the sales by 2012. <a href="https://en.wikipedia.org/wiki/The_7_Habits_of_Highly_Effective_People">en.wikipedia.org/wiki/The_7_Habits_of_Highly_Effective_People</a></li>
+  <li><span class="conf high">High</span> Wikipedia, <span class="quoted">Stephen Covey</span>, read in the original text on 30 September 2026. Used for the dates of his life, his degrees, and his doctoral study of self-help books. <a href="https://en.wikipedia.org/wiki/Stephen_Covey">en.wikipedia.org/wiki/Stephen_Covey</a></li>
+  <li><span class="conf medium">Medium</span> FranklinCovey, <span class="quoted">The 7 Habits of Highly Effective People</span>, product page, read in the original text on 30 September 2026. Used for the names of the habits, the Maturity Continuum, and the trademarks. <a href="https://www.franklincovey.com/the-7-habits/">franklincovey.com/the-7-habits/</a></li>
+  <li><span class="conf medium">Medium</span> NBC News, <span class="quoted">7 Reasons '7 Habits of Highly Effective People' Lives on 25 Years Later</span>, 2014. Read in the original text on 30 September 2026. Used for the sales by 2014. <a href="https://www.nbcnews.com/id/wbna55874823">nbcnews.com/id/wbna55874823</a></li>
+  <li><span class="conf medium">Medium</span> University of Washington, Department of Global Health, <span class="quoted">Unit 2: The 7 Habits of Highly Effective People</span>, a teaching unit. Read in the original text on 30 September 2026. Used for the P/PC balance with the machine example, and for the Emotional Bank Account and its deposits. Also used for the Circle of Influence and the description of the quadrants. <a href="https://depts.washington.edu/edgh/namibia-lio/unit-2.html">depts.washington.edu/edgh/namibia-lio/unit-2.html</a></li>
+  <li><span class="conf low">Low</span> Studies of the seven habits in schools, found by a web search on 30 September 2026 and not opened. The search summaries described designs without random assignment. Not verified.</li>
+  <li><span class="conf given">Given</span> The team of 5 engineers, the bug, the dates, and the hours per quadrant are example values. The sums and percentages were calculated with code.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
