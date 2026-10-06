@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kanban for Engineering Teams</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: Toyota, Corbis, Microsoft, Scrum, Scrumban, Jira, Trello -->
+<h1>What is Kanban, and how does an engineering team run its work with it?</h1>
+<p class="meta">Written 2026-10-06 · Reading time: about 29 minutes · You need to know: what a software task or ticket is</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>Kanban is a way to manage the flow of work through a team. The team draws its work process as columns on a board. Each task is a card on the board. The team sets a <strong>limit on the number of tasks that can be open at the same time</strong>. A task enters a column only when the column has free space. This limit is the core of the method.</p>
+  <p><strong>Why the limit matters:</strong> average time per task = open tasks ÷ tasks finished per week. A team finishes 3 tasks per week and has 12 open tasks. Then the average time per task is <strong>4 weeks</strong>. The same team with 6 open tasks takes <strong>2 weeks</strong>. The team does not work faster. Each task simply waits less.</p>
+  <p>Kanban has no fixed iterations and no required roles. It adds four measurements: open tasks, tasks finished per week, age of each open task, and time per task. It adds three practices: define and show the workflow, manage the open tasks every day, and improve the workflow.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>You run, or will soon run, a software engineering team of about 4 to 8 people.</li>
+    <li>The team today has a list of tasks, for example in a ticket system, but no limit on open tasks.</li>
+    <li>The page follows the Kanban Guide of May 2025 for definitions. Where older books use other names, the page says so.</li>
+    <li>All team sizes, task counts, and durations on this page are example values, not measurements of a real team.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#example">One example: a team of 5 runs one day on a Kanban board</a></li>
+    <li><a href="#rule">The rule: a Kanban system has a defined workflow, a limit on open work, and daily management</a></li>
+    <li><a href="#data">Fewer open tasks mean shorter time per task: 20 days at 12 open tasks, 10 days at 6</a></li>
+    <li><a href="#compare">Kanban and Scrum differ in one main point: continuous flow against fixed sprints</a></li>
+    <li><a href="#mistake">Wrong idea corrected: a board with cards is not yet Kanban</a></li>
+    <li><a href="#limits">Limits: the formula uses averages, and Kanban does not choose priorities for you</a></li>
+    <li><a href="#words">Words that you will hear in a Kanban team</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One example: a team of 5 runs one day on a Kanban board</h2>
+<p>A team of 5 engineers builds a web service. The team uses <dfn>Kanban</dfn>. Kanban is a strategy that improves the flow of work through a process. The Kanban Guide names three practices: define and visualize the workflow, actively manage the items in the workflow, and improve the workflow. On this page, "flow" means the movement of tasks from start to finish.</p>
+<p>Each task is a <dfn>work item</dfn> (one unit of work that the team delivers, for example a feature, a bug fix, or a technical change). The team shows all work items on a <dfn>Kanban board</dfn>. A Kanban board is a board with one column for each state of the workflow, and one card for each work item. The example team has six columns. The figure below shows the board on Monday morning.</p>
+
+<figure class="diagram">
+  <p class="fig-title">Each column has a limit, and the column "Code review" is full on Monday morning.</p>
+  <p class="fig-sub">Each small box is one work item. The number in parentheses is the maximum number of work items that the column may hold. "Backlog" and "Done" have no limit.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 720 300" role="img" aria-label="Diagram of a Kanban board with six columns. Backlog has no limit and holds many items. Selected has a limit of 4 and holds 3 items. In development has a limit of 3 and holds 3 items. Code review has a limit of 2 and holds 2 items. Testing has a limit of 2 and holds 1 item. Done has no limit. Work items move from left to right.">
+    <defs>
+      <marker id="arrow-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/>
+      </marker>
+    </defs>
+    <!-- columns: x positions 10,128,246,364,482,600 width 110 -->
+    <rect class="node" x="10" y="10" width="110" height="250" rx="6"/>
+    <rect class="node" x="128" y="10" width="110" height="250" rx="6"/>
+    <rect class="node" x="246" y="10" width="110" height="250" rx="6"/>
+    <rect class="node" x="364" y="10" width="110" height="250" rx="6"/>
+    <rect class="node" x="482" y="10" width="110" height="250" rx="6"/>
+    <rect class="node" x="600" y="10" width="110" height="250" rx="6"/>
+    <text class="node-name" x="65" y="34" text-anchor="middle">Backlog</text>
+    <text class="node-value" x="65" y="52" text-anchor="middle">(no limit)</text>
+    <text class="node-name" x="183" y="34" text-anchor="middle">Selected</text>
+    <text class="node-value" x="183" y="52" text-anchor="middle">(limit 4)</text>
+    <text class="node-name" x="301" y="34" text-anchor="middle">In develop.</text>
+    <text class="node-value" x="301" y="52" text-anchor="middle">(limit 3)</text>
+    <text class="node-name" x="419" y="34" text-anchor="middle">Code review</text>
+    <text class="node-value" x="419" y="52" text-anchor="middle">(limit 2)</text>
+    <text class="node-name" x="537" y="34" text-anchor="middle">Testing</text>
+    <text class="node-value" x="537" y="52" text-anchor="middle">(limit 2)</text>
+    <text class="node-name" x="655" y="34" text-anchor="middle">Done</text>
+    <text class="node-value" x="655" y="52" text-anchor="middle">(no limit)</text>
+    <!-- cards: height 26, width 90, start y=66, step 34 -->
+    <g fill="var(--s1)" fill-opacity="0.25" stroke="var(--s1)" stroke-width="1.5">
+      <rect x="20" y="66" width="90" height="26" rx="4"/><rect x="20" y="100" width="90" height="26" rx="4"/><rect x="20" y="134" width="90" height="26" rx="4"/><rect x="20" y="168" width="90" height="26" rx="4"/><rect x="20" y="202" width="90" height="26" rx="4"/>
+      <rect x="138" y="66" width="90" height="26" rx="4"/><rect x="138" y="100" width="90" height="26" rx="4"/><rect x="138" y="134" width="90" height="26" rx="4"/>
+      <rect x="256" y="66" width="90" height="26" rx="4"/><rect x="256" y="100" width="90" height="26" rx="4"/><rect x="256" y="134" width="90" height="26" rx="4"/>
+      <rect x="374" y="66" width="90" height="26" rx="4"/><rect x="374" y="100" width="90" height="26" rx="4"/>
+      <rect x="492" y="66" width="90" height="26" rx="4"/>
+      <rect x="610" y="66" width="90" height="26" rx="4"/><rect x="610" y="100" width="90" height="26" rx="4"/><rect x="610" y="134" width="90" height="26" rx="4"/><rect x="610" y="168" width="90" height="26" rx="4"/>
+    </g>
+    <g font-size="13" text-anchor="middle" fill="var(--text)">
+      <text x="65" y="84">item 21</text><text x="65" y="118">item 22</text><text x="65" y="152">item 23</text><text x="65" y="186">item 24</text><text x="65" y="220">… 30</text>
+      <text x="183" y="84">item 18</text><text x="183" y="118">item 19</text><text x="183" y="152">item 20</text>
+      <text x="301" y="84">item 15</text><text x="301" y="118">item 16</text><text x="301" y="152">item 17</text>
+      <text x="419" y="84">item 13</text><text x="419" y="118">item 14</text>
+      <text x="537" y="84">item 12</text>
+      <text x="655" y="84">item 8</text><text x="655" y="118">item 9</text><text x="655" y="152">item 10</text><text x="655" y="186">item 11</text>
+    </g>
+    <text class="node-value" x="65" y="250" text-anchor="middle">10 items</text>
+    <text class="node-value" x="183" y="250" text-anchor="middle">3 of 4</text>
+    <text class="node-value" x="301" y="250" text-anchor="middle">3 of 3: full</text>
+    <text class="node-value" x="419" y="250" text-anchor="middle">2 of 2: full</text>
+    <text class="node-value" x="537" y="250" text-anchor="middle">1 of 2</text>
+    <text class="node-value" x="655" y="250" text-anchor="middle">this week</text>
+    <line class="arrow" x1="250" y1="285" x2="470" y2="285" marker-end="url(#arrow-head)"/>
+    <text class="arrow-label" x="360" y="278" text-anchor="middle">work items move to the right</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each large box is one column of the board, which is one state of the workflow. Each small box is one work item. A work item moves from the left column to the right column, one column at a time. A column with "full" below it has reached its limit.</p>
+</figure>
+
+<p>The board uses two more terms. The work items in the columns "In development", "Code review", and "Testing" are <dfn>work in progress</dfn> (WIP). WIP means the work items that are started but not finished. The items in "Selected" are chosen but not started, so they are not WIP on this board. The number in parentheses under each column name is the <dfn>WIP limit</dfn>. The WIP limit is the maximum number of work items that one column may hold at the same time. On Monday morning the board holds 3 + 2 + 1 = 6 work items in progress.</p>
+
+<div class="box example">
+  <span class="label">Worked example: one day on the board</span>
+  <ol class="steps">
+    <li><strong>09:00, the daily walk of the board.</strong> The team stands at the board and reads it from right to left: "Testing" first, "Selected" last.
+      <span class="why">The items on the right are closest to being finished. Finishing them frees space for the items on the left.</span></li>
+    <li><strong>"Testing" holds item 12.</strong> The tester reports that item 12 passed. Item 12 moves to "Done". "Testing" now holds 0 of 2.
+      <span class="why">The move happens as soon as the item meets the condition of the next column. The team does not wait for a weekly meeting.</span></li>
+    <li><strong>"Code review" is full (2 of 2).</strong> Item 13 has waited for a review for 3 days. Engineer A stops her own development work on item 16 and reviews item 13 first.
+      <span class="why">A full column on the right blocks the columns on the left. The WIP limit forces the team to finish instead of start. This is the central mechanism of Kanban.</span></li>
+    <li><strong>Item 13 passes review</strong> and moves to "Testing". "Code review" holds 1 of 2 and has one free place.
+      <span class="why">Now a work item from "In development" may move to "Code review", but only when its development is complete.</span></li>
+    <li><strong>Engineer B finishes item 15.</strong> Item 15 moves to "Code review" (2 of 2 again). "In development" holds 2 of 3 and has one free place.
+      <span class="why">The free place is a signal. The signal tells the team that it has capacity for one more development item.</span></li>
+    <li><strong>Engineer B pulls item 18 from "Selected" into "In development".</strong> "Selected" now holds 2 of 4.
+      <span class="why">An engineer starts a new item only when the next column has a free place. This rule is the <dfn>pull system</dfn>: a free place in the next column is the signal to start the next item.</span></li>
+    <li><strong>Engineer C has no free development place</strong> and no review to do, because "Code review" is full and both reviews are assigned. Engineer C helps the tester with item 13.
+      <span class="why">Kanban prefers that a person helps an existing item over starting a new one. Starting a new one would raise WIP.</span></li>
+    <li><strong>Evening count.</strong> Started today: 1 (item 18). Finished today: 1 (item 12). WIP in the evening: 6, the same as in the morning.
+      <span class="why">When starts and finishes balance, WIP stays constant, and the time per item stays predictable.</span></li>
+  </ol>
+  <p><strong>Result:</strong> in one day the team finished one item, moved three items one column to the right, and started one item. Nobody started a second item while a review was waiting.</p>
+</div>
+
+<h2 id="rule">2. The rule: a Kanban system has a defined workflow, a limit on open work, and daily management</h2>
+<p>The Kanban Guide says that a Kanban system must have a <dfn>Definition of Workflow</dfn> (DoW). The DoW is the written and shared description of how work items flow from started to finished. The DoW of the example team has five parts. The guide requires all five.</p>
+<ol>
+  <li><strong>What a work item is.</strong> For the example team: one ticket that a user can notice, or one technical change that a reviewer can check.</li>
+  <li><strong>When an item is started and when it is finished.</strong> Started: the card enters "In development". Finished: the card enters "Done". Note that "Selected" is before the start point, so the items in "Selected" are not counted in the 6 items in progress of section 1. The team may define this differently. The guide allows more than one start point and finish point.</li>
+  <li><strong>The states</strong> between started and finished: "In development", "Code review", "Testing".</li>
+  <li><strong>How WIP is controlled.</strong> The example team uses one WIP limit per column: 3, 2, and 2.</li>
+  <li><strong>Explicit policies</strong> for each state. Example: an item may enter "Code review" only when its tests pass on the build server.</li>
+</ol>
+<p>The DoW also contains a <dfn>service level expectation</dfn> (SLE, a forecast of the time from started to finished, with a probability). The guide gives this example form: "85% of work items will be finished in eight days or less". The team calculates the SLE from its own past data, see section 3. If no data exists, a guess is allowed until the data exists.</p>
+
+<h3>The WIP limit creates a pull system</h3>
+<p>Without a limit, work enters a column when someone decides to push it in. With a limit, a work item enters a column only when the column has a free place. This is the pull system of section 1: a free place in the next state is the signal to start the next item. The Kanban Guide says that controlling WIP <span class="quoted">should create a pull system</span>. It also says that members should start an item <span class="quoted">only when there is a clear signal that there is capacity to do so</span>.</p>
+<p>The pull system has a direct effect on behaviour. In step 3 of the example, engineer A could not start a new item, because the review column was full. Therefore she reviewed item 13. The limit converts the question "what shall I start?" into the question "what can I finish?".</p>
+
+<h3>The three practices, and what the team does each day, week, and month</h3>
+<div class="table-wrap">
+<table>
+  <caption>The three practices of the Kanban Guide, and the concrete actions of the example team</caption>
+  <thead>
+    <tr><th>Practice (Kanban Guide, May 2025)</th><th>What the example team does</th><th>How often</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Defining and visualizing the workflow</th><td>Keeps the board and the written DoW: columns, WIP limits, policies, SLE.</td><td>Once, then updated when the workflow changes</td></tr>
+    <tr class="highlight"><th scope="row">Actively managing items in a workflow</th><td>Walks the board from right to left. Moves finished items. Frees blocked items. Checks the age of each item against the SLE. Pulls new items only into free places.</td><td>Every working day, about 15 minutes</td></tr>
+    <tr><th scope="row">Improving the workflow</th><td>Looks at the four flow metrics and changes the DoW: a WIP limit, a column, or a policy.</td><td>Every two weeks in a meeting, and at any time when the data shows a problem</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one practice. The second column translates the practice into actions. The third column is the rhythm of the example team, not a rule of the guide. The guide prescribes no meeting rhythm.</p>
+
+<h3>The four flow metrics</h3>
+<p>The guide requires four measurements. Two of them are counts and two are durations.</p>
+<ul>
+  <li><strong>WIP:</strong> the number of work items that are started but not finished. In the example: 6 on Monday morning, counted over the three states of the DoW.</li>
+  <li><strong><dfn>Throughput</dfn></strong> (the number of work items finished per unit of time). The example team finishes 3 items per week. The guide says that throughput counts items, not points or hours.</li>
+  <li><strong><dfn>Work item age</dfn></strong> (the time from the start of a work item until today, for an item that is still open). Item 13 in the example had an age of 3 days in "Code review" alone.</li>
+  <li><strong><dfn>Cycle time</dfn></strong> (the time from the start of a work item until its finish). The guide allows other names for the same measure, for example "flow time".</li>
+</ul>
+<p>The four metrics use the start point and the finish point of the DoW. If the team changes the DoW, the numbers change their meaning. So the team must write the DoW down.</p>
+
+<h2 id="data">3. Fewer open tasks mean shorter time per task: 20 days at 12 open tasks, 10 days at 6</h2>
+<p>The link between WIP and cycle time is a mathematical law. <dfn>Little's Law</dfn> is a result from queueing theory. It applies to a system with stable averages. In such a system, the average number of items in the system equals the average arrival rate multiplied by the average time in the system. John D. C. Little published the proof in 1961. For a Kanban board the law reads:</p>
+<pre><code>average cycle time = average WIP ÷ average throughput
+20 working days    = 12 items    ÷ 3 items per week   (= 4 weeks × 5 working days)</code></pre>
+<p>The law says nothing about how hard the team works. It says that for a fixed throughput, the time per item is proportional to the number of open items. The chart shows the cycle time for four WIP values and a constant throughput of 3 items per week.</p>
+
+<figure>
+  <p class="fig-title">At 3 items per week, the cycle time rises from 7 days (4 open items) to 30 days (18 open items).</p>
+  <p class="fig-sub">Average cycle time in working days. Throughput is 3 items per week in every case. Example values.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 640 300" role="img" aria-label="Bar chart. Four bars. WIP 4 gives 7 working days. WIP 6 gives 10 days. WIP 12 gives 20 days. WIP 18 gives 30 days. The bar for WIP 6 is the case of the example team after the change, the bar for WIP 12 is before the change.">
+    <!-- y scale: 0..35 days over y 260..30, so 1 day = 6.571 px -->
+    <line class="axis" x1="70" y1="260" x2="600" y2="260"/>
+    <line class="grid" x1="70" y1="194.3" x2="600" y2="194.3"/>
+    <line class="grid" x1="70" y1="128.6" x2="600" y2="128.6"/>
+    <line class="grid" x1="70" y1="62.9" x2="600" y2="62.9"/>
+    <text class="axis-label" x="62" y="264" text-anchor="end">0</text>
+    <text class="axis-label" x="62" y="198.3" text-anchor="end">10</text>
+    <text class="axis-label" x="62" y="132.6" text-anchor="end">20</text>
+    <text class="axis-label" x="62" y="66.9" text-anchor="end">30 days</text>
+    <!-- bars: width 90, centers at 140, 270, 400, 530 -->
+    <rect x="95" y="214" width="90" height="46" fill="var(--s2)" fill-opacity="0.35" stroke="var(--s2)" stroke-width="2" stroke-dasharray="6 4"/>
+    <rect x="225" y="194.3" width="90" height="65.7" fill="var(--s1)"/>
+    <rect x="355" y="128.6" width="90" height="131.4" fill="var(--s2)" fill-opacity="0.35" stroke="var(--s2)" stroke-width="2" stroke-dasharray="6 4"/>
+    <rect x="485" y="62.9" width="90" height="197.1" fill="var(--s2)" fill-opacity="0.35" stroke="var(--s2)" stroke-width="2" stroke-dasharray="6 4"/>
+    <g font-size="14" font-weight="650" text-anchor="middle" fill="var(--text)">
+      <text x="140" y="206">7 days</text>
+      <text x="270" y="186">10 days</text>
+      <text x="400" y="120">20 days</text>
+      <text x="530" y="55">30 days</text>
+    </g>
+    <g class="axis-label" font-size="13" text-anchor="middle">
+      <text x="140" y="282">WIP 4</text>
+      <text x="270" y="282">WIP 6 (after)</text>
+      <text x="400" y="282">WIP 12 (before)</text>
+      <text x="530" y="282">WIP 18</text>
+    </g>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each bar is one WIP value. The height is the average cycle time in working days. The solid bar is the WIP limit that the example team chose. The dashed bars are the other cases for comparison.</p>
+  <p class="fig-source">Source: calculated with Little's Law, cycle time = WIP ÷ throughput, with 5 working days per week. The bar for WIP 4 is rounded from 6.67 days.</p>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <caption>Exact values for the chart above: the cycle time is proportional to WIP</caption>
+  <thead>
+    <tr><th>WIP (items)</th><th class="num">Throughput (items per week)</th><th class="num">Cycle time (weeks)</th><th class="num">Cycle time (working days)</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">4</th><td class="num">3</td><td class="num">1.33</td><td class="num">6.67</td></tr>
+    <tr class="highlight"><th scope="row">6</th><td class="num">3</td><td class="num">2.00</td><td class="num">10.00</td></tr>
+    <tr><th scope="row">12</th><td class="num">3</td><td class="num">4.00</td><td class="num">20.00</td></tr>
+    <tr><th scope="row">18</th><td class="num">3</td><td class="num">6.00</td><td class="num">30.00</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Why the time falls: the same work is divided among fewer items</h3>
+<p>The law is an average. To see the mechanism, consider a simplified model that I ran as a small program. Five engineers share their time equally among all open items. Each item needs 5 engineer-days of work. New items are started as soon as the WIP limit allows.</p>
+<div class="compare">
+  <div>
+    <h4>WIP limit 15</h4>
+    <p>Each engineer works on 3 items at the same time. Each item receives one third of an engineer-day per day.</p>
+    <p>Result over 60 days: 60 items finished. Cycle time of every item: <strong>15 days</strong>.</p>
+  </div>
+  <div>
+    <h4>WIP limit 5</h4>
+    <p>Each engineer works on 1 item at a time. Each item receives one full engineer-day per day.</p>
+    <p>Result over 60 days: 60 items finished. Cycle time of every item: <strong>5 days</strong>.</p>
+  </div>
+</div>
+<p>The throughput is identical: 1 item per day in both cases. The cycle time differs by a factor of 3. The principle: <strong>a WIP limit does not add capacity, it stops the capacity from being spread thin</strong>. In the real world, the case with WIP 15 is worse than the model shows. A person who switches between tasks loses time at each switch. This page gives no number for that loss, because I did not find a source that I could verify for software teams.</p>
+
+<h3>From cycle times to a service level expectation</h3>
+<p>The SLE uses the past cycle times of the team. Suppose the team finished 20 items. The sorted cycle times in working days are:</p>
+<pre><code>3, 4, 4, 5, 5, 5, 6, 6, 7, 7, 8, 8, 9, 10, 12, 14, 15, 18, 21, 30</code></pre>
+<p> The 85th percentile is the value below which 85% of the items fall. 85% of 20 is 17, and the 17th value is 15. So the SLE is: "85% of work items are finished in 15 working days or less". The mean is 9.85 days, but the team does not promise the mean, because the slow items are far above it.</p>
+<p>When the daily walk finds an open item with an age of 12 days, the team compares 12 with the SLE of 15. The item is close to the limit of the promise. So the team acts on this item first.</p>
+
+<h2 id="compare">4. Kanban and Scrum differ in one main point: continuous flow against fixed sprints</h2>
+<p>Many engineering teams use Scrum. The Scrum Guide of November 2020 defines a sprint as a fixed-length event of one month or less. A new sprint starts immediately after the previous one. Kanban has no sprint. The table compares the two on the points that matter for a team lead.</p>
+<div class="table-wrap">
+<table>
+  <caption>Kanban and Scrum differ in the unit of planning, the roles, and the moment when work is selected</caption>
+  <thead>
+    <tr><th>Point</th><th>Kanban (Kanban Guide, May 2025)</th><th>Scrum (Scrum Guide, November 2020)</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Unit of planning</th><td>None. Work is selected continuously, one item at a time, when a place is free.</td><td>The sprint, a fixed period of one month or less, with a sprint backlog chosen at the start.</td></tr>
+    <tr><th scope="row">Required roles</th><td>None. All people who deliver value are "Kanban system members".</td><td>Product Owner, Scrum Master, Developers.</td></tr>
+    <tr><th scope="row">Required limit on open work</th><td>Yes. WIP must be explicitly controlled.</td><td>No explicit WIP limit. The sprint backlog limits the work of one sprint.</td></tr>
+    <tr><th scope="row">Required measurements</th><td>WIP, throughput, work item age, cycle time.</td><td>None are named as mandatory metrics.</td></tr>
+    <tr><th scope="row">Required meetings</th><td>None. Review of items can be continuous or at intervals.</td><td>Sprint Planning, Daily Scrum, Sprint Review, Sprint Retrospective.</td></tr>
+    <tr><th scope="row">Change of plan during the period</th><td>Any time. A new urgent item enters when a place is free, or by an explicit exception written in the DoW.</td><td>The sprint goal stays fixed; the sprint backlog can be adjusted by the developers.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one point of comparison. Read the two right columns side by side. The highlighted row is the main difference.</p>
+<p>When should a team lead prefer Kanban? When the work arrives continuously and its priority changes often, for example in a team that handles support, operations, and features together. A fixed sprint plan breaks when the priorities change every few days. When should a team lead prefer Scrum? When the team builds one product in a stable direction and wants a fixed rhythm for planning and review. Many teams combine both, see "Scrumban" in section 7.</p>
+
+<h2 id="mistake">5. Wrong idea corrected: a board with cards is not yet Kanban</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "We use Kanban, because our tickets are on a board with columns 'To do', 'Doing', and 'Done'."</p>
+  <p><strong>Correct:</strong> a board without a WIP limit and without a written DoW is a visualization, not a Kanban system. The Kanban Guide requires that members "must explicitly control the number of work items in a workflow from started to finished".</p>
+  <p><strong>Why the wrong idea fails:</strong> without the limit, nothing stops the team from starting a new item every time an item is blocked. WIP grows. By Little's Law, cycle time grows with WIP. The board then shows 25 items in "Doing", and the team has lost the one effect that Kanban is designed to produce. The limit is uncomfortable on purpose: it forces a conversation when the board is full.</p>
+</div>
+
+<h2 id="limits">6. Limits: the formula uses averages, and Kanban does not choose priorities for you</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>Little's Law holds for long-run averages in a stable system.</strong> It needs that items which enter also leave, and that the averages do not drift. For one week, or for one item, the formula can be far from the truth.</li>
+    <li><strong>The simulation in section 3 is a simplified model.</strong> It assumes equal items, equal engineers, and no loss from switching. Real teams have unequal items and specialists. The direction of the result (lower WIP, shorter cycle time) holds; the exact factor of 3 does not.</li>
+    <li><strong>Kanban does not say which item to select next.</strong> The team needs a rule for ordering the backlog, for example by cost of delay. The Kanban Guide leaves this to the team.</li>
+    <li><strong>Kanban does not say how to estimate.</strong> Forecasts come from past cycle time and throughput, not from estimates. A team that must give a fixed delivery date for a large project needs more than this page.</li>
+    <li><strong>The right WIP limit is not known in advance.</strong> A common starting point is one or two items per person per column, then the team adjusts after a few weeks of data. This starting point is a practice of the community, not a rule of the guide.</li>
+    <li><strong>Naming differs between sources.</strong> The 2010 book by David Anderson lists six practices, for example "limit work in progress" and "make policies explicit". The Kanban Guide of 2025 folds these into three practices. The ideas are the same; the headings differ.</li>
+  </ul>
+</div>
+
+<h2 id="words">7. Words that you will hear in a Kanban team</h2>
+<p>These terms are not part of the main explanation, but your team will use them.</p>
+<dl class="glossary">
+  <dt>Swimlane</dt>
+  <dd>A horizontal row on the board that crosses all columns. A team often uses one swimlane for urgent items and one for normal items. The WIP limits can apply per column, per swimlane, or both.</dd>
+  <dt>Blocked</dt>
+  <dd>A mark on a card for an item that cannot move, because it waits for something outside the team. Blocked items still count as WIP. The daily walk looks at blocked items first.</dd>
+  <dt>Expedite, class of service</dt>
+  <dd>An "expedite" item is an item that may break the normal order and sometimes the WIP limit. A class of service is a category of item with its own policy, for example "expedite", "fixed date", "standard". The guide allows exceptions to the WIP control only when the DoW states them.</dd>
+  <dt>Cumulative flow diagram</dt>
+  <dd>A chart with one coloured band per column, showing how many items were in each column on each day. The vertical distance between two bands is the WIP of that column. The horizontal distance is the approximate cycle time.</dd>
+  <dt>Replenishment meeting</dt>
+  <dd>A short meeting in which the team and its stakeholders choose which backlog items enter the "Selected" column. The team holds it when "Selected" has free places.</dd>
+  <dt>Scrumban</dt>
+  <dd>A combination: a Scrum team keeps its sprints and roles, and adds WIP limits and flow metrics from Kanban. The name comes from a 2008 book by Corey Ladas.</dd>
+  <dt>Kanban in Toyota</dt>
+  <dd>The word "kanban" is Japanese for "signal card". In the Toyota Production System, a card travels with parts and signals that a new batch of parts may be produced. The Kanban Guide names this system and the work of Taiichi Ohno as the origin. For knowledge work, the practices mainly originated at Corbis in 2006.</dd>
+</dl>
+
+<h2 id="check">8. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>Your team finishes 4 items per week and has 16 items in progress. What is the average cycle time? What happens to it when you set a WIP limit of 8 and the throughput stays at 4 per week?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>4 weeks, then 2 weeks.</strong></p>
+          <p>Cycle time = WIP ÷ throughput = 16 ÷ 4 = 4 weeks. With WIP 8: 8 ÷ 4 = 2 weeks. A typical wrong answer is "the throughput doubles". The throughput does not change. Only the waiting time per item falls. See <a href="#data">section 3</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>On the board of section 1, "Code review" is full and an engineer has just finished the development of item 16. What may the engineer do with item 16, and what should the engineer do next?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>Item 16 may not enter "Code review", because the column has reached its limit of 2. Item 16 stays in "In development" and waits. The engineer should not start a new item. The engineer should help to finish an item on the right of the board. For example, the engineer reviews one of the two items in "Code review", or helps with testing. The wrong answer is "pull item 19 from Selected", because that raises WIP without finishing anything.</p>
+        </div>
+      </details>
+    </li>
+    <li>Which five elements must a Definition of Workflow contain according to the Kanban Guide?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <ol><li>A definition of the work item.</li><li>The start point and the finish point.</li><li>The states between them.</li><li>How WIP is controlled.</li><li>Explicit policies for the states.</li></ol><p>The guide also requires a service level expectation inside the DoW. A board of columns alone covers only the third element. See <a href="#rule">section 2</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>A team records cycle times of 2, 3, 3, 4, 5, 6, 8, 9, 14, 22 days. The team wants to promise "85% of items in N days or less". What is N?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>14 days.</strong> 85% of 10 items is 8.5, so the 9th value in the sorted list is the first value at or above the 85% point. The 9th value is 14. A typical wrong answer is the mean, 7.6 days, which the team would miss for 3 of 10 items.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">9. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>Kanban is a strategy to improve the flow of work. It has three practices: define and visualize the workflow, actively manage the items, improve the workflow.</li>
+    <li>The WIP limit is the core. It creates a pull system: an item starts only when a place is free. The team finishes before it starts.</li>
+    <li>Little's Law: average cycle time = average WIP ÷ average throughput. Half the WIP gives half the cycle time at the same throughput.</li>
+    <li>The team tracks four metrics: WIP, throughput, work item age, cycle time. The service level expectation is a promise built from past cycle times, for example "85% in 15 days or less".</li>
+    <li>Kanban has no sprints and no required roles. Scrum has both. A board without a WIP limit is not a Kanban system.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>Cycle time</dt>
+  <dd>The time from the start of a work item until its finish. Start and finish are the points of the Definition of Workflow.</dd>
+  <dt>Definition of Workflow (DoW)</dt>
+  <dd>The written and shared description of how work items flow from started to finished. It contains the work item, the start and finish points, the states, the WIP control, the policies, and the service level expectation.</dd>
+  <dt>Kanban</dt>
+  <dd>A strategy that improves the flow of work through a process, with three practices: define and visualize the workflow, actively manage items, improve the workflow.</dd>
+  <dt>Kanban board</dt>
+  <dd>A board with one column per state of the workflow and one card per work item.</dd>
+  <dt>Little's Law</dt>
+  <dd>A law for a system with stable averages. The average number of items in the system equals the average arrival rate multiplied by the average time in the system. For a board: cycle time = WIP ÷ throughput.</dd>
+  <dt>Pull system</dt>
+  <dd>A system where a free place in the next state is the signal to start the next item.</dd>
+  <dt>Service level expectation (SLE)</dt>
+  <dd>A forecast of the time from started to finished, with a probability, built from past cycle times.</dd>
+  <dt>Throughput</dt>
+  <dd>The number of work items finished per unit of time, counted as items.</dd>
+  <dt>WIP limit</dt>
+  <dd>The maximum number of work items that one column, or one part of the workflow, may hold at the same time.</dd>
+  <dt>Work in progress (WIP)</dt>
+  <dd>The work items that are started but not finished.</dd>
+  <dt>Work item</dt>
+  <dd>One unit of work that the team delivers, for example a feature, a bug fix, or a technical change.</dd>
+  <dt>Work item age</dt>
+  <dd>The time from the start of an open work item until today.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or sources with limits. <span class="conf low">Low</span> = not verified, or sources disagree. <span class="conf given">Given</span> = a value from your message or an example value.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> <span class="quoted">The Kanban Guide</span>, May 2025, by John Coleman and Daniel Vacanti, published by Orderly Disruption Limited and Daniel S. Vacanti, Inc. under a Creative Commons licence. <a href="https://kanbanguides.org/english/">kanbanguides.org/english/</a>. I downloaded the page on 6 October 2026 and searched its text for every quoted phrase. Verified there: the definition of Kanban, the three practices, and the five elements of the DoW. Also verified: the SLE example, the WIP control sentence, the four flow metrics, and the history paragraph.</li>
+  <li><span class="conf high">High</span> <span class="quoted">The 2020 Scrum Guide</span>, November 2020, by Ken Schwaber and Jeff Sutherland. <a href="https://scrumguides.org/scrum-guide.html">scrumguides.org/scrum-guide.html</a>. Downloaded on 6 October 2026. Verified: a sprint is a fixed-length event of one month or less, and the names of the roles, events, and artifacts.</li>
+  <li><span class="conf medium">Medium</span> Little's Law: Wikipedia, <span class="quoted">Little's law</span>, read on 6 October 2026. Verified in the article text: John D. C. Little published the proof in 1961. The original paper is J. D. C. Little, <span class="quoted">A Proof for the Queuing Formula: L = λW</span>, Operations Research, 1961. I did not open the original paper.</li>
+  <li><span class="conf medium">Medium</span> History and naming: Wikipedia, <span class="quoted">Kanban (development)</span>, read on 6 October 2026. Verified in the article text: the 2010 book by David Anderson, the 2004 project at Microsoft, and the 2006 to 2007 project at Corbis. Also verified there: the 2008 book <span class="quoted">Scrumban</span> by Corey Ladas, and the 1988 book by Taiichi Ohno on the Toyota Production System. The list of six practices in the 2010 book is from my memory of the book, not verified on this date.</li>
+  <li><span class="conf given">Given</span> Team size, columns, WIP limits, item numbers, throughput of 3 items per week, and the list of 20 cycle times are example values.</li>
+  <li><span class="conf high">High</span> Calculated: all cycle times in section 3 use cycle time = WIP ÷ throughput, computed with a short Python program. The simulation of section 3 is the same program. Its settings: 5 engineers, 5 engineer-days per item, equal sharing of time, 60 days, WIP limits 5 and 15. The percentile in section 3 and in question 4 was computed from the sorted lists.</li>
+  <li><span class="conf low">Low</span> The claim that switching between tasks costs time: common in the literature on multitasking, but not verified on this date for software teams. No number is given on this page.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
