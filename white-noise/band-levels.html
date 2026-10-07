@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Band Levels Explained</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: IEC -->
+<h1>How does a change in one frequency band change the overall level?</h1>
+<p class="meta">Written 2026-10-07 · Reading time: about 19 minutes · You need to know: what a decibel is, and that a sound can be split into frequency bands</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>Band levels add as <strong>power</strong>, not as numbers. The overall level is 10 × log10 of the sum of 10^(level/10) over the bands. So the loudest band decides the total, and a quiet band changes it almost not at all.</p>
+  <p>In the example sound on this page, raising the loudest band (250 Hz) by 6 dB raises the total by <strong>3.8 dB</strong>. Raising the 8 kHz band by 6 dB raises the total by <strong>0.00 dB</strong>. Raising every band by 6 dB raises the total by exactly 6 dB.</p>
+  <p>The level you hear is <strong>A-weighted</strong>: the ear discounts low bands (63 Hz by 26 dB). So the same 6 dB at 63 Hz changes the unweighted total by 0.7 dB and the A-weighted total by 0.01 dBA. The app uses this to hold the heard level nearly steady when you move the tone dial.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>Eight octave bands, 63 Hz to 8 kHz, as in the app. Each band's level is the level of all the sound inside that band.</li>
+    <li>The example sound is the shaped sound from the page on Adapt: band levels -41, -33, -32, -39, -47, -55, -62, -67 dB. Example values.</li>
+    <li>The bands do not overlap and the sounds in them are unrelated noise, so their powers add. This is true for noise. It is not true for two copies of the same tone.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#example">One sound: +6 dB at 250 Hz gives +3.8 dB in total, +6 dB at 8 kHz gives +0.00 dB</a></li>
+    <li><a href="#rule">The rule: levels add as power, and the loudest band decides</a></li>
+    <li><a href="#weighting">The ear discounts the low bands: A-weighting moves the dominant band</a></li>
+    <li><a href="#app">What the app does with this: 85% loudness compensation</a></li>
+    <li><a href="#mistake">Wrong idea corrected: +6 dB in one band is not +6 dB in total</a></li>
+    <li><a href="#limits">Limits</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One sound: +6 dB at 250 Hz gives +3.8 dB in total, +6 dB at 8 kHz gives +0.00 dB</h2>
+<p>A sound is split into 8 <dfn>octave bands</dfn> (ranges of frequency, each twice the frequency of the one below). The bands are centred on 63, 125, 250, 500 Hz, 1, 2, 4 and 8 kHz. Each band has a <dfn>band level</dfn> (the level of the sound inside that band alone, in dB). The <dfn>total level</dfn> is the level of the whole sound, all bands together.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the example sound, in dB per band</span>
+  <ol class="steps">
+    <li>Band levels, from 63 Hz to 8 kHz: -41, -33, -32, -39, -47, -55, -62 and -67 dB.
+      <span class="why">These are the targets from the page on Adapt: a sound shaped to cover a snore, loud in the low bands.</span></li>
+    <li>Turn each level into power: 10^(level/10). For 250 Hz: 10^(-3.2) = 0.000631. For 8 kHz: 10^(-6.7) = 0.0000002.
+      <span class="why">Decibels are a logarithm of power. To add sounds, you must go back to power.</span></li>
+    <li>Add the eight powers: 0.001362. Turn the sum back into a level: 10 × log10(0.001362) = <strong>-28.66 dB</strong>. This is the total level.
+      <span class="why">The total is 3.3 dB above the loudest band (-32 dB), because the other bands add some power.</span></li>
+    <li>Raise 250 Hz by 6 dB, to -26 dB. New total: <strong>-24.89 dB</strong>, a change of <strong>+3.77 dB</strong>.
+      <span class="why">The loudest band holds 46% of the power. Raising it by 6 dB multiplies its power by 4, so the total power more than doubles: 10 × log10(2.38) = 3.77.</span></li>
+    <li>Instead, raise 8 kHz by 6 dB, to -61 dB. New total: <strong>-28.66 dB</strong>, a change of <strong>+0.00 dB</strong> (0.0005 dB).
+      <span class="why">The 8 kHz band holds 0.02% of the power. Four times almost nothing is still almost nothing.</span></li>
+    <li>Instead, raise every band by 6 dB. New total: -22.66 dB, a change of exactly <strong>+6.00 dB</strong>.
+      <span class="why">Every power is multiplied by 4, so the sum is multiplied by 4, and 10 × log10(4) = 6.02.</span></li>
+  </ol>
+  <p><strong>Result:</strong> the same 6 dB change gives +3.8, +0.0 or +6.0 dB in total. The only thing that decides is how much of the power the changed band holds.</p>
+</div>
+
+<figure>
+  <p class="fig-title">A 6 dB rise in the loudest band adds 3.8 dB to the total; in the quietest band it adds 0.0 dB.</p>
+  <p class="fig-sub">Change in the total level when one band is raised by 6 dB, for the example sound. Dark bars: unweighted. Pale bars: A-weighted (section 3).</p>
+  <div class="fig-scroll"><svg viewBox="0 0 680 300" role="img" aria-label="Bar chart. Raising one band by 6 decibels changes the total level by 3.8 decibels when the band is 250 hertz, the loudest band, and by 0.0 to 0.7 decibels for the other bands. A-weighted, the 63 hertz band changes the total by 0.0 decibels and the 1 kilohertz band by 1.2 decibels."><line class="grid" x1="56" y1="254.0" x2="664" y2="254.0"/><text class="axis-label" x="48" y="259.0" text-anchor="end" font-size="13">+0</text><line class="grid" x1="56" y1="196.0" x2="664" y2="196.0"/><text class="axis-label" x="48" y="201.0" text-anchor="end" font-size="13">+1</text><line class="grid" x1="56" y1="138.0" x2="664" y2="138.0"/><text class="axis-label" x="48" y="143.0" text-anchor="end" font-size="13">+2</text><line class="grid" x1="56" y1="80.0" x2="664" y2="80.0"/><text class="axis-label" x="48" y="85.0" text-anchor="end" font-size="13">+3</text><line class="grid" x1="56" y1="22.0" x2="664" y2="22.0"/><text class="axis-label" x="48" y="27.0" text-anchor="end" font-size="13">+4</text><rect x="67.2" y="213.6" width="25.8" height="40.4" fill="var(--s1)"/><rect x="95.0" y="253.2" width="25.8" height="0.8" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="94.0" y="272" text-anchor="middle" font-size="13">63 Hz</text><text x="80.1" y="208.6" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">0.7</text><rect x="143.2" y="67.4" width="25.8" height="186.6" fill="var(--s1)"/><rect x="171.0" y="208.7" width="25.8" height="45.3" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="170.0" y="272" text-anchor="middle" font-size="13">125 Hz</text><text x="156.1" y="62.4" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">3.2</text><text x="183.9" y="203.7" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">0.8</text><rect x="219.2" y="35.4" width="25.8" height="218.6" fill="var(--s1)"/><rect x="247.0" y="33.7" width="25.8" height="220.3" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="246.0" y="272" text-anchor="middle" font-size="13">250 Hz</text><text x="232.1" y="30.4" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">3.8</text><text x="259.9" y="28.7" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">3.8</text><rect x="295.2" y="192.7" width="25.8" height="61.3" fill="var(--s1)"/><rect x="323.0" y="82.8" width="25.8" height="171.2" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="322.0" y="272" text-anchor="middle" font-size="13">500 Hz</text><text x="308.1" y="187.7" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">1.1</text><text x="335.9" y="77.8" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">3.0</text><rect x="371.2" y="243.2" width="25.8" height="10.8" fill="var(--s1)"/><rect x="399.0" y="182.9" width="25.8" height="71.1" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="398.0" y="272" text-anchor="middle" font-size="13">1 kHz</text><text x="411.9" y="177.9" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">1.2</text><rect x="447.2" y="252.3" width="25.8" height="1.7" fill="var(--s1)"/><rect x="475.0" y="237.4" width="25.8" height="16.6" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="474.0" y="272" text-anchor="middle" font-size="13">2 kHz</text><rect x="523.2" y="253.7" width="25.8" height="0.3" fill="var(--s1)"/><rect x="551.0" y="250.8" width="25.8" height="3.2" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="550.0" y="272" text-anchor="middle" font-size="13">4 kHz</text><rect x="599.2" y="253.9" width="25.8" height="0.1" fill="var(--s1)"/><rect x="627.0" y="253.4" width="25.8" height="0.6" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="626.0" y="272" text-anchor="middle" font-size="13">8 kHz</text><rect x="434" y="26" width="12" height="12" fill="var(--s1)"/><text x="452" y="37" font-size="13" fill="var(--text)">change in total, dB</text><rect x="434" y="46" width="12" height="12" fill="var(--s2)" opacity="0.65"/><text x="452" y="57" font-size="13" fill="var(--text)">change in A-weighted total, dBA</text><text class="axis-label" x="60" y="37" font-size="13">dB</text></svg></div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each pair of bars is one band. The height is how much the total rises when that band alone rises by 6 dB. The dark bar is the plain total. The pale bar is the A-weighted total, which section 3 explains. Bars under 0.5 dB have no number.</p>
+  <p class="fig-source">Source: calculated from the example band levels with the formula in section 2.</p>
+</figure>
+
+<h2 id="rule">2. The rule: levels add as power, and the loudest band decides</h2>
+<p>The general formula, then the example again with its numbers:</p>
+<pre><code>total = 10 × log10( 10^(L1/10) + 10^(L2/10) + … + 10^(L8/10) )
+-28.66 = 10 × log10( 10^(-4.1) + 10^(-3.3) + 10^(-3.2) + 10^(-3.9) + 10^(-4.7) + 10^(-5.5) + 10^(-6.2) + 10^(-6.7) )</code></pre>
+<p>Two consequences follow. First, a band 10 dB below the loudest band holds one tenth of its power, and a band 20 dB below holds one hundredth. Second, a change in a band moves the total by at most the change itself. That maximum happens only when the band holds all the power. The table gives the rule for two sounds, which is enough to reason about any number of bands.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Two sounds together: how far the total sits above the louder one</caption>
+  <thead><tr><th class="num">Quieter sound below the louder by (dB)</th><th class="num">Total above the louder (dB)</th></tr></thead>
+  <tbody>
+    <tr><th scope="row" class="num">0</th><td class="num">3.01</td></tr>
+    <tr><th scope="row" class="num">1</th><td class="num">2.54</td></tr>
+    <tr><th scope="row" class="num">3</th><td class="num">1.76</td></tr>
+    <tr><th scope="row" class="num">6</th><td class="num">0.97</td></tr>
+    <tr><th scope="row" class="num">10</th><td class="num">0.41</td></tr>
+    <tr><th scope="row" class="num">20</th><td class="num">0.04</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read">The formula for the right column is 10 × log10(1 + 10^(-difference/10)). Two equal sounds give +3 dB. A sound 10 dB quieter adds 0.4 dB. A sound 20 dB quieter adds 0.04 dB, which no meter shows.</p>
+<p>So the <dfn>dominant band</dfn> (the band that holds the largest share of the power) decides the total. In the example, 250 Hz holds 46% and 125 Hz holds 37%; together 83%. The four highest bands hold 1.7% between them. A change in any of those four is invisible in the total.</p>
+
+<h2 id="weighting">3. The ear discounts the low bands: A-weighting moves the dominant band</h2>
+<p>A meter adds power as above. The ear does not weigh every band the same: it is much less sensitive to low frequencies. <dfn>A-weighting</dfn> is the standard correction for this, defined in IEC 61672. It adds a fixed value to each band level before the powers are summed. The result is in <dfn>dBA</dfn> (A-weighted decibels, the level as the ear roughly hears it). The values at the eight band centres, calculated from the standard's formula, are in the table.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>The example sound per band: share of the power, the A-weight, and the effect of +6 dB in that band</caption>
+  <thead><tr><th>Band</th><th class="num">Level (dB)</th><th class="num">Share (%)</th><th class="num">A-weight (dB)</th><th class="num">Share, A-weighted (%)</th><th class="num">+6 dB here: total (dB)</th><th class="num">+6 dB here: A-weighted (dBA)</th></tr></thead>
+  <tbody><tr><th scope="row">63&nbsp;Hz</th><td class="num">-41</td><td class="num">5.8</td><td class="num">-26.2</td><td class="num">0.1</td><td class="num">+0.70</td><td class="num">+0.01</td></tr><tr><th scope="row">125&nbsp;Hz</th><td class="num">-33</td><td class="num">36.8</td><td class="num">-16.2</td><td class="num">6.6</td><td class="num">+3.22</td><td class="num">+0.78</td></tr><tr class="highlight"><th scope="row">250&nbsp;Hz</th><td class="num">-32</td><td class="num">46.3</td><td class="num">-8.7</td><td class="num">46.9</td><td class="num">+3.77</td><td class="num">+3.80</td></tr><tr><th scope="row">500&nbsp;Hz</th><td class="num">-39</td><td class="num">9.2</td><td class="num">-3.2</td><td class="num">32.7</td><td class="num">+1.06</td><td class="num">+2.95</td></tr><tr><th scope="row">1&nbsp;kHz</th><td class="num">-47</td><td class="num">1.5</td><td class="num">0.0</td><td class="num">10.9</td><td class="num">+0.19</td><td class="num">+1.23</td></tr><tr><th scope="row">2&nbsp;kHz</th><td class="num">-55</td><td class="num">0.2</td><td class="num">1.2</td><td class="num">2.3</td><td class="num">+0.03</td><td class="num">+0.29</td></tr><tr><th scope="row">4&nbsp;kHz</th><td class="num">-62</td><td class="num">0.0</td><td class="num">1.0</td><td class="num">0.4</td><td class="num">+0.01</td><td class="num">+0.06</td></tr><tr><th scope="row">8&nbsp;kHz</th><td class="num">-67</td><td class="num">0.0</td><td class="num">-1.1</td><td class="num">0.1</td><td class="num">+0.00</td><td class="num">+0.01</td></tr></tbody>
+</table>
+</div>
+<p class="table-read">The shares in each column add to 100% apart from rounding. The 250 Hz row is the dominant band in both columns. The A-weight moves the second place from 125 Hz (37% unweighted, 7% A-weighted) to 500 Hz (9% unweighted, 33% A-weighted).</p>
+
+<figure>
+  <p class="fig-title">A-weighting shifts the power from the low bands to the middle: 63 Hz falls from 6% to 0.1%, 500 Hz rises from 9% to 33%.</p>
+  <p class="fig-sub">Share of the total power per band for the example sound. Dark bars: unweighted. Pale bars: A-weighted.</p>
+  <div class="fig-scroll"><svg viewBox="0 0 680 300" role="img" aria-label="Bar chart. Share of the total sound power per octave band. Unweighted: 250 hertz holds 46 percent and 125 hertz 37 percent. A-weighted: 250 hertz holds 47 percent, 500 hertz 33 percent and 1 kilohertz 11 percent, while 63 hertz falls from 6 percent to 0.1 percent."><line class="grid" x1="56" y1="254.0" x2="664" y2="254.0"/><text class="axis-label" x="48" y="259.0" text-anchor="end" font-size="13">0%</text><line class="grid" x1="56" y1="207.6" x2="664" y2="207.6"/><text class="axis-label" x="48" y="212.6" text-anchor="end" font-size="13">10%</text><line class="grid" x1="56" y1="161.2" x2="664" y2="161.2"/><text class="axis-label" x="48" y="166.2" text-anchor="end" font-size="13">20%</text><line class="grid" x1="56" y1="114.8" x2="664" y2="114.8"/><text class="axis-label" x="48" y="119.8" text-anchor="end" font-size="13">30%</text><line class="grid" x1="56" y1="68.4" x2="664" y2="68.4"/><text class="axis-label" x="48" y="73.4" text-anchor="end" font-size="13">40%</text><line class="grid" x1="56" y1="22.0" x2="664" y2="22.0"/><text class="axis-label" x="48" y="27.0" text-anchor="end" font-size="13">50%</text><rect x="67.2" y="226.9" width="25.8" height="27.1" fill="var(--s1)"/><rect x="95.0" y="253.5" width="25.8" height="0.5" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="94.0" y="272" text-anchor="middle" font-size="13">63 Hz</text><text x="80.1" y="221.9" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">6</text><rect x="143.2" y="83.2" width="25.8" height="170.8" fill="var(--s1)"/><rect x="171.0" y="223.4" width="25.8" height="30.6" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="170.0" y="272" text-anchor="middle" font-size="13">125 Hz</text><text x="156.1" y="78.2" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">37</text><text x="183.9" y="218.4" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">7</text><rect x="219.2" y="39.0" width="25.8" height="215.0" fill="var(--s1)"/><rect x="247.0" y="36.4" width="25.8" height="217.6" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="246.0" y="272" text-anchor="middle" font-size="13">250 Hz</text><text x="232.1" y="34.0" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">46</text><text x="259.9" y="31.4" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">47</text><rect x="295.2" y="211.1" width="25.8" height="42.9" fill="var(--s1)"/><rect x="323.0" y="102.5" width="25.8" height="151.5" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="322.0" y="272" text-anchor="middle" font-size="13">500 Hz</text><text x="308.1" y="206.1" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">9</text><text x="335.9" y="97.5" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">33</text><rect x="371.2" y="247.2" width="25.8" height="6.8" fill="var(--s1)"/><rect x="399.0" y="203.3" width="25.8" height="50.7" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="398.0" y="272" text-anchor="middle" font-size="13">1 kHz</text><text x="411.9" y="198.3" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text)">11</text><rect x="447.2" y="252.9" width="25.8" height="1.1" fill="var(--s1)"/><rect x="475.0" y="243.4" width="25.8" height="10.6" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="474.0" y="272" text-anchor="middle" font-size="13">2 kHz</text><rect x="523.2" y="253.8" width="25.8" height="0.2" fill="var(--s1)"/><rect x="551.0" y="252.0" width="25.8" height="2.0" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="550.0" y="272" text-anchor="middle" font-size="13">4 kHz</text><rect x="599.2" y="253.9" width="25.8" height="0.1" fill="var(--s1)"/><rect x="627.0" y="253.6" width="25.8" height="0.4" fill="var(--s2)" opacity="0.65"/><text class="axis-label" x="626.0" y="272" text-anchor="middle" font-size="13">8 kHz</text><rect x="464" y="26" width="12" height="12" fill="var(--s1)"/><text x="482" y="37" font-size="13" fill="var(--text)">share of power, unweighted</text><rect x="464" y="46" width="12" height="12" fill="var(--s2)" opacity="0.65"/><text x="482" y="57" font-size="13" fill="var(--text)">share of power, A-weighted</text></svg></div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each pair of bars is one band. The height is the band's share of the total power, in percent. The dark bar is the plain share. The pale bar is the share after the A-weight is added to each band. Bars under 5% have no number.</p>
+  <p class="fig-source">Source: calculated from the example band levels and the A-weights in the table.</p>
+</figure>
+
+<p>The consequence for a change is in the last two columns of the table. At 63 Hz, +6 dB moves the meter by 0.70 dB and the ear by 0.01 dBA. At 1 kHz, +6 dB moves the meter by 0.19 dB and the ear by 1.23 dBA. Which band matters depends on which total you ask about. For sleep, the A-weighted total is the one that matters, because it is the one the sleeper hears.</p>
+
+<h2 id="app">4. What the app does with this: 85% loudness compensation</h2>
+<p>When you move the tone dial or choose a scene, the app changes the band levels. Without a correction, a dark setting would be much quieter in dBA than a bright one. A switch between them would change the level suddenly. So the app computes a <dfn>makeup gain</dfn> (one multiplier on the whole sound that restores part of the lost A-weighted level). It does the sum of this page twice, once for the plain dial and once for the new shape. Then it compares the two A-weighted totals.</p>
+<p>One detail of the sum is specific to the app. The shape it sums is a <dfn>spectral density</dfn> (power per hertz, not per band). An octave band is twice as wide as the one below it, so the band power is the density plus 3 dB per band. The code adds 3 × index before the A-weight for this reason. Without it, the high bands would be under-weighted and every dark scene would be mispriced.</p>
+<p>The correction is 85% of the difference, not 100%. The code gives its own reason. A dark setting is supposed to sound somewhat darker, and the last few dB of restoration cost a large gain. The gain is also limited to between 0.3 and 4.0, a range of -10 to +12 dB. So no shape can drive the output into clipping.</p>
+<p>The relevant lines are in <code>WhiteNoise/Sources/Models/RoomProfile.swift</code>: the sum at line 268, the fraction at line 295. The A-weights the app uses are a table in <code>NoiseDSP.swift</code> at line 358, the standard's rounded values. They agree with the calculated values on this page within 0.1 dB.</p>
+
+<h2 id="mistake">5. Wrong idea corrected: +6 dB in one band is not +6 dB in total</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "I raised the 2 kHz slider by 6 dB, so the sound is 6 dB louder."</p>
+  <p><strong>Correct:</strong> in the example sound, the total rises by 0.03 dB on a meter and 0.29 dBA to the ear. The sound is louder by 6 dB only inside that band.</p>
+  <p><strong>Why the wrong idea fails:</strong> levels are logarithms of power, and powers add. A band that holds 0.2% of the power can quadruple and still hold under 1%. Only a change in the dominant band, or a change in every band, moves the total by about the same amount as the change.</p>
+</div>
+
+<h2 id="limits">6. Limits</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>Powers add only for unrelated sounds.</strong> Two copies of the same waveform add as amplitude, up to +6 dB, not +3 dB. Noise in separate bands is unrelated, so the rule holds for every example on this page.</li>
+    <li><strong>A-weighting is an approximation of the ear.</strong> It was defined for moderate levels. At the quiet levels of a bedroom the ear discounts low frequencies even more than the A-weight says.</li>
+    <li><strong>dBA is a level, not loudness.</strong> Loudness as people judge it also depends on bandwidth and on masking between bands. The page on a steady sound covers masking.</li>
+    <li><strong>The example sound is loud in the low bands.</strong> For a bright sound the dominant band is a high one, and the same +6 dB at 8 kHz would move the total.</li>
+  </ul>
+</div>
+
+<h2 id="check">7. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>Two bands only: 250 Hz at -32 dB and 500 Hz at -39 dB. What is the total level?
+      <details>
+        <summary>Show the answer</summary>
+        <div><p><strong>-31.2 dB.</strong></p><p>The quieter band is 7 dB below the louder. From the table in <a href="#rule">section 2</a>, the answer lies between the 6 dB row (0.97) and the 10 dB row (0.41). Exactly: 10 × log10(1 + 10^(-0.7)) = 0.79 dB, so -32 + 0.79 = -31.2 dB. A typical wrong answer is -71 dB (the numbers added) or -35.5 dB (the numbers averaged).</p></div>
+      </details>
+    </li>
+    <li>In the example sound, you lower the 125 Hz band by 6 dB. Does the total fall by about 3.2 dB (the same as the rise in section 1), by more, or by less?
+      <details>
+        <summary>Show the answer</summary>
+        <div><p><strong>By less: about 1.4 dB.</strong></p><p>A rise of 6 dB multiplies the band's power by 4; a fall of 6 dB divides it by 4. The 125 Hz band holds 37% of the power. After the cut it holds 37% ÷ 4 = 9% of the old total. So the total power falls to 72% of what it was, and 10 × log10(0.72) = -1.4 dB. A rise and a fall in one band are not symmetric, because the other bands do not change. A typical wrong answer is -3.2 dB by symmetry.</p></div>
+      </details>
+    </li>
+    <li>You raise the 63 Hz band of the example sound by 10 dB. Roughly how much louder does it sound, in dBA?
+      <details>
+        <summary>Show the answer</summary>
+        <div><p><strong>About 0.04 dBA, which is not audible.</strong></p><p>At 63 Hz the A-weight is -26.2 dB, so the band holds 0.1% of the A-weighted power. Ten times 0.1% is 1%, and 10 × log10(1.01) = 0.04 dBA. The meter would show +1.8 dB unweighted. See <a href="#weighting">section 3</a>. A typical wrong answer is "10 dB louder".</p></div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">8. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>Band levels add as power: total = 10 × log10 of the sum of 10^(level/10).</li>
+    <li>The dominant band decides the total. In the example, +6 dB at 250 Hz gives +3.8 dB; +6 dB at 8 kHz gives +0.00 dB; +6 dB everywhere gives +6 dB.</li>
+    <li>The ear discounts low bands. A-weighting adds -26.2 dB at 63 Hz and 0 dB at 1 kHz, and moves the dominant share toward the middle bands.</li>
+    <li>The app restores 85% of the A-weighted level that a tone or scene change removes, with a makeup gain between 0.3 and 4.0.</li>
+  </ol>
+</div>
+
+<dl class="glossary">
+  <dt>A-weighting</dt><dd>The standard correction, from IEC 61672, that discounts low and very high frequencies the way the ear does, before the powers are summed.</dd>
+  <dt>Band level</dt><dd>The level of the sound inside one band alone, in dB.</dd>
+  <dt>dBA</dt><dd>A-weighted decibels: the level as the ear roughly hears it.</dd>
+  <dt>Dominant band</dt><dd>The band that holds the largest share of the total power.</dd>
+  <dt>Makeup gain</dt><dd>One multiplier on the whole sound that restores part of the A-weighted level lost to a shape change.</dd>
+  <dt>Octave band</dt><dd>A range of frequency, each twice the frequency of the one below: 63 Hz to 8 kHz in eight bands.</dd>
+  <dt>Spectral density</dt><dd>Power per hertz. Band power is density times band width, so it rises 3 dB per octave for a flat density.</dd>
+  <dt>Total level</dt><dd>The level of the whole sound, all bands together.</dd>
+</dl>
+
+<ol class="sources">
+  <li><span class="conf given">Given</span> The example band levels are the targets from the page on Adapt: example values.</li>
+  <li><span class="conf high">High</span> Every total, share and change on this page: calculated with total = 10 × log10(Σ 10^(L/10)) in a script on 7 October 2026.</li>
+  <li><span class="conf medium">Medium</span> The A-weighting formula R_A(f), its constants 12194, 20.6, 107.7 and 737.9, the +2.00 dB offset, and its definition in IEC 61672. Source: the Wikipedia article <span class="quoted">A-weighting</span>, opened 7 October 2026. The standard itself was not opened. The band values on this page are calculated from that formula.</li>
+  <li><span class="conf high">High</span> The app's loudness compensation: <code>LoudnessCompensation.makeup</code> in <code>WhiteNoise/Sources/Models/RoomProfile.swift</code>, lines 258 to 295. The A-weight table: <code>WhiteNoise/Sources/Audio/NoiseDSP.swift</code>, line 358. Read at commit f493112, with no uncommitted changes to these files.</li>
+</ol>
+<p>Confidence labels: <strong>High</strong> means calculated or read in the code; <strong>Medium</strong> one good source with limits; <strong>Low</strong> not verified; <strong>Given</strong> an example value.</p>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
