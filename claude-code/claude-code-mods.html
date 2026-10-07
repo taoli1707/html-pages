@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code Mods Explained</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: Claude, Anthropic, GitHub, Tetris, Doom, Express, Koa, React, MCP, TypeScript, JavaScript, JSON, WSL, VS, SDK, CLI -->
+<h1>What are Claude Code mods, and how does a mod change Claude Code from the inside?</h1>
+<p class="meta">Written 2026-10-07 · Reading time: about 29 minutes · You need to know: what Claude Code is, and what a JavaScript function is</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>A mod is a Claude Code plugin that contains a JavaScript or TypeScript file with event handlers. Each time an event happens, Claude Code runs a handler, called a hook, inside its own process. An event is a tool call, a submitted prompt, or a part of the screen that is drawn. The hook can <strong>observe</strong> the event, <strong>rewrite</strong> it, or <strong>answer</strong> it instead of Claude Code.</p>
+  <p>The GitHub issue that you linked is the public proposal of this feature. Its author, an Anthropic engineer, posted it on 3 September 2026 under the name "function hooks". On 9 September 2026 the issue announced the product name "Claude Mods". On 1 October 2026 the issue said that mods are live. Mods are on by default in Claude Code version 2.1.287 and later. Your installed version is 2.1.290.</p>
+  <p>The comment that you linked is from a community member. It shows the first mod that draws an interactive surface: nine games above the prompt, playable while Claude works.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>You use Claude Code in a terminal, version 2.1.290. The page says where the Desktop app and other places differ.</li>
+    <li>You want to understand the mechanism before you write or install a mod. The page does not write a mod into your settings folder.</li>
+    <li>The official documentation at code.claude.com is the source of truth for the behaviour. The GitHub issue is the source for the history.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#example">One example: a mod of 3 files counts tool calls and adds a /tally command</a></li>
+    <li><a href="#rule">The rule: a hook receives the event, the API, and a next function, and it chooses one of three actions</a></li>
+    <li><a href="#chain">Several mods form one chain, and the first mod in the chain controls the others</a></li>
+    <li><a href="#compare">A mod differs from a settings hook in one main point: it runs inside the Claude Code process</a></li>
+    <li><a href="#data">The limits: 10 seconds per hook, 4 MiB per store, 10 redraws per second</a></li>
+    <li><a href="#history">The history in the issue: from a proposal on 3 September 2026 to a release on 1 October 2026</a></li>
+    <li><a href="#mistake">Wrong idea corrected: a mod runs with your permissions and is not sandboxed</a></li>
+    <li><a href="#limits">Limits of this page</a></li>
+    <li><a href="#words">Words that you will hear</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One example: a mod of 3 files counts tool calls and adds a /tally command</h2>
+<p>A <dfn>mod</dfn> is a Claude Code plugin that changes how Claude Code looks and behaves, with code that runs inside Claude Code. A <dfn>plugin</dfn> is a folder with a manifest file that Claude Code can install or load. A plugin can hold skills, commands, agents, and servers for the Model Context Protocol (MCP). A plugin becomes a mod when it also holds one code file with event handlers. The next paragraphs describe that file.</p>
+<p>The example is the tutorial mod from the official documentation. It has three files. I created the three files in a temporary folder. Then I ran the validation command and the command of the mod, on 7 October 2026 with Claude Code 2.1.290.</p>
+<pre><code>first-mod/
+├── .claude-plugin/
+│   └── plugin.json       the manifest: name, version, description
+└── hooks/
+    ├── hooks.json        { "modules": ["./register.js"] }
+    └── register.js       the hooks module</code></pre>
+<p>The file <code>register.js</code> does the work. It exports one function, <code>register</code>. Claude Code calls <code>register</code> one time when the mod loads, and passes it a function named <code>on</code>. </p>
+<p>Each call of <code>on</code> adds one <dfn>hook</dfn>. A hook is a function that Claude Code runs when one named event happens. This file is the <dfn>hooks module</dfn>: the one JavaScript or TypeScript file that the plugin names in <code>hooks/hooks.json</code>, under the key <code>modules</code>. An <dfn>event</dfn> is one thing that Claude Code is about to do, together with its data. For example, a tool call is an event with the name of the tool and its arguments.</p>
+<pre><code>// first-mod/hooks/register.js
+let calls = 0
+
+export function register(on) {
+  on('session.start', async ($, e, next) => {
+    await $.command.register({ name: 'tally', description: 'Show how many tool calls Claude has made' })
+    return next(e)
+  })
+
+  on('tool.call', async ($, e, next) => {
+    calls += 1
+    $.ui.invalidate('ui.render')
+    return next(e)
+  })
+
+  on('command.run', { command: 'tally' }, async () => {
+    return { text: 'Claude has made ' + calls + ' tool calls since this mod loaded' }
+  })
+
+  on('ui.render', { component: 'Spinner' }, async ($, e, next) => {
+    return next({ ...e, props: { ...e.props, suffix: ' · tool calls: ' + calls + '…' } })
+  })
+}</code></pre>
+
+<div class="box example">
+  <span class="label">Worked example: the mod runs through a session with 3 tool calls</span>
+  <ol class="steps">
+    <li><strong>The session starts.</strong> Claude Code loads the mod and calls <code>register(on)</code>. The four calls of <code>on</code> add four hooks. The variable <code>calls</code> is 0.
+      <span class="why">The module runs one time at load. The hooks only wait until their event happens.</span></li>
+    <li><strong>The event <code>session.start</code> happens.</strong> The first hook runs. It calls <code>$.command.register</code> and adds the command <code>/tally</code>. Then it returns <code>next(e)</code>.
+      <span class="why">Only a hook can add a command. The call of <code>next</code> lets the session start as usual.</span></li>
+    <li><strong>You type a prompt. Claude calls the tool <code>Bash</code>.</strong> The event <code>tool.call</code> happens. The second hook runs: <code>calls</code> becomes 1. The hook asks Claude Code to redraw the screen, then returns <code>next(e)</code>.
+      <span class="why">The hook does not change the tool call. It passes the same event <code>e</code> on, so the tool runs as usual.</span></li>
+    <li><strong>Claude Code draws the spinner.</strong> The event <code>ui.render</code> with <code>component: 'Spinner'</code> happens. The fourth hook runs. It calls <code>next</code> with a copy of <code>e</code> that has one more property, <code>suffix</code>. The spinner shows "Thinking · tool calls: 1…".
+      <span class="why">The hook rewrites the event. Claude Code draws its own spinner, but with the text that the hook added.</span></li>
+    <li><strong>Claude calls <code>Read</code> two more times.</strong> Steps 3 and 4 repeat. <code>calls</code> becomes 2, then 3. The spinner shows "tool calls: 3…".
+      <span class="why">All four hooks share the variable <code>calls</code>, because they are in the same file.</span></li>
+    <li><strong>You type <code>/tally</code>.</strong> The event <code>command.run</code> happens with <code>command: 'tally'</code>. The third hook matches, runs, and returns an object with <code>text</code>. It does not call <code>next</code>. The transcript shows "first-mod: Claude has made 3 tool calls since this mod loaded".
+      <span class="why">The hook answers the event itself. Nothing else handles <code>/tally</code>, so no Claude turn runs and no tokens are used.</span></li>
+  </ol>
+  <p><strong>My real run:</strong> I ran <code>claude -p "/tally" --plugin-dir ./first-mod</code> with no prior tool calls. The output was <span class="quoted">first-mod: Claude has made 0 tool calls since this mod loaded</span>. The count is 0 because the non-interactive run made no tool calls before the command. The validation command listed the four hooks and the two API calls, see section 2.</p>
+</div>
+
+<h2 id="rule">2. The rule: a hook receives the event, the API, and a next function, and it chooses one of three actions</h2>
+<p>Every hook has the same signature: <code>($, e, next)</code>. The three arguments have fixed meanings.</p>
+<ul>
+  <li><strong><code>$</code> is the <dfn>mods API</dfn>.</strong> The mods API is the one object through which a hook reaches anything outside its own code. This includes the screen, commands, files, processes, the network, and a model. Each call is a namespace and a method: <code>$.ui.toast(text)</code>, <code>$.fs.read(path)</code>, <code>$.model.complete(...)</code>. The reference page lists 21 namespaces, from <code>$.agent</code> to <code>$.ui</code>.</li>
+  <li><strong><code>e</code> is the event.</strong> It is plain, frozen data. For <code>tool.call</code> with the tool <code>Bash</code>, <code>e.tool</code> is <code>'Bash'</code> and <code>e.command</code> is the command text.</li>
+  <li><strong><code>next</code> is the <dfn>next function</dfn>.</strong> The next function passes the event to the other mods and then to the normal behaviour of Claude Code. It returns the result of the event, for example the output of the tool.</li>
+</ul>
+<p>A hook chooses one of three actions with these arguments. The three actions are the whole model.</p>
+<div class="table-wrap">
+<table>
+  <caption>The three actions of a hook, with the line of code that performs each one</caption>
+  <thead>
+    <tr><th>Action</th><th>What the hook does</th><th>Code</th><th>Example in section 1</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Observe</th><td>Notes the event and lets it continue without change.</td><td><code>return next(e)</code></td><td>The <code>tool.call</code> hook counts and passes on.</td></tr>
+    <tr><th scope="row">Rewrite</th><td>Changes the event, then lets it continue.</td><td><code>return next({ ...e, x: y })</code></td><td>The <code>ui.render</code> hook adds <code>suffix</code>.</td></tr>
+    <tr class="highlight"><th scope="row">Answer</th><td>Returns its own result and never calls <code>next</code>. The normal behaviour does not run.</td><td><code>return { text: '…' }</code> or <code>return { deny: '…' }</code></td><td>The <code>command.run</code> hook returns the text.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one action. The third column is the shape of the return statement. The highlighted row is the action that stops the normal behaviour.</p>
+<p>A hook can also act after the event. It calls <code>await next(e)</code>, receives the result, and then does something with the result. The example file <code>tool-call.ts</code> in the built-in skill does this. It runs the <code>Bash</code> tool. When the result has <code>isError === true</code>, it writes a status line with <code>$.ui.status</code>.</p>
+
+<h3>A matcher limits a hook to some events</h3>
+<p>The second argument of <code>on</code> is optional. It is a <dfn>matcher</dfn>: an object with field values that the event must have. The hook <code>on('command.run', { command: 'tally' }, …)</code> runs only when the command is <code>tally</code>. The hook <code>on('ui.render', { component: 'Spinner' }, …)</code> runs only when Claude Code draws the spinner. It does not run for a pane or a tool row. Without a matcher, the hook runs for every event of that name.</p>
+
+<h3>Claude Code reads the code before it runs the code</h3>
+<p>Claude Code analyses the source of the hooks module statically when it loads the mod. It finds every <code>on</code> call and every <code>$</code> call. The command <code>claude plugin validate</code> runs the same analysis. For the example mod, my run printed these two lines:</p>
+<pre><code>❯ ./register.js hooks: session.start, tool.call, command.run{command=tally}, ui.render{component=Spinner}
+❯ ./register.js calls: $.command.register, $.ui.invalidate</code></pre>
+<p>This is why the code has rules. The event name in <code>on</code> must be a string literal. Each API call must be written in full as <code>$.namespace.method</code>. The code may not copy <code>$</code> into a variable. If the analysis cannot find a hook, Claude Code does not call it. The benefit: you can list what a mod does before you install it, and you do not need to run it.</p>
+
+<h2 id="chain">3. Several mods form one chain, and the first mod in the chain controls the others</h2>
+<p>When several mods hook the same event, their hooks form a <dfn>middleware chain</dfn>. A middleware chain is a sequence of functions. Each function calls the next one through <code>next</code>, and the last call reaches the normal behaviour. The issue compares this to the web frameworks Express and Koa, which use the same pattern. The first mod is the outermost: it sees the event before the others, and it sees the result after them. If the first mod does not call <code>next</code>, the others never run.</p>
+
+<figure class="diagram">
+  <p class="fig-title">A tool call passes through the chain from the outermost mod to the normal behaviour, and the result returns the same way.</p>
+  <p class="fig-sub">The order is the one that the documentation gives for a terminal session. The guard mod loads only on a machine with managed settings or in a Team or Enterprise organization.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 720 230" role="img" aria-label="Diagram of a chain of five boxes from left to right: the event tool.call, the guard mod sec-default, a mod that you installed, a built-in mod, and the normal behaviour of Claude Code which runs the tool. Arrows labelled next go from left to right. A return arrow labelled result goes from the last box back to the first.">
+    <defs>
+      <marker id="arrow-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/>
+      </marker>
+    </defs>
+    <rect class="node" x="10" y="60" width="120" height="64" rx="8"/>
+    <text class="node-name" x="70" y="87" text-anchor="middle">Event</text>
+    <text class="node-value" x="70" y="108" text-anchor="middle">tool.call</text>
+    <rect class="node" x="160" y="60" width="120" height="64" rx="8"/>
+    <text class="node-name" x="220" y="87" text-anchor="middle">1. Guard mod</text>
+    <text class="node-value" x="220" y="108" text-anchor="middle">sec-default</text>
+    <rect class="node" x="310" y="60" width="120" height="64" rx="8"/>
+    <text class="node-name" x="370" y="87" text-anchor="middle">2. Your mod</text>
+    <text class="node-value" x="370" y="108" text-anchor="middle">first-mod</text>
+    <rect class="node" x="460" y="60" width="120" height="64" rx="8"/>
+    <text class="node-name" x="520" y="87" text-anchor="middle">3. Built-in mod</text>
+    <text class="node-value" x="520" y="108" text-anchor="middle">diff</text>
+    <rect class="node" x="610" y="60" width="100" height="64" rx="8"/>
+    <text class="node-name" x="660" y="87" text-anchor="middle">Claude Code</text>
+    <text class="node-value" x="660" y="108" text-anchor="middle">runs the tool</text>
+    <line class="arrow" x1="132" y1="92" x2="157" y2="92" marker-end="url(#arrow-head)"/>
+    <line class="arrow" x1="282" y1="92" x2="307" y2="92" marker-end="url(#arrow-head)"/>
+    <text class="arrow-label" x="295" y="50" text-anchor="middle">next(e)</text>
+    <line class="arrow" x1="432" y1="92" x2="457" y2="92" marker-end="url(#arrow-head)"/>
+    <text class="arrow-label" x="445" y="50" text-anchor="middle">next(e)</text>
+    <line class="arrow" x1="582" y1="92" x2="607" y2="92" marker-end="url(#arrow-head)"/>
+    <text class="arrow-label" x="595" y="50" text-anchor="middle">next(e)</text>
+    <path class="arrow" d="M 660 126 V 170 H 220 V 128" marker-end="url(#arrow-head)"/>
+    <text class="arrow-label" x="440" y="196" text-anchor="middle">the result of the tool returns through every hook that called next</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is one hook or the normal behaviour. An arrow to the right means "calls next and passes the event". The arrow at the bottom means "returns the result". A hook that answers the event instead of calling <code>next</code> stops the chain at its box.</p>
+</figure>
+
+<p>The documentation gives this order of the chain, from outermost to innermost:</p>
+<ol>
+  <li>The built-in guard mod <code>sec-default</code>, where it loads, then the mods that your organization lists first in managed settings.</li>
+  <li>The mods that you installed. Among them, a mod runs before the mods that it lists under <code>dependencies</code>. Inside one module, hooks run in the order of the <code>on</code> calls.</li>
+  <li>The mods that your organization lists last in managed settings.</li>
+  <li>The other built-in mods, for example <code>diff</code>.</li>
+</ol>
+<p>The consequence for an organization: an administrator puts a policy mod first. The policy mod can remove methods from <code>$</code> or answer an event with <code>deny</code>, and no later mod can undo this. The issue describes this in its fourth video: "Admins can remove affordances from $ so that all plugins below cannot invoke that side-effect."</p>
+
+<h3>A second example: the community mod from the comment draws a game above the prompt</h3>
+<p>The comment that you linked, posted on 14 September 2026 by a community member, is a data point in the issue. It presents the mod <code>cc-arcade</code>: nine games and a pet, drawn above the prompt, playable while Claude works, with zero tokens. The comment names the events and methods that the mod uses. The side-by-side comparison shows how the two examples use the same mechanism for different purposes.</p>
+<div class="compare">
+  <div>
+    <h4>first-mod (official tutorial)</h4>
+    <p>Hooks <code>ui.render</code> with the matcher <code>Spinner</code> and rewrites the props of the spinner that Claude Code draws.</p>
+    <p>Keeps its count in a module variable. The count resets at each reload.</p>
+  </div>
+  <div>
+    <h4>cc-arcade (community, from the comment)</h4>
+    <p>Hooks <code>ui.render</code> with the matcher <code>AbovePrompt</code> and returns its own tree of elements: the game board and buttons.</p>
+    <p>Keeps best scores and the pet in <code>$.store</code>, so they survive restarts. Pauses the game on <code>turn.complete</code> and feeds the pet on <code>tool.call</code>.</p>
+  </div>
+</div>
+<p>The principle: the same event, <code>ui.render</code>, serves both a small rewrite and a full replacement. The matcher selects which part of the screen the hook touches. The comment also reports three undocumented facts that cost its author time. A local variable may not be named <code>h</code> in a drawing module. The paths of <code>Client</code> modules must be string literals. The band above the prompt is about half the terminal and redraws about ten times a second. </p>
+<p>The last fact matches the documented limit of 10 redraws per second in section 5.</p>
+
+<h2 id="compare">4. A mod differs from a settings hook in one main point: it runs inside the Claude Code process</h2>
+<p>Claude Code had hooks before mods. A <dfn>settings hook</dfn> is a shell command, a web request, or a prompt that you configure in a settings file. Claude Code runs it on a lifecycle event such as <code>PreToolUse</code>. The documentation uses "hook" for the function of a mod, and "settings hook" for the older kind. The table compares the four ways to extend Claude Code, following the comparison table of the documentation.</p>
+<div class="table-wrap">
+<table>
+  <caption>Only a mod runs inside the process and can draw on the screen</caption>
+  <thead>
+    <tr><th>Point</th><th>Mod</th><th>Settings hook</th><th>Skill</th><th>MCP server</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Where it runs</th><td>Functions inside the Claude Code process</td><td>A separate shell command, web request, or prompt</td><td>Text that Claude reads</td><td>An external process or service</td></tr>
+    <tr><th scope="row">What it can change</th><td>Tool calls, prompts, commands, turns. What the interface draws.</td><td>Whether a tool call or prompt proceeds. Its arguments and result. Context for Claude.</td><td>What Claude knows and does</td><td>Which tools Claude has</td></tr>
+    <tr><th scope="row">Can it draw on the screen</th><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><th scope="row">What you write</th><td>JavaScript or TypeScript</td><td>A script and a settings entry</td><td>Markdown</td><td>A server in any language</td></tr>
+    <tr><th scope="row">Choose it when</th><td>You want a pane, a band above the prompt, a custom command, or a rewrite of an event.</td><td>You want to block, allow, or log an event with a script that you already have.</td><td>You repeat the same instructions in chat.</td><td>Claude needs an external system.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each column is one way to extend Claude Code. Read a row across to compare. The highlighted row is the main difference. One plugin can hold all four kinds.</p>
+<p>Where a mod runs matters for drawing. The hooks of a mod run in every kind of session that loads the plugin. The drawing appears only in the terminal and in the Code tab of the Desktop app. In the chat panel of the Visual Studio Code extension, in <code>claude -p</code>, and in a cloud session, the hooks run but nothing is drawn. In a WSL session of the Desktop app, mods do not run at all.</p>
+
+<h2 id="data">5. The limits: 10 seconds per hook, 4 MiB per store, 10 redraws per second</h2>
+<p>The reference page gives fixed limits. Claude Code skips a hook that exceeds a time limit, and rejects a call that exceeds a size limit. The table shows the limits that affect a first mod.</p>
+<div class="table-wrap">
+<table>
+  <caption>The limits of a hook and of the mods API, from the reference page read on 7 October 2026</caption>
+  <thead>
+    <tr><th>Limit</th><th class="num">Value</th><th>Unit</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Execution time of one hook for one event, not counting time inside <code>next</code></th><td class="num">10</td><td>seconds</td></tr>
+    <tr><th scope="row">Execution time of a <code>prompt.edit</code> hook</th><td class="num">50</td><td>milliseconds</td></tr>
+    <tr><th scope="row">Execution time of a <code>.catch</code> handler</th><td class="num">1</td><td>second</td></tr>
+    <tr><th scope="row">All <code>session.end</code> hooks together, by default</th><td class="num">1.5</td><td>seconds</td></tr>
+    <tr><th scope="row"><code>$.process.run</code> timeout, default and maximum</th><td class="num">30 to 600</td><td>seconds</td></tr>
+    <tr><th scope="row"><code>$.model.complete</code> output, default and maximum</th><td class="num">1,024 to 64,000</td><td>tokens</td></tr>
+    <tr><th scope="row">One file in <code>$.fs.read</code> or <code>$.fs.write</code></th><td class="num">4</td><td>MiB</td></tr>
+    <tr><th scope="row">All data in <code>$.store</code></th><td class="num">4</td><td>MiB of JSON</td></tr>
+    <tr><th scope="row">Redraws from <code>$.ui.invalidate</code>, in general and for the visible pane in the terminal</th><td class="num">10 to 30</td><td>per second</td></tr>
+    <tr><th scope="row">A toast stays visible</th><td class="num">4</td><td>seconds</td></tr>
+    <tr><th scope="row">Terminal width for a pane that opens without a request from you, first time and later</th><td class="num">144 to 110</td><td>columns</td></tr>
+    <tr><th scope="row">Events in the reference page, counted by me</th><td class="num">49</td><td>events</td></tr>
+    <tr><th scope="row">Namespaces of the mods API, counted by me</th><td class="num">21</td><td>namespaces</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one limit. Where a row has two values, the first is the default and the second is the maximum. The highlighted row is the limit that a slow hook hits first. The last two rows are counts that I made with a text search over the reference page, so a renamed event could change them.</p>
+<p>One consequence of the 10 second limit: a hook that waits for a slow network call must do that call through <code>$.http</code> or <code>$.process</code>. Time inside an API call does not count. A hook that computes for 11 seconds in its own code is skipped.</p>
+
+<h2 id="history">6. The history in the issue: from a proposal on 3 September 2026 to a release on 1 October 2026</h2>
+<p>The GitHub issue number 91870 is titled <span class="quoted">Mods - make Claude 10x more extensible</span>. Its author is an Anthropic engineer. The issue was edited in place three times, so its body has three dated sections. The table gives the sequence.</p>
+<div class="table-wrap">
+<table>
+  <caption>The feature moved from proposal to release in 28 days</caption>
+  <thead>
+    <tr><th>Date</th><th>Source</th><th>What happened</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">3 September 2026</th><td>Original post of the issue</td><td>A proposal named "function hooks". Hooks are TypeScript functions. Side effects are tracked through the <code>$</code> object. Composition works through <code>next</code>, as in Express or Koa. The author asked the community to engage, and said that the response "likely dictates whether this ships or not".</td></tr>
+    <tr><th scope="row">9 September 2026</th><td>Community update in the issue</td><td>Anthropic committed to ship. The product name became "Claude Mods". The term "function hook" stays as the name of the implementation primitive. The source of the first three built-in mods became public. Testers could use the variable <code>CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1</code>.</td></tr>
+    <tr class="highlight"><th scope="row">14 September 2026</th><td>The comment that you linked</td><td>A community member posted <code>cc-arcade</code> as a data point. It is the first plugin that draws an interactive surface with function hooks.</td></tr>
+    <tr><th scope="row">1 October 2026</th><td>Micro-update in the issue</td><td><span class="quoted">We're live!</span> Mods ship in Claude Code. The documentation says: on by default from version 2.1.287 in the terminal, and from 2.1.286 in the Desktop app. The environment variable is now ignored.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one dated event. The highlighted row is the comment that you asked about. The days between the first row and the last row are 28, calculated with code.</p>
+<p>The issue also names the design in one sentence that uses the vocabulary of functional programming: <span class="quoted">an effect-parameterized endomorphic continuation model for plugins</span>. In plain words: each hook is a function from an event to an event of the same type (endomorphic). It receives the rest of the chain as a function (continuation). Every side effect passes through the <code>$</code> parameter (effect-parameterized). The author also wrote that the <code>$</code> symbol is not negotiable, with a link to the library jQuery, which made that symbol famous.</p>
+
+<h2 id="mistake">7. Wrong idea corrected: a mod runs with your permissions and is not sandboxed</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "A mod only reaches the world through <code>$</code>, so Claude Code sandboxes it. A mod from an unknown author is safe to try."</p>
+  <p><strong>Correct:</strong> the documentation says that mods are not sandboxed. A mod runs with your permissions inside Claude Code. It can read and write files anywhere your account can. It can start programs and make network requests. It can read environment variables and settings files, including an API key. It can see every prompt and tool call, approve a tool call before you are asked, and call a model on your plan.</p>
+  <p><strong>Why the wrong idea fails:</strong> the <code>$</code> object makes the actions of a mod <em>visible</em>, not <em>restricted</em>. Static analysis lists what the mod calls. The restriction exists only when an outer mod, such as the guard of an organization, removes methods from <code>$</code>. On your own machine with no managed settings, no guard loads. So read the output of <code>claude plugin validate</code> before you install a mod, and install only from authors that you trust. The one thing that a mod cannot change is the permission prompt itself.</p>
+</div>
+
+<h2 id="limits">8. Limits of this page</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>The API changes between releases.</strong> The documentation says to trust the type declaration file that Claude Code writes beside your mod over any page. The event count of 49 and the namespace count of 21 are from the reference page on 7 October 2026.</li>
+    <li><strong>I did not watch the videos of the issue.</strong> The descriptions of the nine videos come from the text under each video in the issue. The issue states that the demos are real and the thumbnails are generated.</li>
+    <li><strong>I did not run cc-arcade.</strong> The facts about it come from the comment and from the readme file of its repository, read on 7 October 2026.</li>
+    <li><strong>I ran the example mod only non-interactively.</strong> The run shows that the mod loads and the command answers. It does not show the spinner text, because <code>claude -p</code> draws nothing.</li>
+    <li><strong>The page does not cover drawing in depth.</strong> Panes, bands, elements, and state across reloads have their own documentation pages. This page covers the event model.</li>
+    <li><strong>Organization policy is only summarized.</strong> Managed settings, the guard mod, and the order of policy mods have a separate documentation page for administrators.</li>
+  </ul>
+</div>
+
+<h2 id="words">9. Words that you will hear</h2>
+<p>These terms belong to the work with mods, but not to the event model that this page explains.</p>
+<dl class="glossary">
+  <dt>Pane, band, AbovePrompt</dt>
+  <dd>A pane is a view beside the transcript, opened with <code>$.ui.open</code>. A band is a row above the prompt, drawn by a hook on <code>ui.render</code> with the matcher <code>AbovePrompt</code>. Both are results of the rewrite or answer action on <code>ui.render</code>.</dd>
+  <dt>Surface</dt>
+  <dd>The place where Claude Code draws: <code>terminal</code>, <code>desktop</code>, <code>vscode</code>, or <code>mobile</code>. A drawing hook asks <code>$.ui.resolve(e)</code> for the elements of the current surface.</dd>
+  <dt><code>$.state</code> and <code>$.store</code></dt>
+  <dd>Two places to keep values. <code>$.state</code> keeps values for the session and survives a reload of the mod. <code>$.store</code> keeps values across sessions on the machine, up to 4 MiB. A plain variable in the module resets at each reload.</dd>
+  <dt>Hot reload</dt>
+  <dd>Claude Code watches a folder loaded with <code>--plugin-dir</code>, or the folder of mods that Claude wrote in the session. It reloads the module when a file changes. A reload runs <code>register</code> again and fires <code>session.start</code> again.</dd>
+  <dt><code>--plugin-dir</code> and the marketplace</dt>
+  <dd><code>claude --plugin-dir ./first-mod</code> loads a folder for one session without installation. An installed mod comes from a marketplace: <code>claude plugin install name@marketplace</code>. An installed copy is cached by version, so edits need a new version number.</dd>
+  <dt>The plugin-authoring skill and the dev-mods folder</dt>
+  <dd>When you ask Claude for a mod in a session, Claude uses the built-in skill <code>plugin-authoring</code>. Claude writes the mod under <code>~/.claude/dev-mods/</code> followed by the session ID. Claude Code then asks you once whether to enable hot reloading for the session. Claude Code deletes that folder after the cleanup period of your settings.</dd>
+  <dt><code>claude plugin test</code></dt>
+  <dd>Runs automated tests of a mod from the shell, without a session or network. A test fires events through <code>$</code> and checks what the hooks did. One test may take 5 seconds unless it sets a longer timeout.</dd>
+  <dt><code>sec-default</code> and managed settings</dt>
+  <dd>The built-in guard mod. It loads first on a machine with managed settings or in a Team or Enterprise organization. It keeps the classic hooks, prompt content, and deny rules of the organization out of reach of the mods that a person installs.</dd>
+</dl>
+
+<h2 id="check">10. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>A hook on <code>tool.call</code> with the matcher <code>{ tool: 'Edit' }</code> returns <code>{ deny: 'protected file' }</code> for every path that ends in <code>.env</code>. Which of the three actions is this, and does the tool run?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Answer. The tool does not run.</strong></p>
+          <p>The hook returns its own result and never calls <code>next</code>, so the chain stops at this hook. Nothing after it, including the normal behaviour that runs the tool, executes. A typical wrong answer is "rewrite", but a rewrite always calls <code>next</code> with a changed event. See <a href="#rule">section 2</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>Two mods hook <code>tool.call</code>: a mod that your organization lists first in managed settings, and a mod that you installed. Your mod approves every tool call. Can your mod approve a call that the organization mod denied?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>No.</strong></p>
+          <p>The organization mod is outermost. It sees the event first. When it answers with <code>deny</code>, it does not call <code>next</code>, so your mod never runs for that event. A later mod cannot stop an earlier mod from seeing an event, and cannot undo its answer. See <a href="#chain">section 3</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>You change the text in the <code>ui.render</code> hook of first-mod while the session runs with <code>--plugin-dir</code>. After the reload, <code>/tally</code> prints 0 although Claude made 5 tool calls before the edit. Why?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>A reload runs <code>register</code> again, and the module variables start over. The variable <code>calls</code> is a module variable, so it becomes 0. To keep a value across reloads, the mod must store it in <code>$.state</code> or <code>$.store</code>. See <a href="#words">section 9</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>You want to log every tool call to a file with a shell script that you already have, and you need nothing on the screen. Do you write a mod or a settings hook?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>A settings hook.</strong></p>
+          <p>The comparison table says: choose a settings hook when you want to block, allow, or log an event with a script that you already have. A mod is the right choice when you need a pane, a band, a command, or a rewrite of an event. Both can see every tool call. See <a href="#compare">section 4</a>.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">11. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>A mod is a plugin with a hooks module. The module exports <code>register(on)</code>, and each <code>on</code> call adds a hook for one event, with an optional matcher.</li>
+    <li>Every hook receives <code>($, e, next)</code>. It observes with <code>next(e)</code>, rewrites with <code>next({ ...e, change })</code>, or answers with its own result and no call of <code>next</code>.</li>
+    <li>Hooks on one event form a middleware chain. The outermost mod, which is the guard or the first policy mod of the organization, controls whether the inner mods run.</li>
+    <li>A mod reaches the outside only through <code>$</code>, so static analysis can list its hooks and calls before you run it. But a mod is not sandboxed: it runs with your permissions.</li>
+    <li>The issue proposed the feature on 3 September 2026 as "function hooks". The product name became "Claude Mods" on 9 September. Mods shipped on 1 October 2026, on by default from version 2.1.287.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>Event</dt>
+  <dd>One thing that Claude Code is about to do, together with its data. Example: a tool call with the name of the tool and its arguments.</dd>
+  <dt>Hook</dt>
+  <dd>A function in a hooks module that Claude Code runs when one named event happens. On the documentation pages, "hook" means this function, and the older kind is a "settings hook".</dd>
+  <dt>Hooks module</dt>
+  <dd>The one JavaScript or TypeScript file that a plugin names in <code>hooks/hooks.json</code> under <code>modules</code>. It exports <code>register</code>.</dd>
+  <dt>Matcher</dt>
+  <dd>The optional second argument of <code>on</code>: an object with field values that the event must have for the hook to run.</dd>
+  <dt>Middleware chain</dt>
+  <dd>A sequence of functions where each function calls the next one through <code>next</code>, and the last call reaches the normal behaviour.</dd>
+  <dt>Mod</dt>
+  <dd>A Claude Code plugin that changes how Claude Code looks and behaves, with code that runs inside Claude Code.</dd>
+  <dt>Mods API (<code>$</code>)</dt>
+  <dd>The one object through which a hook reaches anything outside its own code, organized as namespaces with methods.</dd>
+  <dt>Next function (<code>next</code>)</dt>
+  <dd>The third argument of a hook. It passes the event to the other mods and then to the normal behaviour, and returns the result.</dd>
+  <dt>Plugin</dt>
+  <dd>A folder with a manifest file that Claude Code can install or load. It can hold skills, commands, agents, MCP servers, and a hooks module.</dd>
+  <dt>Settings hook</dt>
+  <dd>A shell command, a web request, or a prompt that you configure in a settings file and that Claude Code runs on a lifecycle event.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or sources with limits. <span class="conf low">Low</span> = not verified, or sources disagree. <span class="conf given">Given</span> = a value from your message or an example value.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> GitHub issue 91870 in the repository anthropics/claude-code, <span class="quoted">Mods - make Claude 10x more extensible</span>, created 3 September 2026. <a href="https://github.com/anthropics/claude-code/issues/91870">github.com/anthropics/claude-code/issues/91870</a>. I read the full body through the GitHub API on 7 October 2026. This includes the updates of 9 September and 1 October 2026, and the text under each of the nine videos.</li>
+  <li><span class="conf high">High</span> The comment that you linked, posted 14 September 2026 on the same issue. <a href="https://github.com/anthropics/claude-code/issues/91870#issuecomment-5666255143">issuecomment-5666255143</a>. Read in full through the GitHub API on 7 October 2026. The readme file of the repository <code>sezaakgun/cc-arcade</code> was read the same day for the list of games and the development rules.</li>
+  <li><span class="conf high">High</span> Official documentation, read as markdown on 7 October 2026: <a href="https://code.claude.com/docs/en/plugins/mods/overview">Mods overview</a>, <a href="https://code.claude.com/docs/en/plugins/mods/create">Create a mod</a>, <a href="https://code.claude.com/docs/en/plugins/mods/events">React to events</a>, <a href="https://code.claude.com/docs/en/plugins/mods/reference">Mods reference</a>. The three actions, the order of the chain, the comparison table, the limits table, the trust section, and the version numbers come from these pages.</li>
+  <li><span class="conf high">High</span> The readme file of the <code>mods</code> folder of the repository anthropics/claude-code, read through the GitHub API on 7 October 2026. It lists the four built-in mods with source: <code>sec-default</code>, <code>diff</code>, <code>telemetry</code>, <code>agents-md</code>.</li>
+  <li><span class="conf high">High</span> The built-in skill <code>plugin-authoring</code> of Claude Code 2.1.287, as loaded on this machine, and its example file <code>tool-call.ts</code>. The type declaration file of the skill has 20,102 lines and names version 2.1.287 in its first line.</li>
+  <li><span class="conf high">High</span> My run on 7 October 2026 with Claude Code 2.1.290. <code>claude plugin validate ./first-mod</code> printed the hooks line and the calls line that section 2 quotes. It also printed a warning about a missing author field. <code>claude -p "/tally" --plugin-dir ./first-mod</code> printed the text that section 1 quotes. The command <code>claude --version</code> printed 2.1.290.</li>
+  <li><span class="conf high">High</span> Calculated: the days between 3 September 2026 and 1 October 2026 are 28, computed with Python.</li>
+  <li><span class="conf medium">Medium</span> The counts of 49 events and 21 namespaces: a text search over the events section and the methods section of the reference page. A renamed or added event changes the count.</li>
+  <li><span class="conf given">Given</span> The three tool calls and their names in the worked example are example values that follow the recording described in the documentation.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
