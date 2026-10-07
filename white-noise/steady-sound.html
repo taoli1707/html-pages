@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steady Sound Explained</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: ICU, WHO, NIOSH, iOS, ABA -->
+<h1>Why does a steady sound help you sleep through noise, and how can you measure whether it works?</h1>
+<p class="meta">Written 2026-10-06 · Reading time: about 26 minutes · You need to know: what a decibel is (the unit of loudness; 10 dB more sounds about twice as loud)</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>A steady sound does not cancel noise. It raises the background, so that a sudden noise is a smaller <strong>step</strong> above the background. In a sleep laboratory, the size of that step decided whether a sleeper woke: about <strong>17.5 dB</strong>, the same with and without white noise. With recorded intensive-care noise, sleepers had <strong>48.4 arousals per hour</strong>; with white noise added, <strong>15.7</strong>, close to the quiet night's 13.3.</p>
+  <p>The second effect, <strong>masking</strong>, is that a sound hides another sound of a similar pitch. Low pitches hide high pitches better than the reverse, so the steady sound must be shaped to the noise you want to hide.</p>
+  <p>To measure whether it works, measure two things. First, the <strong>step</strong> at your pillow, with a sound-level app; the best phone apps are within ±2 dB. Second, your <strong>sleep</strong> over three weeks with a diary and a wrist tracker: one week without the sound, one with, one without. The research evidence for white noise as a sleep aid is rated very low in quality. So your own three weeks are the test that counts.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>The sleeper is an adult. The infant limit of 50 dBA appears only in the safety section.</li>
+    <li>The example night (a snore of 55 dBA over a background of 32 dBA) uses example values. The laboratory numbers are from the published studies.</li>
+    <li>"White noise" on this page means any steady broadband sound: white, pink or brown noise, a fan, rain. The studies used various kinds.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#a">Part A. Why a steady sound helps: the step, and masking</a></li>
+    <li><a href="#a-example">One laboratory night: 48.4 arousals per hour fell to 15.7</a></li>
+    <li><a href="#a-rule">The rule: the step from background to peak decides, not the peak</a></li>
+    <li><a href="#a-masking">Masking is per pitch: low hides high, not the reverse</a></li>
+    <li><a href="#a-evidence">What the studies found, and how weak the evidence is</a></li>
+    <li><a href="#a-mistake">Wrong idea corrected: white noise does not "block" noise</a></li>
+    <li><a href="#a-check">Check your understanding, part A</a></li>
+    <li><a href="#b">Part B. How to measure whether it works</a></li>
+    <li><a href="#b-step">Measure the step at the pillow: 23 dB becomes 10 dB</a></li>
+    <li><a href="#b-sleep">Measure your sleep: three weeks, one change in the middle week</a></li>
+    <li><a href="#b-safety">Measure the level for safety: stay well under 50 dBA at the pillow</a></li>
+    <li><a href="#b-check">Check your understanding, part B</a></li>
+    <li><a href="#limits">Limits</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<p class="part">Part A</p>
+<h2 id="a">Why a steady sound helps: the step, and masking</h2>
+<div class="box bottom-line">
+  <span class="label">The short answer for part A</span>
+  <p>Sleepers wake when a sound rises about 17.5 dB above the background. A steady sound raises the background, so the same noise is a smaller step. And a sound hides noise of a similar pitch, more so from below than from above.</p>
+</div>
+
+<h2 id="a-example">1. One laboratory night: 48.4 arousals per hour fell to 15.7</h2>
+<p>In 2005 a group at Brown Medical School recorded five healthy adults under three conditions. They used <dfn>polysomnography</dfn> (the full sleep recording of brain waves, eye movement and muscle tone). An <dfn>arousal</dfn> is a brief awakening of the brain, seen in the brain waves, which the sleeper usually does not remember. The <dfn>arousal index</dfn> is the number of arousals per hour of sleep.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the Brown study (Stanchina and colleagues, 2005)</span>
+  <ol class="steps">
+    <li>Quiet night: <strong>13.3 arousals per hour</strong>.
+      <span class="why">Everyone has some arousals; this is the baseline for these sleepers.</span></li>
+    <li>Recorded intensive-care-unit noise played in the room: <strong>48.4 arousals per hour</strong>, 3.6 times the baseline.
+      <span class="why">Intensive-care noise is a series of sudden sounds: alarms, voices, doors. Each sudden sound can cause an arousal.</span></li>
+    <li>The same recorded noise plus steady white noise: <strong>15.7 arousals per hour</strong>. The extra arousals fell by 68%.
+      <span class="why">The white noise did not remove the alarms. It raised the background, so each alarm was a smaller step above it.</span></li>
+    <li>The step from the background to the peak that caused an arousal was <strong>17.7 dB</strong> without white noise and <strong>17.5 dB</strong> with it. The peak alone did not predict arousals.
+      <span class="why">The threshold for the brain is the change, not the absolute loudness. White noise moves the starting point of that change.</span></li>
+  </ol>
+  <p><strong>Result:</strong> one steady sound removed 68% of the extra arousals, because it changed the step and not the peak.</p>
+</div>
+
+<figure>
+  <p class="fig-title">White noise cut arousals from 48.4 to 15.7 per hour under intensive-care noise, near the quiet night's 13.3.</p>
+  <p class="fig-sub">Arousals per hour of sleep, five healthy adults, Stanchina and colleagues 2005.</p>
+  <div class="fig-scroll"><svg viewBox="0 0 640 300" role="img" aria-label="Bar chart. Arousals per hour of sleep: 13.3 on a quiet night, 48.4 with recorded intensive-care noise, 15.7 with the same noise plus white noise. White noise removed most of the extra arousals."><line class="grid" x1="56" y1="252.0" x2="624" y2="252.0"/><text class="axis-label" x="48" y="257.0" text-anchor="end" font-size="13">0</text><line class="grid" x1="56" y1="174.7" x2="624" y2="174.7"/><text class="axis-label" x="48" y="179.7" text-anchor="end" font-size="13">20</text><line class="grid" x1="56" y1="97.3" x2="624" y2="97.3"/><text class="axis-label" x="48" y="102.3" text-anchor="end" font-size="13">40</text><line class="grid" x1="56" y1="20.0" x2="624" y2="20.0"/><text class="axis-label" x="48" y="25.0" text-anchor="end" font-size="13">60</text><rect x="103.3" y="200.6" width="94.7" height="51.4" fill="var(--s1)"/><text x="150.7" y="194.6" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">13.3</text><text class="axis-label" x="150.7" y="270" text-anchor="middle" font-size="13">Quiet night</text><rect x="292.7" y="64.9" width="94.7" height="187.1" fill="var(--s2)"/><text x="340.0" y="58.9" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">48.4</text><text class="axis-label" x="340.0" y="270" text-anchor="middle" font-size="13">Recorded ICU noise</text><rect x="482.0" y="191.3" width="94.7" height="60.7" fill="var(--s1)"/><text x="529.3" y="185.3" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">15.7</text><text class="axis-label" x="529.3" y="270" text-anchor="middle" font-size="13">ICU noise + white noise</text><text class="axis-label" x="60" y="14" text-anchor="start" font-size="13">arousals per hour</text></svg></div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each bar is one condition. The height is the number of arousals per hour of sleep. The middle bar is the noisy night without help. The right bar is the same noise with white noise added.</p>
+  <p class="fig-source">Source: the abstract of the study, listed in the sources.</p>
+</figure>
+
+<h2 id="a-rule">2. The rule: the step from background to peak decides, not the peak</h2>
+<p>Levels on this page are in <dfn>dBA</dfn> (A-weighted decibels: loudness weighted by pitch the way the ear hears it). Every limit quoted here uses this scale.</p>
+<p>The <dfn>background level</dfn> is the steady loudness of the room between events. The <dfn>peak level</dfn> is the loudness of a sudden event, for example one snore. The rule from the laboratory: an arousal happens when the peak is about 17.5 dB above the background. A steady sound raises the background. Therefore the same peak is a smaller step, and fewer peaks cross the threshold.</p>
+<p>Levels in dB do not add like ordinary numbers, because the scale is logarithmic. Two sounds of 40 dB together give 43 dB, not 80 dB. The table gives the sums that this page uses.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Two sounds together: the louder one decides, the quieter one adds a little</caption>
+  <thead><tr><th>Sound 1 (dB)</th><th class="num">Sound 2 (dB)</th><th class="num">Together (dB)</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">30</th><td class="num">30</td><td class="num">33.0</td></tr>
+    <tr class="highlight"><th scope="row">32</th><td class="num">45</td><td class="num">45.2</td></tr>
+    <tr><th scope="row">40</th><td class="num">40</td><td class="num">43.0</td></tr>
+    <tr><th scope="row">40</th><td class="num">50</td><td class="num">50.4</td></tr>
+    <tr><th scope="row">45</th><td class="num">55</td><td class="num">55.4</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read">The formula is: together = 10 × log10(10^(a/10) + 10^(b/10)). A sound 13 dB quieter than another adds only 0.2 dB. That is why a steady sound at 45 dBA makes a 32 dBA room a 45 dBA room.</p>
+
+<figure class="diagram">
+  <p class="fig-title">The same snore is a step of 23 dB in a quiet room and a step of 10 dB over white noise at 45 dBA.</p>
+  <p class="fig-sub">Sound level at the pillow over a few seconds. Example values: background 32 dBA, snore peak 55 dBA, white noise 45 dBA.</p>
+  <div class="fig-scroll"><svg viewBox="0 0 720 236" role="img" aria-label="Two panels of sound level over time. Left, without white noise: the background is 32 decibels and a snore peak of 55 decibels is a step of 23 decibels. Right, with white noise at 45 decibels: the background becomes 45 decibels and the same peak is a step of only 10 decibels, under the 17.5 decibel threshold for an arousal."><text class="node-name" x="200" y="22" text-anchor="middle">Without white noise</text><line class="grid" x1="60" y1="200" x2="340" y2="200"/><text class="axis-label" x="54" y="205" text-anchor="end" font-size="13">20</text><line class="grid" x1="60" y1="120" x2="340" y2="120"/><text class="axis-label" x="54" y="125" text-anchor="end" font-size="13">40</text><line class="grid" x1="60" y1="40" x2="340" y2="40"/><text class="axis-label" x="54" y="45" text-anchor="end" font-size="13">60</text><path class="arrow" d="M60,152 L170,152 L185,60 L215,60 L230,152 L340,152" fill="none" stroke="var(--s1)" stroke-width="3"/><line x1="275" y1="152" x2="275" y2="60" stroke="var(--s2)" stroke-width="2" stroke-dasharray="4 3"/><text x="282" y="111" font-size="14" font-weight="600" fill="var(--text)">step 23 dB</text><text x="335" y="144" text-anchor="end" font-size="13" fill="var(--text)">background 32 dBA</text><text x="200" y="52" text-anchor="middle" font-size="13" fill="var(--text)">snore peak 55 dBA</text><text class="axis-label" x="200" y="222" text-anchor="middle" font-size="13">time, a few seconds</text><text class="node-name" x="540" y="22" text-anchor="middle">With white noise at 45 dBA</text><line class="grid" x1="400" y1="200" x2="680" y2="200"/><text class="axis-label" x="394" y="205" text-anchor="end" font-size="13">20</text><line class="grid" x1="400" y1="120" x2="680" y2="120"/><text class="axis-label" x="394" y="125" text-anchor="end" font-size="13">40</text><line class="grid" x1="400" y1="40" x2="680" y2="40"/><text class="axis-label" x="394" y="45" text-anchor="end" font-size="13">60</text><path class="arrow" d="M400,99 L510,99 L525,60 L555,60 L570,99 L680,99" fill="none" stroke="var(--s1)" stroke-width="3"/><line x1="615" y1="99" x2="615" y2="60" stroke="var(--s2)" stroke-width="2" stroke-dasharray="4 3"/><text x="622" y="85" font-size="14" font-weight="600" fill="var(--text)">step 10 dB</text><text x="675" y="91" text-anchor="end" font-size="13" fill="var(--text)">background 45 dBA</text><text x="540" y="52" text-anchor="middle" font-size="13" fill="var(--text)">snore peak 55 dBA</text><text class="axis-label" x="540" y="222" text-anchor="middle" font-size="13">time, a few seconds</text><text class="axis-label" x="12" y="22" font-size="13">dBA</text></svg></div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> the line is the sound level over time. The flat part is the background. The bump is one snore. The dashed line is the step from background to peak. In the right panel the background is higher, so the step is smaller and stays under the 17.5 dB threshold.</p>
+  <p class="fig-source">Source: example values; the threshold is from the Brown study.</p>
+</figure>
+
+<h2 id="a-masking">3. Masking is per pitch: low hides high, not the reverse</h2>
+<p>The step rule is about loudness over time. <dfn>Auditory masking</dfn> is about pitch: one sound makes another sound of a similar pitch inaudible, or quieter than it is. In 1940 Fletcher showed that only the part of the masking sound within a narrow range of pitch around the target sound counts. That range is the <dfn>critical band</dfn> (the width of the ear's own filter around one pitch). Energy outside the band does not help.</p>
+<p>The effect is not symmetric. A low-pitched sound masks higher pitches over a wide range; a high-pitched sound masks only pitches near its own. This is called the upward spread of masking. The consequence for sleep: a snore, which is mostly low-pitched, is hidden only by a sound with enough energy at low pitches. A hiss-like sound at the same total level leaves the snore audible.</p>
+
+<div class="compare">
+  <div>
+    <h3>White noise</h3>
+    <p>Equal energy per hertz. Each octave band is twice as wide as the one below it, so white noise is 3 dB louder in each higher octave band. From the 63 Hz band to the 8 kHz band it rises by 21 dB. It sounds like a hiss, and most of its energy is high-pitched.</p>
+  </div>
+  <div>
+    <h3>Pink noise</h3>
+    <p>Equal energy per octave band. Each band carries the same level, so the sound is balanced from low to high. It sounds like steady rain or a waterfall. Brown noise goes further: 3 dB less in each higher band, a rumble.</p>
+  </div>
+</div>
+<p>The principle: at the same total level, the sound that hides a snore is the one with its energy at the snore's pitch. That is why the app on this site measures the surroundings in 8 octave bands and shapes its sound band by band. The page <a href="adapt-explained.html">How does Adapt measure your surroundings and shape the sound?</a> explains that mechanism.</p>
+
+<h2 id="a-evidence">4. What the studies found, and how weak the evidence is</h2>
+<p>Three studies with sleep measurements, not only questionnaires:</p>
+<ul>
+  <li><strong>Brown, 2005:</strong> five healthy adults, polysomnography, recorded intensive-care noise. Arousals per hour 13.3, 48.4 and 15.7, as above.</li>
+  <li><strong>Harvard, 2017 (Messineo and colleagues):</strong> 18 healthy adults, two nights, bedtime moved 90 minutes earlier to model insomnia. Room noise 40.1 dB, or broadband sound at 46.0 dB from two speakers. Time to fall asleep (to stage 2) was 19 minutes with room noise and 13 minutes with the sound. The paper reports a median reduction of 38%.</li>
+  <li><strong>New York, 2021 (Ebben and colleagues):</strong> 10 adults with sleep complaints in noisy homes. One week without a white-noise machine, one week with, one week without. Time awake in the night (measured by a wrist tracker) fell, and self-reported time to fall asleep fell. Both were statistically significant with 10 people.</li>
+</ul>
+<p>Against that, the 2021 systematic review of 38 studies (Riedy and colleagues) rated the quality of evidence that continuous noise improves sleep as <strong>very low</strong>. The studies differed in the sound, the measurement and the control condition, and the results ranged from improved to disrupted sleep. The review also noted a possible negative effect on sleep and on hearing. So: the mechanism is clear and measured, the population benefit is not established, and whether it helps <em>you</em> is a question for part B.</p>
+
+<h2 id="a-mistake">5. Wrong idea corrected: white noise does not "block" noise</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "White noise blocks or cancels the noise, so the snore gets quieter."</p>
+  <p><strong>Correct:</strong> the snore arrives at your ear at the same level. Two things change. The step from background to peak is smaller. And the part of the snore within the masked pitch range is harder to hear.</p>
+  <p><strong>Why the wrong idea fails:</strong> cancellation needs a second sound with the opposite waveform at the ear, which is what noise-cancelling headphones do. A speaker in the room cannot do that. In the Brown study the peaks were the same on both nights. Only the background changed, and the arousals fell from 48.4 to 15.7 per hour.</p>
+</div>
+
+<h2 id="a-check">6. Check your understanding, part A</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>The background in a room is 40 dBA. A door closes at 56 dBA. You add a steady sound at 50 dBA. Is the step now above or below the 17.5 dB threshold?
+      <details>
+        <summary>Show the answer</summary>
+        <div><p><strong>Below. The step is about 5.6 dB.</strong></p><p>Background with the sound: 40 dBA + 50 dBA together = 50.4 dBA (table in <a href="#a-rule">section 2</a>). Step: 56 − 50.4 = 5.6 dB. Without the sound the step was 16 dB, already close to the threshold. A typical wrong answer adds 40 + 50 = 90 dB; levels do not add that way.</p></div>
+      </details>
+    </li>
+    <li>Two sounds have the same total level. One is a hiss, one is a rumble. Which hides a snore better, and why?
+      <details>
+        <summary>Show the answer</summary>
+        <div><p><strong>The rumble.</strong></p><p>A snore is low-pitched. Masking works within the critical band around the snore's pitch, and low pitches mask upward, not downward. The hiss has its energy at high pitches, outside the snore's band. See <a href="#a-masking">section 3</a>. A typical wrong answer is "the same, because the level is the same": total level says nothing about where the energy is.</p></div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<p class="part">Part B</p>
+<h2 id="b">How to measure whether it works</h2>
+<div class="box bottom-line">
+  <span class="label">The short answer for part B</span>
+  <p>Measure the step at your pillow with a phone app: background, peak, and both again with the sound on. Then measure your sleep for three weeks, one change in the middle week, with a diary and a wrist tracker. And check the level at the pillow for safety.</p>
+</div>
+
+<h2 id="b-step">7. Measure the step at the pillow: 23 dB becomes 10 dB</h2>
+<p>A <dfn>sound-level app</dfn> turns the phone into a sound-level meter. In a NIOSH test of 130 iOS apps, the three best were within ±2 dB of a reference meter, from 65 to 95 dB. With an external calibrated microphone the error fell to ±1 dB. Bedroom levels are lower than 65 dB, so treat the readings as approximate, and compare readings from the same phone in the same place. Set the app to dBA.</p>
+
+<div class="box example">
+  <span class="label">Worked example: one evening of measurements</span>
+  <ol class="steps">
+    <li>Put the phone on the pillow, screen up, for 5 minutes with the room as it is at night. Read the lowest steady value: <strong>background 32 dBA</strong>.
+      <span class="why">The pillow is where the ear will be. The lowest steady value is the background, not the average, because the average includes the peaks.</span></li>
+    <li>Wait for the noise you want to hide, or play a recording of it from where it comes from. Read the highest value: <strong>peak 55 dBA</strong>. The step is 55 − 32 = <strong>23 dB</strong>.
+      <span class="why">23 dB is above the 17.5 dB threshold, so this noise can cause arousals.</span></li>
+    <li>Turn on the steady sound at the level you would sleep with. Read the new background: <strong>45 dBA</strong>.
+      <span class="why">The app reads the sum of the room and the sound: 32 and 45 together are 45.2 dBA.</span></li>
+    <li>Peak again with the sound on: still about 55 dBA, because the snore has not changed. New step: 55 − 45 = <strong>10 dB</strong>.
+      <span class="why">10 dB is under 17.5 dB. The sound is loud enough to take this noise under the threshold.</span></li>
+    <li>Calculate the lowest sound level that would do it: the background must reach 55 − 17.5 = 37.5 dBA. With a 32 dBA room, a sound of <strong>36.1 dBA</strong> is enough.
+      <span class="why">10 × log10(10^3.75 − 10^3.2) = 36.1. Anything above this is louder than it needs to be for this noise.</span></li>
+  </ol>
+  <p><strong>Result:</strong> for this noise, the sound needs to be at least 36 dBA at the pillow; 45 dBA gives a 7.5 dB reserve.</p>
+</div>
+<p>This is the step rule only. For masking by pitch, the phone app shows one number, not a spectrum. The app on this site does the per-pitch version automatically. It measures the surroundings in 8 bands, and its Coverage sheet reports how far its sound sits above each band. A good manual check is simpler: lie down, play the sound, and ask whether you can still hear the noise. If you can hear it clearly, the sound is wrong in pitch or in level.</p>
+
+<h2 id="b-sleep">8. Measure your sleep: three weeks, one change</h2>
+<p>The step measurement predicts fewer arousals. Whether you sleep better is a separate question, and the only honest way to answer it is to measure your own sleep. The New York study used an <dfn>ABA design</dfn>. ABA is a test in three periods: A, a week without the change; B, a week with it; A again, a week without it. The return to the first condition shows whether an improvement came from the sound or from something else that week.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>The three-week test, as the New York study ran it</caption>
+  <thead><tr><th>Week</th><th>Sound</th><th>Diary, each morning</th><th>Wrist tracker</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">1</th><td>Off</td><td>Time to fall asleep; number of awakenings; minutes awake in the night; a rating of the night from 1 to 5</td><td>Minutes awake in the night; sleep efficiency</td></tr>
+    <tr class="highlight"><th scope="row">2</th><td>On, same level every night</td><td>The same four items</td><td>The same two items</td></tr>
+    <tr><th scope="row">3</th><td>Off</td><td>The same four items</td><td>The same two items</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read">Keep bedtime, alcohol and caffeine the same across the three weeks, or write them down. Compare the averages of week 2 with weeks 1 and 3.</p>
+
+<p>The two numbers that moved in the New York study are the two to watch. <dfn>Wake after sleep onset</dfn> (from here: WASO; the minutes awake between falling asleep and the final waking) fell, as measured by the wrist tracker. <dfn>Sleep latency</dfn> (the minutes from lights out to falling asleep) fell, as reported in the diary. A wrist tracker measures movement, so its WASO is approximate; it is the same approximation in all three weeks, which is what matters.</p>
+<p>What counts as "it works": week 2 is better than both week 1 and week 3, on WASO or on sleep latency. The difference must be larger than the night-to-night variation inside week 1. With 7 nights per week, a change of a few minutes is noise. A change of 10 minutes or more in WASO, seen in both comparisons, is a result.</p>
+
+<h2 id="b-safety">9. Measure the level for safety: stay well under 50 dBA at the pillow</h2>
+<p>The same app gives the safety check. Three reference values, all in dBA:</p>
+<div class="table-wrap">
+<table>
+  <caption>Reference levels for a bedroom, in dBA</caption>
+  <thead><tr><th>Level (dBA)</th><th>What it is</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">40</th><td>WHO guideline for night noise outside the bedroom window, to protect sleep</td><td>WHO, 2009</td></tr>
+    <tr class="highlight"><th scope="row">50</th><td>Recommended limit for infants in hospital nurseries; all 14 infant sleep machines tested exceeded it at 30 cm at full volume</td><td>Hugh, 2014</td></tr>
+    <tr><th scope="row">85</th><td>Occupational limit for 8 hours; 3 of the 14 machines exceeded it at 30 cm</td><td>Hugh, 2014</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read">A steady sound for sleep sits between 35 and 50 dBA at the pillow in the examples on this page. The Harvard study used 46 dB. A machine at full volume next to a cot can exceed 85 dBA, which is a hearing risk over a night.</p>
+
+<h2 id="b-check">10. Check your understanding, part B</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>Your background is 35 dBA and the loudest truck is 60 dBA. What is the lowest steady sound level at the pillow that brings the step under 17.5 dB?
+      <details>
+        <summary>Show the answer</summary>
+        <div><p><strong>About 42 dBA.</strong></p><p>The background must reach 60 − 17.5 = 42.5 dBA. The sound alone must be 10 × log10(10^4.25 − 10^3.5) = 41.7 dBA, because the room's own 35 dBA adds a little. A typical wrong answer is 42.5 − 35 = 7.5 dBA; levels do not subtract that way. See <a href="#b-step">section 7</a>.</p></div>
+      </details>
+    </li>
+    <li>In your three-week test, WASO is 40 minutes in week 1, 25 in week 2 and 38 in week 3. Does the sound work?
+      <details>
+        <summary>Show the answer</summary>
+        <div><p><strong>Yes, by this test.</strong></p><p>Week 2 is 15 minutes better than week 1 and 13 minutes better than week 3. The return to about 40 in week 3 shows the improvement followed the sound and not the calendar. A typical wrong conclusion compares only weeks 1 and 2; without week 3 you cannot tell a real effect from a good week. See <a href="#b-sleep">section 8</a>.</p></div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="limits">11. Limits</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>The 17.5 dB threshold comes from 5 healthy adults.</strong> Light sleepers and children may wake at smaller steps; the number is a guide, not a law.</li>
+    <li><strong>The evidence for better sleep is very low quality.</strong> The 2021 review of 38 studies found results from improved to disrupted sleep. The three studies on this page are small: 5, 18 and 10 people.</li>
+    <li><strong>Phone sound-level apps were tested from 65 to 95 dB.</strong> Bedroom levels are lower, where the phone's microphone is less accurate. Use the readings to compare, not as absolute values.</li>
+    <li><strong>The step rule ignores pitch.</strong> A 10 dB step at the snore's pitch is one thing. A 10 dB step at a pitch the sound does not cover is another, and the ear hears the difference. The lying-down listening check covers this.</li>
+    <li><strong>Hearing.</strong> A sound played all night near 50 dBA is far below the occupational limit. But the review names hearing as an open concern, and no long-term study was found.</li>
+  </ul>
+</div>
+
+<h2 id="recap">12. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>A steady sound raises the background, so a sudden noise is a smaller step. Sleepers in the laboratory woke at a step of about 17.5 dB, with or without white noise.</li>
+    <li>Under intensive-care noise, white noise cut arousals from 48.4 to 15.7 per hour, near the quiet night's 13.3.</li>
+    <li>Masking is per pitch, and low pitches mask upward. The sound must have energy at the pitch of the noise.</li>
+    <li>Measure the step at the pillow with a phone app, then measure your sleep for three weeks with one change in the middle week.</li>
+    <li>The population evidence is very low quality; your own three weeks decide. Keep the level well under 50 dBA at the pillow.</li>
+  </ol>
+</div>
+
+<dl class="glossary">
+  <dt>ABA design</dt><dd>A test with three periods: A, without the change; B, with it; A again, without it.</dd>
+  <dt>Arousal</dt><dd>A brief awakening of the brain, visible in the brain waves, usually not remembered.</dd>
+  <dt>Arousal index</dt><dd>The number of arousals per hour of sleep.</dd>
+  <dt>Auditory masking</dt><dd>One sound makes another sound of a similar pitch inaudible or quieter.</dd>
+  <dt>Background level</dt><dd>The steady loudness of the room between events.</dd>
+  <dt>Critical band</dt><dd>The width of the ear's own filter around one pitch; only masking energy inside it counts.</dd>
+  <dt>dBA</dt><dd>A-weighted decibels: loudness weighted by pitch the way the ear hears it.</dd>
+  <dt>Peak level</dt><dd>The loudness of a sudden event, for example one snore.</dd>
+  <dt>Polysomnography</dt><dd>The full laboratory sleep recording: brain waves, eye movement, muscle tone.</dd>
+  <dt>Sleep latency</dt><dd>The minutes from lights out to falling asleep.</dd>
+  <dt>Sound-level app</dt><dd>A phone app that reads the sound level from the phone's microphone.</dd>
+  <dt>Wake after sleep onset (WASO)</dt><dd>The minutes awake between falling asleep and the final waking.</dd>
+</dl>
+
+<ol class="sources">
+  <li><span class="conf high">High</span> Stanchina and colleagues, <span class="quoted">The influence of white noise on sleep in subjects exposed to ICU noise</span>, Sleep Medicine 2005;6(5):423-8. Abstract read on PubMed, record 16139772, on 6 October 2026: 13.3, 48.4 and 15.7 arousals per hour; steps 17.7 and 17.5 dB.</li>
+  <li><span class="conf high">High</span> Messineo and colleagues, <span class="quoted">Broadband Sound Administration Improves Sleep Onset Latency in Healthy Subjects in a Model of Transient Insomnia</span>, Frontiers in Neurology 2017;8:718. Abstract read on PubMed, record 29312136: 18 subjects, 40.1 and 46.0 dB, 19 and 13 minutes, median reduction 38%.</li>
+  <li><span class="conf high">High</span> Ebben, Yan and Krieger. <span class="quoted">The effects of white noise on sleep and duration in individuals living in a high noise environment in New York City</span>. Sleep Medicine 2021;83:256-259. Abstract read on PubMed, record 34049045. Ten participants in three one-week periods. WASO and sleep latency improved.</li>
+  <li><span class="conf high">High</span> Riedy and colleagues, <span class="quoted">Noise as a sleep aid: A systematic review</span>, Sleep Medicine Reviews 2021;55:101385. Abstract read on PubMed, record 33007706: 38 studies, quality of evidence very low.</li>
+  <li><span class="conf high">High</span> Hugh and colleagues, <span class="quoted">Infant sleep machines and hazardous sound pressure levels</span>, Pediatrics 2014;133(4):677-81. Abstract read on PubMed, record 24590753: 14 machines, all above 50 dBA at 30 cm, 3 above 85 dBA.</li>
+  <li><span class="conf high">High</span> NIOSH Science Blog, <span class="quoted">So How Accurate Are These Smartphone Sound Measurement Apps?</span>, 2014, with the 2016 update. Page opened: 130 iOS apps examined, three within ±2 dB over 65 to 95 dB, ±1 dB with external microphones. https://www.cdc.gov/niosh/bulletin/2014/sound-app.html</li>
+  <li><span class="conf high">High</span> WHO Regional Office for Europe, <span class="quoted">Night Noise Guidelines for Europe</span>, 2009. Page opened: guideline value 40 dB Lnight outside, interim target 55 dB. https://www.who.int/europe/publications/i/item/9789289041737</li>
+  <li><span class="conf medium">Medium</span> Masking and the critical band: the Wikipedia article <span class="quoted">Auditory masking</span>, opened 6 October 2026, which summarises Fletcher 1940. The primary paper was not opened.</li>
+  <li><span class="conf high">High</span> Level sums and the required sound levels: calculated with 10 × log10(10^(a/10) + 10^(b/10)); the octave-band rise of white noise from the band widths.</li>
+  <li><span class="conf given">Given</span> The example night: background 32 dBA, peak 55 dBA, sound 45 dBA are example values.</li>
+</ol>
+<p>Confidence labels: <strong>High</strong> means read in a primary source or calculated; <strong>Medium</strong> one good source with limits; <strong>Low</strong> not verified; <strong>Given</strong> an example value.</p>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
