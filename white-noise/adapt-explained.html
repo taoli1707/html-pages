@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adapt Explained</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: iOS, OLED -->
+<h1>How does Adapt measure your surroundings and shape the sound?</h1>
+<p class="meta">Written 2026-10-06 · Reading time: about 14 minutes · You need to know: what a decibel is (a unit of loudness; 10 dB more sounds about twice as loud)</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>When you press Play, the microphone listens for <strong>4 seconds</strong>. The app reduces that sound to <strong>8 numbers</strong>. Each number is the loudness of your surroundings in one <dfn>octave band</dfn> (a range of pitch). The 8 bands run from 63 Hz to 8 kHz, and each is twice the pitch of the one before. Then it shapes its own sound so that it sits <strong>5 dB above</strong> your surroundings in every band, at the lowest level that does so.</p>
+  <p>Through the night, Adapt listens for 5 seconds every minute. When the noise rises, the sound rises, at most +6 dB by default. When the noise falls, the sound eases back. Nothing is recorded, stored or sent.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>The numbers come from the app's code at commit 35aafce (6 October 2026). The measured values in the example are example values, not a real night.</li>
+    <li>The phone plays through its own speaker unless the text says "earbuds".</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#example">One night: 8 measured numbers become 8 target numbers, each 5 dB higher</a></li>
+    <li><a href="#rule">The rule: measure per band, cover per band, at the lowest level</a></li>
+    <li><a href="#night">Through the night: 5 seconds a minute, a rise of at most +6 dB</a></li>
+    <li><a href="#route">Speaker and earbuds start differently, because of where the microphone is</a></li>
+    <li><a href="#mistake">Wrong idea corrected: "5 dB louder in total" does not cover a snore</a></li>
+    <li><a href="#limits">Limits: the margin is a target, and earbuds cannot be checked</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One night: 8 measured numbers become 8 target numbers, each 5 dB higher</h2>
+<p>A phone lies on a nightstand. A partner snores. You press Play with Adapt on. The app opens the microphone for 4 seconds and splits what it hears into the 8 octave bands. The result of this example night is one loudness per band, in <dfn>dB</dfn> (decibels, the unit of loudness on a logarithmic scale). On this scale 0 dB is the loudest the microphone can record, and -60 dB is very quiet.</p>
+
+<div class="box example">
+  <span class="label">Worked example</span>
+  <ol class="steps">
+    <li>Listen for 4 seconds, then compute the loudness per band: <strong>-46, -38, -37, -44, -52, -60, -67, -72 dB</strong> from 63 Hz to 8 kHz.
+      <span class="why">A snore is loudest around 125 to 250 Hz, so the low bands are loud and the high bands are quiet. The audio itself is now discarded.</span></li>
+    <li>Add the <dfn>margin</dfn> (the fixed distance the sound must sit above the surroundings: 5 dB) to each number. The targets are <strong>-41, -33, -32, -39, -47, -55, -62, -67 dB</strong>.
+      <span class="why">The margin is per band, because a sound that is 5 dB above the average could still be below the snore at 250 Hz.</span></li>
+    <li>Search for the tone, the 8 band gains and the level that reach these 8 targets. The search tries every tone position and keeps the one that needs the least level.
+      <span class="why">Two different tones can both reach the targets. The one that reaches them at the lowest level is the quietest sound that covers, which is the whole point.</span></li>
+    <li>Play that sound. The home screen shows the 8 targets as the lit ring and the 8 measurements as the grey shape inside it.
+      <span class="why">The band between the two shapes is the margin. If the grey shape touched the ring, that band would not be covered.</span></li>
+  </ol>
+  <p><strong>Result:</strong> 8 targets, each exactly 5 dB above its measurement, reached at the lowest possible level.</p>
+</div>
+
+<figure>
+  <p class="fig-title">In every band the shaped sound sits exactly 5 dB above the surroundings.</p>
+  <p class="fig-sub">Loudness in dB per octave band. Example night: a snoring partner. Higher bars are louder.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 680 300" role="img" aria-label="Bar chart. For each of eight octave bands, the shaped sound sits exactly 5 decibels above the measured surroundings. The surroundings are loudest at 250 hertz, minus 37 decibels, and quietest at 8 kilohertz, minus 72 decibels."><line class="grid" x1="56" y1="256.0" x2="664" y2="256.0"/><text class="axis-label" x="48" y="261.0" text-anchor="end" font-size="13">-80</text><line class="grid" x1="56" y1="176.0" x2="664" y2="176.0"/><text class="axis-label" x="48" y="181.0" text-anchor="end" font-size="13">-60</text><line class="grid" x1="56" y1="96.0" x2="664" y2="96.0"/><text class="axis-label" x="48" y="101.0" text-anchor="end" font-size="13">-40</text><line class="grid" x1="56" y1="16.0" x2="664" y2="16.0"/><text class="axis-label" x="48" y="21.0" text-anchor="end" font-size="13">-20</text><rect x="67.7" y="120.0" width="24.3" height="136.0" fill="var(--s2)" opacity="0.55"/><rect x="96.0" y="100.0" width="24.3" height="156.0" fill="var(--s1)"/><text class="axis-label" x="94.0" y="274" text-anchor="middle" font-size="13">63 Hz</text><rect x="143.7" y="88.0" width="24.3" height="168.0" fill="var(--s2)" opacity="0.55"/><rect x="172.0" y="68.0" width="24.3" height="188.0" fill="var(--s1)"/><text class="axis-label" x="170.0" y="274" text-anchor="middle" font-size="13">125 Hz</text><rect x="219.7" y="84.0" width="24.3" height="172.0" fill="var(--s2)" opacity="0.55"/><rect x="248.0" y="64.0" width="24.3" height="192.0" fill="var(--s1)"/><text class="axis-label" x="246.0" y="274" text-anchor="middle" font-size="13">250 Hz</text><rect x="295.7" y="112.0" width="24.3" height="144.0" fill="var(--s2)" opacity="0.55"/><rect x="324.0" y="92.0" width="24.3" height="164.0" fill="var(--s1)"/><text class="axis-label" x="322.0" y="274" text-anchor="middle" font-size="13">500 Hz</text><rect x="371.7" y="144.0" width="24.3" height="112.0" fill="var(--s2)" opacity="0.55"/><rect x="400.0" y="124.0" width="24.3" height="132.0" fill="var(--s1)"/><text class="axis-label" x="398.0" y="274" text-anchor="middle" font-size="13">1 kHz</text><rect x="447.7" y="176.0" width="24.3" height="80.0" fill="var(--s2)" opacity="0.55"/><rect x="476.0" y="156.0" width="24.3" height="100.0" fill="var(--s1)"/><text class="axis-label" x="474.0" y="274" text-anchor="middle" font-size="13">2 kHz</text><rect x="523.7" y="204.0" width="24.3" height="52.0" fill="var(--s2)" opacity="0.55"/><rect x="552.0" y="184.0" width="24.3" height="72.0" fill="var(--s1)"/><text class="axis-label" x="550.0" y="274" text-anchor="middle" font-size="13">4 kHz</text><rect x="599.7" y="224.0" width="24.3" height="32.0" fill="var(--s2)" opacity="0.55"/><rect x="628.0" y="204.0" width="24.3" height="52.0" fill="var(--s1)"/><text class="axis-label" x="626.0" y="274" text-anchor="middle" font-size="13">8 kHz</text><rect x="64" y="22" width="12" height="12" fill="var(--s2)" opacity="0.55"/><text x="82" y="33" font-size="13" fill="var(--text)">surroundings</text><rect x="64" y="42" width="12" height="12" fill="var(--s1)"/><text x="82" y="53" font-size="13" fill="var(--text)">shaped sound, +5 dB</text></svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each pair of bars is one octave band. The pale bar is the measured surroundings, the dark bar is the shaped sound. The dark bar is always 5 dB taller. The surroundings are loudest at 250 Hz (-37 dB) and quietest at 8 kHz (-72 dB).</p>
+  <p class="fig-source">Source: the example values above plus the margin of 5 dB from the code.</p>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <caption>The 8 measurements and the 8 targets of the example night, in dB</caption>
+  <thead><tr><th>Band</th><th class="num">Surroundings (dB)</th><th class="num">Target (dB)</th><th class="num">Margin (dB)</th></tr></thead>
+  <tbody><tr><th scope="row">63&nbsp;Hz</th><td class="num">-46</td><td class="num">-41</td><td class="num">5</td></tr><tr><th scope="row">125&nbsp;Hz</th><td class="num">-38</td><td class="num">-33</td><td class="num">5</td></tr><tr><th scope="row">250&nbsp;Hz</th><td class="num">-37</td><td class="num">-32</td><td class="num">5</td></tr><tr><th scope="row">500&nbsp;Hz</th><td class="num">-44</td><td class="num">-39</td><td class="num">5</td></tr><tr><th scope="row">1&nbsp;kHz</th><td class="num">-52</td><td class="num">-47</td><td class="num">5</td></tr><tr><th scope="row">2&nbsp;kHz</th><td class="num">-60</td><td class="num">-55</td><td class="num">5</td></tr><tr><th scope="row">4&nbsp;kHz</th><td class="num">-67</td><td class="num">-62</td><td class="num">5</td></tr><tr><th scope="row">8&nbsp;kHz</th><td class="num">-72</td><td class="num">-67</td><td class="num">5</td></tr></tbody>
+</table>
+</div>
+<p class="table-read">The margin column is 5 in every row. That is the rule, not a result of the example.</p>
+
+<h2 id="rule">2. The rule: measure per band, cover per band, at the lowest level</h2>
+<p>The same 8 bands are used three times. The <dfn>analyser</dfn> (the part that turns 4 seconds of audio into 8 numbers) uses them. The <dfn>equaliser</dfn> (the part that raises or lowers the sound in each band) uses them. The solver that chooses the targets uses them. So the measurement and the shaping speak the same language, and nothing is translated between them.</p>
+<p>In words: for each band, target = surroundings + 5 dB. Then choose the tone and the level that reach every target with the least level. The tone is the dial on the home screen. Adapt chooses a starting position for it. After that you can move it. The band gains are kept, so the sound still covers at the tone you prefer.</p>
+
+<h2 id="night">3. Through the night: 5 seconds a minute, a rise of at most +6 dB</h2>
+<p>After the start, Adapt opens the microphone for 5 seconds once every 60 seconds. It compares what it hears with what it believed about the surroundings. When the noise rises, for example when a snore starts an hour after you fall asleep, the sound rises to meet it. The rise stops at the <dfn>limit</dfn> (the setting "Can rise": +3, +6 or +9 dB above your level; +6 dB is the default). When the noise falls, the sound eases back toward your level.</p>
+<p>While the app confirms a change, the microphone stays open for several windows in a row. The orange microphone dot in the status bar is drawn by iOS, not by the app, so it shows the truth. On a quiet night it lights for about 5 seconds each minute.</p>
+
+<h2 id="route">4. Speaker and earbuds start differently, because of where the microphone is</h2>
+<div class="compare">
+  <div>
+    <h3>Phone speaker</h3>
+    <p>The microphone sits a few centimetres from the speaker. If the sound started at full level, the microphone would measure the sound itself. So the sound starts low and rises over 10 seconds while the 4-second measurement runs. Through the night, the app measures its own sound at the microphone and subtracts it. So it can tell the surroundings from itself.</p>
+  </div>
+  <div>
+    <h3>Earbuds</h3>
+    <p>The sound is in your ears and the microphone is in the phone. The microphone cannot hear what you hear, so there is nothing to measure about the sound. The sound starts at once, and the surroundings are measured beside it. Adapt still shapes the sound to the measured surroundings. It cannot check the result.</p>
+  </div>
+</div>
+<p>The principle: the start is soft only where the microphone would otherwise hear the sound as part of the surroundings.</p>
+
+<h2 id="mistake">5. Wrong idea corrected: "5 dB louder in total" does not cover a snore</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "The app makes the sound 5 dB louder than the room, so I could do the same with the volume button."</p>
+  <p><strong>Correct:</strong> the margin is per band. In the example, the sound at 250 Hz must reach -32 dB. The sound at 8 kHz must reach only -67 dB. That is a difference of 35 dB between bands, and one volume setting cannot produce it.</p>
+  <p><strong>Why the wrong idea fails:</strong> a plain white noise is about equally loud in every band. Turn it up until it covers the snore at 250 Hz. It is then far too loud at 4 and 8 kHz, where the surroundings are 30 dB quieter. The shape is what lets the sound cover at a low level.</p>
+</div>
+
+<h2 id="limits">6. Limits: the margin is a target, and earbuds cannot be checked</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>The 5 dB margin is a target, not a measurement.</strong> The chart shows the shape the solver placed. Whether the sound really covers the surroundings is a separate check. The app makes that check through the night on a speaker, and reports it on the Coverage sheet as a measured figure.</li>
+    <li><strong>In earbuds there is no check.</strong> The phone's microphone cannot hear what you hear. The shape is still applied, but no measured figure is possible.</li>
+    <li><strong>The equaliser has a range.</strong> In a band where the surroundings are far louder than the rest, the target can be out of reach. The Coverage sheet then shows that band as "under".</li>
+    <li><strong>The rise has a limit.</strong> If your level is already near the top, the sound cannot rise the full +6 dB, and the app says so.</li>
+  </ul>
+</div>
+
+<h2 id="check">7. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>How long does the microphone listen when you press Play?
+      <details>
+        <summary>Show the answer</summary>
+        <div><p><strong>4 seconds.</strong></p><p>Then 5 seconds once a minute through the night. A typical wrong answer is "all the time". The microphone is closed for 55 of every 60 seconds on a quiet night. See <a href="#night">section 3</a>.</p></div>
+      </details>
+    </li>
+    <li>How many numbers does the app keep from that listening?
+      <details>
+        <summary>Show the answer</summary>
+        <div><p><strong>8.</strong></p><p>One loudness per octave band, 63 Hz to 8 kHz. The audio itself is overwritten. A typical wrong answer is "a recording": there is none. See <a href="#example">section 1</a>.</p></div>
+      </details>
+    </li>
+    <li>In the example night the surroundings measure -60 dB at 2 kHz. What is the target for the sound in that band?
+      <details>
+        <summary>Show the answer</summary>
+        <div><p><strong>-55 dB.</strong></p><p>Target = surroundings + 5 dB = -60 + 5 = -55 dB. A typical wrong answer is -65 dB, from subtraction instead of addition. Another is "5 dB above the average of all bands". The margin is per band. See the table in <a href="#example">section 1</a>.</p></div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">8. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>4 seconds of listening become 8 numbers, one per octave band from 63 Hz to 8 kHz. The audio is discarded.</li>
+    <li>The sound is shaped so that each band sits 5 dB above its measurement, at the lowest level that reaches all 8 targets.</li>
+    <li>Through the night Adapt listens 5 seconds a minute, rises at most +6 dB by default, and eases back when it is quiet.</li>
+    <li>On a speaker the start is soft, because the microphone is next to the speaker. In earbuds the sound starts at once and cannot be checked.</li>
+  </ol>
+</div>
+
+<dl class="glossary">
+  <dt>Analyser</dt><dd>The part of the app that turns 4 seconds of audio into 8 loudness values, one per octave band.</dd>
+  <dt>dB (decibel)</dt><dd>The unit of loudness on a logarithmic scale. 10 dB more sounds about twice as loud. In this app 0 dB is the loudest the microphone can record.</dd>
+  <dt>Equaliser</dt><dd>The part of the app that raises or lowers the sound in each of the 8 bands.</dd>
+  <dt>Limit</dt><dd>How far the sound may rise above your level through the night: +3, +6 or +9 dB. The setting is called "Can rise".</dd>
+  <dt>Margin</dt><dd>The fixed distance the shaped sound sits above the surroundings in each band: 5 dB.</dd>
+  <dt>Octave band</dt><dd>A range of pitch, each twice the pitch of the one before: 63, 125, 250, 500 Hz, 1, 2, 4, 8 kHz.</dd>
+</dl>
+
+<ol class="sources">
+  <li><span class="conf given">Given</span> The 8 measured values of the example night are example values.</li>
+  <li><span class="conf high">High</span> 4 seconds: <code>RoomAnalyzer.captureSeconds</code> in <code>WhiteNoise/Sources/Audio/RoomAnalyzer.swift</code>, line 37. 5 seconds once every 60 seconds: <code>AdaptiveMonitor.window</code> and <code>interval</code>, <code>AdaptiveMonitor.swift</code>, lines 24 and 25. Margin 5 dB: <code>MaskingSolver.marginDB</code>, <code>Models/RoomProfile.swift</code>, line 55. Soft start of 10 seconds: <code>NoiseEngine.swift</code>, line 2075. Limit choices +3, +6, +9 dB with +6 as default: <code>SettingsView.swift</code> line 32 and <code>NoiseEngine.swift</code> line 704. All read at commit 35aafce.</li>
+  <li><span class="conf high">High</span> Targets in the table: calculated as surroundings + 5 dB.</li>
+</ol>
+<p>Confidence labels: <strong>High</strong> means read in the code or calculated; <strong>Medium</strong> one good source; <strong>Low</strong> not verified; <strong>Given</strong> an example value.</p>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
