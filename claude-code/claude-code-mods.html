@@ -499,7 +499,7 @@ ol.sources li { margin-bottom: 0.7rem; }
 </nav>
 
 <h2 id="example">1. One example: a mod of 3 files counts tool calls and adds a /tally command</h2>
-<p>A <dfn>mod</dfn> is a Claude Code plugin that changes how Claude Code looks and behaves, with code that runs inside Claude Code. A <dfn>plugin</dfn> is a folder with a manifest file that Claude Code can install or load. A plugin can hold skills, commands, agents, and servers for the Model Context Protocol (MCP). A plugin becomes a mod when it also holds one code file with event handlers. The next paragraphs describe that file.</p>
+<p>A <dfn>mod</dfn> is a Claude Code plugin that changes how Claude Code looks and behaves, with code that runs inside Claude Code. A <dfn>plugin</dfn> is a folder with a manifest file that Claude Code can install or load. A plugin can hold skills, commands, agents, and servers for the Model Context Protocol (MCP). A plugin becomes a mod when it also holds one code file with functions that react to what Claude Code does. The next paragraphs describe that file.</p>
 <p>The example is the tutorial mod from the official documentation. It has three files. I created the three files in a temporary folder. Then I ran the validation command and the command of the mod, on 7 October 2026 with Claude Code 2.1.290.</p>
 <pre><code>first-mod/
 ├── .claude-plugin/
