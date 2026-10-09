@@ -1,0 +1,966 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The ONE Thing Explained</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: NFL, NASA, BPS, PNAS, DOI, CI, ONE, ISBN, E833, E834 -->
+<h1>What does the book <span class="quoted">The ONE Thing</span> teach, and how do you apply it?</h1>
+<p class="meta">Written 2026-10-08 · Main path: about 25 minutes · Complete page: about 33 minutes · You need to know: nothing special</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>The book says that extraordinary results come from one action at a time, done in sequence. Each result makes a larger next action possible. The tool is the <strong>Focusing Question</strong>. The words of the book: <span class="quoted">What’s the ONE Thing I can do such that by doing it everything else will be easier or unnecessary</span>? You ask it for the far future (your someday goal) and for right now, and you reserve <strong>4 hours a day</strong> for the answer.</p>
+  <p>The model of the book is a chain of dominoes in which each domino is 1.5 times taller than the one before. From a first domino of 5 cm, domino 57 would be 369,000 km tall, almost the distance to the Moon (384,000 km). A new habit took 66 days on average in the study that the book cites, with a range of 18 to 254 days. Two findings behind the claims of the book about willpower were later challenged (part B, limits).</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>You have not read the book.</li>
+    <li>Quotations come from the 2014 edition (John Murray, London), found with the full-text search of the Internet Archive. Page numbers refer to that edition. The first edition is from Bard Press, 2013, 240 pages.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <p><strong>Part A: the idea</strong></p>
+  <ol>
+    <li class="core"><a href="#a-example">One example: a chain of dominoes, each 1.5 times taller than the one before</a></li>
+    <li class="core"><a href="#a-rule">The rule: the Focusing Question finds the first domino, and the Pareto principle shortens the list</a></li>
+    <li class="core"><a href="#a-mistake">Wrong idea corrected: the book does not say “do only one thing in your life”</a></li>
+    <li><a href="#a-lies">More detail: the book names six beliefs that stop people, and calls them lies</a></li>
+    <li class="core"><a href="#a-check">Check your understanding of part A</a></li>
+  </ol>
+  <p><strong>Part B: the method</strong></p>
+  <ol start="6">
+    <li class="core"><a href="#b-example">One example: from a someday goal to the next four hours</a></li>
+    <li class="core"><a href="#b-rule">The rule: block four hours a day, in a fixed order, and repeat for about 66 days</a></li>
+    <li class="core"><a href="#b-limits">Limits: three sources of the book were later challenged, and the method itself has no controlled test</a></li>
+    <li><a href="#b-words">More detail: the four thieves, and other words that you will hear</a></li>
+    <li class="core"><a href="#b-check">Check your understanding of part B</a></li>
+  </ol>
+  <p><strong>End of the page</strong></p>
+  <ol start="11">
+    <li class="core"><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<!-- ============================== PART A ============================== -->
+<p class="part">Part A: the idea</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer for part A</span>
+  <p>The book claims that <span class="quoted">extraordinary success is sequential, not simultaneous</span>. You find the one action that makes the rest easier or unnecessary, and you do that action first. The book calls the chain of actions the domino effect, and it uses the Focusing Question to find the first domino.</p>
+</div>
+
+<h2 id="a-example">1. One example: a chain of dominoes, each 1.5 times taller than the one before</h2>
+<p>In 1983, Lorne Whitehead published a one-page note in the American Journal of Physics. His point: a falling domino can make a domino fall that is up to about 1.5 times as large in each dimension. The book builds its model on this fact (chapter 2, <span class="quoted">The Domino Effect</span>, page 13).</p>
+<p>The book then imagines a chain that starts with a 2-inch domino, each domino 50% larger than the one before. Such a chain is a <dfn>geometric progression</dfn>. In a geometric progression, each number is the number before it multiplied by a fixed ratio. Here the ratio is 1.5.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the heights in the chain of the book</span>
+  <ol class="steps">
+    <li>Domino 1 is 2 inches tall, which is 5.08 cm.
+      <span class="why">The book starts with a 2-inch domino. One inch is 2.54 cm.</span></li>
+    <li>Domino 2 is 5.08 cm × 1.5 = 7.62 cm.
+      <span class="why">Each domino is 1.5 times taller than the one before. This factor is the ratio of the chain.</span></li>
+    <li>Domino 10 is 5.08 cm × 1.5<sup>9</sup> = 195 cm.
+      <span class="why">From domino 1 to domino 10 there are 9 multiplications, so the exponent is 9. The book compares domino 10 with the football player Peyton Manning, who is 196 cm tall.</span></li>
+    <li>Domino 31 is 5.08 cm × 1.5<sup>30</sup> = 9,741 m.
+      <span class="why">Mount Everest is 8,849 m high. The difference is 892 m, or 2,927 feet. The book says <span class="quoted">almost 3,000 feet</span>.</span></li>
+    <li>Domino 57 is 5.08 cm × 1.5<sup>56</sup> = 369,000 km.
+      <span class="why">The mean distance from the Earth to the Moon is 384,399 km. Domino 57 reaches 96% of that distance.</span></li>
+  </ol>
+  <p><strong>Result:</strong> 56 multiplications by 1.5 turn 5 cm into 369,000 km.</p>
+</div>
+
+<p>The general formula, and the same formula with the numbers of domino 57:</p>
+<pre><code>height of domino n = height of domino 1 × ratio^(n − 1)
+369,000 km         = 5.08 cm           × 1.5^56</code></pre>
+
+<h3>What the dominoes stand for, and where the comparison stops</h3>
+<p>The book uses the chain as a model of work. One domino is one action, and the height of the domino is the size of its result. The ratio 1.5 is the claim that each finished action makes a somewhat larger action possible. The first domino is the <dfn>lead domino</dfn>, the action that starts the chain.</p>
+<p>The comparison stops at two points. The ratio 1.5 comes from the energy of a falling block; nobody has measured such a ratio for actions. And the model gives no number for how often an action fails and stops the chain.</p>
+
+<div class="box predict">
+  <span class="label">Guess first</span>
+  <p>Which domino is the first one taller than the Eiffel Tower (330 m)? Choose before you continue: domino 12, 23, or 45.</p>
+</div>
+
+<figure>
+  <p class="fig-title">Each domino 1.5 times taller than the one before: domino 23 reaches 380 m, more than the Eiffel Tower (330 m).</p>
+  <p class="fig-sub">Height of each domino on a logarithmic scale. First domino 5.08 cm, as in the book.</p>
+  <div class="fig-scroll">
+<svg viewBox="0 0 680 350" role="img" aria-label="Line chart on a logarithmic height scale. With the ratio 1.5, the height rises in a straight line from 5 centimetres at domino 1 to 369,000 kilometres at domino 57, and domino 23 is 380 metres. With the ratio 1.0, the height stays at 5 centimetres for every domino.">
+<line class="axis" x1="100" y1="310.0" x2="520" y2="310.0"/>
+<text class="axis-label" x="92" y="314.5" text-anchor="end">1 cm</text>
+<line class="grid" x1="100" y1="285.5" x2="520" y2="285.5"/>
+<text class="axis-label" x="92" y="290.0" text-anchor="end">10 cm</text>
+<line class="grid" x1="100" y1="260.9" x2="520" y2="260.9"/>
+<text class="axis-label" x="92" y="265.4" text-anchor="end">1 m</text>
+<line class="grid" x1="100" y1="236.4" x2="520" y2="236.4"/>
+<text class="axis-label" x="92" y="240.9" text-anchor="end">10 m</text>
+<line class="grid" x1="100" y1="211.8" x2="520" y2="211.8"/>
+<text class="axis-label" x="92" y="216.3" text-anchor="end">100 m</text>
+<line class="grid" x1="100" y1="187.3" x2="520" y2="187.3"/>
+<text class="axis-label" x="92" y="191.8" text-anchor="end">1 km</text>
+<line class="grid" x1="100" y1="162.7" x2="520" y2="162.7"/>
+<text class="axis-label" x="92" y="167.2" text-anchor="end">10 km</text>
+<line class="grid" x1="100" y1="138.2" x2="520" y2="138.2"/>
+<text class="axis-label" x="92" y="142.7" text-anchor="end">100 km</text>
+<line class="grid" x1="100" y1="113.6" x2="520" y2="113.6"/>
+<text class="axis-label" x="92" y="118.1" text-anchor="end">1,000 km</text>
+<line class="grid" x1="100" y1="89.1" x2="520" y2="89.1"/>
+<text class="axis-label" x="92" y="93.6" text-anchor="end">10,000 km</text>
+<line class="grid" x1="100" y1="64.5" x2="520" y2="64.5"/>
+<text class="axis-label" x="92" y="69.0" text-anchor="end">100,000 km</text>
+<line class="grid" x1="100" y1="40.0" x2="520" y2="40.0"/>
+<text class="axis-label" x="92" y="44.5" text-anchor="end">1,000,000 km</text>
+<line class="axis" x1="100" y1="40" x2="100" y2="310"/>
+<text class="axis-label" x="100.0" y="332" text-anchor="middle">Domino 1</text>
+<text class="axis-label" x="167.5" y="332" text-anchor="middle">10</text>
+<text class="axis-label" x="242.5" y="332" text-anchor="middle">20</text>
+<text class="axis-label" x="317.5" y="332" text-anchor="middle">30</text>
+<text class="axis-label" x="392.5" y="332" text-anchor="middle">40</text>
+<text class="axis-label" x="467.5" y="332" text-anchor="middle">50</text>
+<text class="axis-label" x="520.0" y="332" text-anchor="middle">57</text>
+<polyline fill="none" stroke="var(--s2)" stroke-width="3" stroke-dasharray="7 5" points="100,292.7 520,292.7"/>
+<circle cx="520" cy="292.7" r="4.5" fill="var(--s2)"/>
+<text x="530" y="288.7" font-size="14" font-weight="650">Ratio 1.0</text>
+<text x="530" y="305.7" font-size="13">every domino 5.08 cm</text>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="100,292.7 520,50.6"/>
+<text x="430.0" y="86.5" font-size="14" font-weight="650" text-anchor="end">Ratio 1.5</text>
+<circle cx="167.5" cy="253.8" r="4.5" fill="var(--s1)"/>
+<text x="178.5" y="266.8" font-size="13">Domino 10: 1.95 m, a tall person (1.96 m)</text>
+<circle cx="227.5" cy="219.2" r="4.5" fill="var(--s1)"/>
+<text x="238.5" y="232.2" font-size="13">Domino 18: 50 m, Tower of Pisa (57 m)</text>
+<circle cx="265.0" cy="197.6" r="7" fill="var(--s1)"/>
+<text x="276.0" y="210.6" font-size="13" font-weight="650">Domino 23: 380 m, Eiffel Tower (330 m)</text>
+<circle cx="325.0" cy="163.0" r="4.5" fill="var(--s1)"/>
+<text x="336.0" y="176.0" font-size="13">Domino 31: 9,741 m, Mount Everest (8,849 m)</text>
+<circle cx="520.0" cy="50.6" r="4.5" fill="var(--s1)"/>
+<text x="530.0" y="47.6" font-size="13">Domino 57: 369,000 km</text>
+<text x="530.0" y="64.6" font-size="13">Moon: 384,000 km</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> the horizontal direction is the domino number, from 1 to 57. The vertical direction is the height, on a logarithmic scale: each gridline is 10 times higher than the one below it. On this scale, a fixed ratio gives a straight line. Each label gives the computed height of one domino and the real height of a landmark from the book.</p>
+  <p class="fig-source">Source: calculated with the formula above (source 14). Landmark heights: sources 13 and 14.</p>
+</figure>
+
+<p><strong>Answer to the guess:</strong> domino 23. Domino 22 is 253 m tall, below the tower. Domino 23 is 380 m tall, 15% above the tower.</p>
+<div class="compare">
+  <div>
+    <h4>Ratio 1.0, the dashed line</h4>
+    <p>Every domino stays 5.08 cm. In the model of the book: a list of equal tasks, where each finished task leaves the next task the same size.</p>
+  </div>
+  <div>
+    <h4>Ratio 1.5, the solid line</h4>
+    <p>Domino 13 is already 6.59 m, 130 times the first. In the model of the book: each finished action makes a larger action possible.</p>
+  </div>
+</div>
+<p>The two chains differ in one feature only, the ratio. The book says: <span class="quoted">What starts out linear becomes geometric</span>. So the claim of the book is a claim about the ratio: choose actions that make the next action larger, and do them in order.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Computed heights of four dominoes next to the landmarks that the book names</caption>
+  <thead>
+    <tr><th>Domino</th><th class="num">Computed height (m)</th><th>Landmark in the book</th><th class="num">Real height (m)</th><th class="num">Domino ÷ landmark</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">10</th><td class="num">1.95</td><td>Peyton Manning, football player</td><td class="num">1.96</td><td class="num">1.00</td></tr>
+    <tr><th scope="row">18</th><td class="num">50.05</td><td>Leaning Tower of Pisa, high side</td><td class="num">56.67</td><td class="num">0.88</td></tr>
+    <tr class="highlight"><th scope="row">23</th><td class="num">380.08</td><td>Eiffel Tower, to the tip</td><td class="num">330.00</td><td class="num">1.15</td></tr>
+    <tr><th scope="row">31</th><td class="num">9,740.95</td><td>Mount Everest</td><td class="num">8,848.86</td><td class="num">1.10</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> the last column divides the computed height by the real height of the landmark. A value of 1.00 means equal, and 1.15 means 15% taller.</p>
+
+<h2 id="a-rule">2. The rule: the Focusing Question finds the first domino, and the Pareto principle shortens the list</h2>
+<p>The book gives one question to find the first domino. It calls the question the <dfn>Focusing Question</dfn>: the question that selects the single action with the largest effect on everything else. The words of the book:</p>
+<p class="quoted">“What’s the ONE Thing I can do such that by doing it everything else will be easier or unnecessary?”</p>
+<p>The book explains the three parts of the question (chapter 10, from page 102). Part one, <span class="quoted">What’s the ONE Thing I can do</span>, asks for one action, not a wish and not a list. Part two, <span class="quoted">such that by doing it</span>, asks for a consequence: the action must change what comes after it. Part three, <span class="quoted">everything else will be easier or unnecessary</span>, is the test of the answer. The answer is <dfn>the ONE Thing</dfn>: the single action that passes the test at this moment, for this area of your life.</p>
+<p>The question comes in two forms. The big-picture form, <span class="quoted">What’s my ONE Thing</span>?, sets the direction for the long term. The small-focus form, <span class="quoted">What’s my ONE Thing right now</span>?, chooses the next action, and the book says to ask it throughout the day.</p>
+
+<h3>The Pareto principle turns a to-do list into a success list</h3>
+<p>Which action passes the test? The book answers with the <dfn>Pareto principle</dfn>: the observation that a small share of the causes produces a large share of the results. Vilfredo Pareto found that 80% of the land in Italy belonged to 20% of the people, and Joseph Juran later named the pattern after him.</p>
+<p>A to-do list holds everything that you could do. A <dfn>success list</dfn> is the same list after you apply the Pareto principle: you keep the few items that produce most of the result. The book says: <span class="quoted">A to-do list becomes a success list when you apply Pareto’s Principle to it</span>. Then the book calls for a further step, extreme Pareto: take 20% of the 20%, and repeat until one item remains. With 10 items, the first step keeps 2 and the second step keeps 1. That item is the ONE Thing, at the top of the success list.</p>
+
+<h2 id="a-mistake">3. Wrong idea corrected: the book does not say “do only one thing in your life”</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> “The ONE Thing means: pick one goal, and ignore everything else.”</p>
+  <p><strong>Correct:</strong> the book asks the Focusing Question separately for each area of life and for each time scale. The areas in the book include the job, the family and the spiritual life (chapter 11, page 112). The ONE Thing is one action at a time, inside one area, not one goal forever.</p>
+  <p><strong>Why the wrong idea fails:</strong> the question itself contains the words <span class="quoted">everything else</span>. The other tasks do not disappear; they become easier or unnecessary. The book reserves 4 hours of the day for the ONE Thing, not the whole day. The other areas of life get their own time, see section 4.</p>
+</div>
+
+<h2 id="a-lies">4. More detail: the book names six beliefs that stop people, and calls them lies</h2>
+<p>Part one of the book, <span class="quoted">The Lies</span>, names six lies, one chapter each. Each chapter names a common belief about success and argues that the belief is false. Four of the chapters need a term.</p>
+<p><dfn>Multitasking</dfn> is the attempt to do two tasks at the same time. The book says that the brain switches between the tasks instead, and each switch costs time. The book quotes the Stanford professor Clifford Nass on people who multitask heavily: <span class="quoted">Multitaskers were just lousy at everything</span>.</p>
+<p>The book adds two numbers. The first: <span class="quoted">Researchers estimate we lose 28 percent of an average workday to multitasking ineffectiveness</span>. The second: workers are interrupted every 11 minutes. The 28% figure matches a 2005 report by the consultancy Basex, which estimated 2.1 hours lost per day. The book does not name the source.</p>
+<p><dfn>Willpower</dfn> is the ability to make yourself do what you decided to do. The book treats willpower as a supply: <span class="quoted">We act as though our supply of willpower were endless</span>. The evidence in the book is a study of 1,112 parole hearings in Israel. The judges granted parole in about 65% of the cases after a break, and in almost 0% before the next break. The book concludes: do the ONE Thing early in the day, when willpower is high. Section 8 shows why this study is disputed.</p>
+<p><dfn>Counterbalancing</dfn> is the replacement of the book for balance. You give the ONE Thing most of your time, you let other areas wait, and you return to them before the damage is large. The book says: <span class="quoted">Counterbalancing done well gives the illusion of balance</span>. The book names two types: between work and personal life, and within each of the two.</p>
+<p>A <dfn>habit</dfn> is a behavior that you perform without a decision, because you performed it many times in the same situation. The answer of the book to the lie of discipline is: <span class="quoted">Build one habit at a time. Success is sequential, not simultaneous</span>.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>The six lies, what the book says instead, and the evidence in the book</caption>
+  <thead>
+    <tr><th>The lie (chapter title, page)</th><th>What the book says instead</th><th>Evidence in the book</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Everything Matters Equally (32)</th><td>A few actions matter much more than the rest. Make a success list.</td><td>Pareto and Juran, see section 2.</td></tr>
+    <tr><th scope="row">Multitasking (43)</th><td>Nobody does two tasks at once. People switch, and each switch costs time.</td><td>A 2009 study by Clifford Nass. An estimate of 28% of a workday lost. Interruptions every 11 minutes.</td></tr>
+    <tr><th scope="row">A Disciplined Life (54)</th><td>You need discipline only long enough to build one habit. Then the habit carries you.</td><td>A study: 66 days on average to form a habit.</td></tr>
+    <tr><th scope="row">Willpower Is Always on Will-Call (61)</th><td>Willpower is a supply that falls during the day. Do the ONE Thing early.</td><td>A study of 1,112 parole hearings in Israel.</td></tr>
+    <tr><th scope="row">A Balanced Life (72)</th><td>Balance is not possible. Counterbalance instead.</td><td>Argument and examples, no study.</td></tr>
+    <tr><th scope="row">Big Is Bad (84)</th><td>Think big. A big goal changes what you do today.</td><td>Examples of people and companies.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one chapter of part one of the book. The number after the title is the page where the chapter starts in the 2014 edition.</p>
+<p>The split is not always 80 to 20. The book says: <span class="quoted">90 percent of your success comes from 20 percent of your effort. Or 70/10 or 65/5</span>. The exact numbers do not matter. The shape matters: a few items carry most of the result.</p>
+
+<h2 id="a-check">5. Check your understanding of part A</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>Domino 1 is 5.08 cm tall, and the ratio is 1.5. How tall is domino 15?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>About 14.8 m.</strong></p>
+          <p>From domino 1 to domino 15 there are 14 multiplications: 5.08 cm × 1.5<sup>14</sup> = 1,483 cm. If your answer was 22.2 m, you used the exponent 15. If it was about 1.1 m, you added instead of multiplied. See <a href="#a-example">section 1</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>Your to-do list has 10 items. How does the book turn the list into a success list, and what goes at the top?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>Apply the Pareto principle: keep the 20% of the items that produce most of the result, which is 2 items. Apply it again, and 1 item remains: the ONE Thing, at the top of the success list. A common wrong answer sorts all 10 items by importance and works through them in order. See <a href="#a-rule">section 2</a>.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================== PART B ============================== -->
+<p class="part">Part B: the method</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer for part B</span>
+  <p>The method has four steps. First, <strong>goal setting to the now</strong>: a chain of seven Focusing Questions from your someday goal to right now. Second, a <strong>time block</strong>: 4 hours a day for the ONE Thing, after your time off and before your planning time. Third, repetition until the block is a habit, about 66 days on average. Fourth, protection of the block against the four thieves (section 9).</p>
+</div>
+
+<h2 id="b-example">6. One example: from a someday goal to the next four hours</h2>
+<p>The book calls the chain of questions <dfn>goal setting to the now</dfn> (page 150). It is a sequence of seven questions, and each question starts from the answer of the one before it. The book compares the chain with <span class="quoted">a Russian matryoshka doll</span>. The ONE Thing today is nested inside the ONE Thing this week, and so on.</p>
+<p>The example below uses example values: a person who wants to earn a living as an author. The plan has 48 writing weeks (4 weeks off) and 5 writing days per week, which gives 240 writing days.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the seven questions with example answers</span>
+  <ol class="steps">
+    <li>Someday goal: earn a living as an author.
+      <span class="why">The first question asks what you want to do some day. The answer has no number; it gives the direction.</span></li>
+    <li>Five-year goal: publish two books.
+      <span class="why">The question of the book: <span class="quoted">Based on my someday goal, what’s the ONE Thing I can do in the next five years</span>? Two published books are a concrete step toward a living as an author.</span></li>
+    <li>One-year goal: finish a manuscript of 60,000 words and send it to publishers.
+      <span class="why">A finished manuscript makes the next steps possible: an agent, a publisher. This is the domino effect of section 1.</span></li>
+    <li>This month: write 5,000 words.
+      <span class="why">60,000 words ÷ 12 months = 5,000 words per month.</span></li>
+    <li>This week: write 1,250 words.
+      <span class="why">5,000 words ÷ 4 writing weeks = 1,250 words per week.</span></li>
+    <li>Today: write 250 words in the 4 reserved hours.
+      <span class="why">1,250 words ÷ 5 writing days = 250 words per day.</span></li>
+    <li>Right now: open the file and write the first sentence of the next scene.
+      <span class="why">The last question is the small-focus question: <span class="quoted">What’s my ONE Thing right now</span>? The answer is an action that you can start in the next minute.</span></li>
+  </ol>
+  <p><strong>Result:</strong> the chain turns a direction without a number (an author) into one action for the next minute (one sentence).</p>
+</div>
+
+<p>250 new words per day is a slow pace, on purpose: the 4 hours also hold research and revision. With 1,000 new words per day, the draft takes 60 writing days.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>The seven questions of goal setting to the now, with the example answers</caption>
+  <thead>
+    <tr><th>Level</th><th>The question</th><th>Example answer</th><th class="num">Number</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Some day</th><td>What is the ONE Thing I want to do some day?</td><td>Earn a living as an author</td><td class="num">—</td></tr>
+    <tr><th scope="row">Five years</th><td>Based on my someday goal, what is the ONE Thing I can do in the next five years?</td><td>Publish two books</td><td class="num">2 books</td></tr>
+    <tr><th scope="row">This year</th><td>Based on my five-year goal, what is the ONE Thing I can do this year?</td><td>Finish a manuscript and send it to publishers</td><td class="num">60,000 words</td></tr>
+    <tr><th scope="row">This month</th><td>Based on my goal this year, what is the ONE Thing I can do this month?</td><td>Write the next chapters</td><td class="num">5,000 words</td></tr>
+    <tr><th scope="row">This week</th><td>Based on my goal this month, what is the ONE Thing I can do this week?</td><td>Write the next scenes</td><td class="num">1,250 words</td></tr>
+    <tr><th scope="row">Today</th><td>Based on my goal this week, what is the ONE Thing I can do today?</td><td>Write during the 4 reserved hours</td><td class="num">250 words</td></tr>
+    <tr class="highlight"><th scope="row">Right now</th><td>What is my ONE Thing right now?</td><td>Open the file, write the first sentence</td><td class="num">1 sentence</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> read the rows from top to bottom. Each question starts with the answer of the row above it. The highlighted row is the action for the next minute. The table omits the test that ends each question in the book, <span class="quoted">easier or unnecessary</span>.</p>
+
+<h2 id="b-rule">7. The rule: block four hours a day, in a fixed order, and repeat for about 66 days</h2>
+<p><dfn>Time blocking</dfn> is the practice of the book for the daily ONE Thing. You reserve a fixed period in your calendar and treat it like an appointment that nobody can move. The reserved period is the <dfn>time block</dfn>.</p>
+<p>The book gives the length in chapter 15, page 156: <span class="quoted">block four hours a day</span>. <span class="quoted">This isn’t a typo. I repeat: four hours a day</span>. That is half of an 8-hour workday.</p>
+<p>The book says to block three things, in this order: first your time off, then your ONE Thing, then your planning time. Rest comes first so that the time block does not consume it. In the planning time you set the next time blocks.</p>
+<p>The example of the book is the writer Stephen King. The book asks: <span class="quoted">does he get to do this because he is Stephen King, or is he Stephen King because he does this</span>?</p>
+
+<figure class="diagram">
+  <p class="fig-title">The method runs from one question to one protected block of time, every day, until the block is a habit.</p>
+  <p class="fig-sub">The five steps of part B. The notes on the right name the section that explains each step.</p>
+  <div class="fig-scroll">
+<svg viewBox="0 0 640 410" role="img" aria-label="Diagram of five steps in a column. Step 1: ask the Focusing Question. Step 2: goal setting to the now, seven questions from some day to right now. Step 3: today’s ONE Thing, the top of the success list. Step 4: a time block of 4 hours, with time off first, then the ONE Thing, then planning. Step 5: repeat daily for about 66 days until the block is a habit. Each arrow means: the result of this step is the input of the next step.">
+<defs><marker id="arrow-head-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<rect class="node" x="40" y="14" width="300" height="56" rx="8"/>
+<text class="node-name" x="190.0" y="38" text-anchor="middle">1. Ask the Focusing Question</text>
+<text class="node-value" x="190.0" y="58" text-anchor="middle">for the long term and for right now</text>
+<line class="arrow" x1="190.0" y1="72" x2="190.0" y2="91" marker-end="url(#arrow-head-2)"/>
+<rect class="node" x="40" y="94" width="300" height="56" rx="8"/>
+<text class="node-name" x="190.0" y="118" text-anchor="middle">2. Goal setting to the now</text>
+<text class="node-value" x="190.0" y="138" text-anchor="middle">seven questions, from some day to right now</text>
+<line class="arrow" x1="190.0" y1="152" x2="190.0" y2="171" marker-end="url(#arrow-head-2)"/>
+<rect class="node" x="40" y="174" width="300" height="56" rx="8"/>
+<text class="node-name" x="190.0" y="198" text-anchor="middle">3. Today’s ONE Thing</text>
+<text class="node-value" x="190.0" y="218" text-anchor="middle">the top of the success list</text>
+<line class="arrow" x1="190.0" y1="232" x2="190.0" y2="251" marker-end="url(#arrow-head-2)"/>
+<rect class="node" x="40" y="254" width="300" height="56" rx="8"/>
+<text class="node-name" x="190.0" y="278" text-anchor="middle">4. Time block of 4 hours</text>
+<text class="node-value" x="190.0" y="298" text-anchor="middle">time off first, then the ONE Thing, then planning</text>
+<line class="arrow" x1="190.0" y1="312" x2="190.0" y2="331" marker-end="url(#arrow-head-2)"/>
+<rect class="node" x="40" y="334" width="300" height="56" rx="8"/>
+<text class="node-name" x="190.0" y="358" text-anchor="middle">5. Repeat daily, about 66 days</text>
+<text class="node-value" x="190.0" y="378" text-anchor="middle">until the block is a habit</text>
+<text class="arrow-label" x="360" y="36">The question is the same at</text>
+<text class="arrow-label" x="360" y="54">every level.</text>
+<text class="arrow-label" x="360" y="116">Each answer is the input of</text>
+<text class="arrow-label" x="360" y="134">the next question (section 6).</text>
+<text class="arrow-label" x="360" y="196">The Pareto principle shortens</text>
+<text class="arrow-label" x="360" y="214">the list to one action (section 2).</text>
+<text class="arrow-label" x="360" y="276">Half of an 8-hour workday.</text>
+<text class="arrow-label" x="360" y="294">Protect it from the four thieves.</text>
+<text class="arrow-label" x="360" y="356">Range in the study: 18 to 254</text>
+<text class="arrow-label" x="360" y="374">days (section 7).</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is one step. Each arrow means “the result of this step is the input of the next step”.</p>
+</figure>
+
+<h3>A habit took 66 days on average in the study that the book cites</h3>
+<p>The time block must become a habit, a behavior that you perform without a decision. The book says: <span class="quoted">Research says this will take about 66 days</span>. The research is a 2010 study by Phillippa Lally and colleagues at University College London. The numbers:</p>
+<ul>
+  <li>96 volunteers chose one daily behavior, for example a glass of water after breakfast, and reported each day for 84 days.</li>
+  <li>The time to reach 95% of the final level of automaticity ranged from 18 to 254 days. The average was 66 days.</li>
+  <li>About half of the participants had not reached their final level by day 84, so the 254 days is a prediction of the model.</li>
+</ul>
+<p>So 66 days is an average with a wide range, not a fixed duration. The book reports the range too: <span class="quoted">The full range was 18 to 254 days</span>. Section 9 names the four things that, in the book, take the time block away: the four thieves.</p>
+
+<h2 id="b-limits">8. Limits: three sources of the book were later challenged, and the method itself has no controlled test</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>The method as a whole was not tested in a controlled study.</strong> The book supports it with examples of successful people, and examples cannot show how many people used the method and did not succeed.</li>
+    <li><strong>Four hours a day needs control over your calendar.</strong> A person with fixed shifts, or with meetings all day, cannot block 4 hours without a change of the job.</li>
+    <li><strong>The ratio 1.5 is physics.</strong> An idealized model from 2013 puts the maximum ratio near 2. Nobody measured such a ratio for actions.</li>
+    <li><strong>The science in part one of the book is uneven.</strong> The table below lists the sources and what happened later.</li>
+  </ul>
+</div>
+
+<div class="table-wrap">
+<table>
+  <caption>Research behind the book, and what later research found</caption>
+  <thead>
+    <tr><th>Claim in the book</th><th>Source behind the claim</th><th>Later finding</th><th>What to take from it</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Judges granted parole in about 65% of the cases after a break, and in almost 0% before the next break. So willpower falls during the day.</th><td>Danziger, Levav and Avnaim-Pesso, 2011: 1,112 rulings, 8 judges, 50 days.</td><td>Weinshall-Margel and Shapard, 2011: the order of the cases was not random. Prisoners without a lawyer came last in each session and won 15% of their cases, against 35% with a lawyer. Glöckner, 2016: a simulation shows that judges who avoid a long case before a break produce part of the drop. The original authors replied and kept their conclusion.</td><td>The drop is disputed. Do not cite 65% to 0% as a fact about willpower.</td></tr>
+    <tr><th scope="row">Willpower (the ability to make yourself do what you decided) is a limited supply that decisions and effort consume.</th><td>Laboratory experiments on the strength model of self-control, also called ego depletion.</td><td>Hagger and colleagues, 2016: 23 laboratories, 2,141 participants, one standard protocol. Effect size d = 0.04, 95% confidence interval from −0.07 to 0.15, which includes zero.</td><td>The laboratory effect did not replicate. The advice to do the ONE Thing early may still help, but the evidence for the reason is weak.</td></tr>
+    <tr><th scope="row">A habit takes about 66 days.</th><td>Lally and colleagues, 2010: 96 volunteers, 84 days.</td><td>The same study: range 18 to 254 days. About half of the participants had not reached their final level by day 84.</td><td>Plan for a range of weeks to months. The book itself reports the range.</td></tr>
+    <tr><th scope="row">A domino makes a domino 1.5 times larger fall, so results grow geometrically.</th><td>Whitehead, 1983, a one-page note in a physics journal.</td><td>Van Leeuwen, 2013: in an idealized model, the maximum ratio is about 2. The physics holds. No study measured a ratio for actions at work.</td><td>The chain is a model of sequence, not a measurement of results.</td></tr>
+    <tr><th scope="row">We lose 28% of an average workday to multitasking.</th><td>Not named in the book. The figure matches a 2005 report by the consultancy Basex: 2.1 hours per day.</td><td>The report is an estimate by a consultancy, not a peer-reviewed study.</td><td>Treat 28% as an estimate.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one claim. Read from left to right: the claim, where it comes from, what was found later, and the conclusion of this page. The full references are in the sources.</p>
+
+<h2 id="b-words">9. More detail: the four thieves, and other words that you will hear</h2>
+<p>These terms belong to the book, but not to the main path of this page. You will meet them in summaries, in the workbooks of the authors and on their website.</p>
+<ul>
+  <li><strong>The four thieves</strong> (chapter 17, page 190): the four things that the book says take the time block. First, the inability to say no: every yes to another request is a no to the ONE Thing. Second, the fear of chaos: when you give 4 hours to the ONE Thing, other things stay undone. The book says to accept the mess. Third, poor health habits: the block needs energy, and the book argues that the energy comes from your health. Fourth, an environment that does not support your goals: the people and the places around you must support the goal.</li>
+  <li><strong>The success habit</strong> (chapter 11, page 112): the name of the book for the daily use of the Focusing Question. It is the habit that takes about 66 days to build, see section 7.</li>
+  <li><strong>Big and specific</strong> (chapter 12, page 119): the form of a good question. A great question is big, because it aims at extraordinary results, and specific, because you can check whether you reached the result. The one-year goal of section 6, 60,000 words within 12 months, is big and specific.</li>
+  <li><strong>The three commitments</strong> (chapter 16, page 175). First, follow the path of mastery: treat the ONE Thing as a skill with no final level. Second, move from E to P. E is the entrepreneurial approach, which does what comes naturally. P is the purposeful approach, which looks for a better method when the results stop. Third, live the accountability cycle: own the results, with an accountability partner if possible. These are attitudes for the time block, not extra steps.</li>
+  <li><strong>The six lies.</strong> Section 4 explains them.</li>
+</ul>
+
+<h2 id="b-check">10. Check your understanding of part B</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>Your one-year goal is to run 1,000 km. Use the plan of section 6 (48 active weeks, 5 active days per week). What are the goals for this month, this week and today?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>83 km this month, 21 km this week, 4.2 km today.</strong></p>
+          <p>1,000 km ÷ 12 months = 83.3 km per month. 83.3 km ÷ 4 active weeks = 20.8 km per week. 20.8 km ÷ 5 active days = 4.2 km per day. A common wrong answer divides 1,000 km by 365 days (2.7 km per day), which assumes a run on every day of the year. See <a href="#b-example">section 6</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>A colleague says: “The book proves that willpower runs out before lunch. The study of the judges shows it.” What is the state of the evidence?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>The study found the drop. But a later analysis found that the order of the cases was not random: prisoners without a lawyer came last and won less often. A 2016 simulation explains part of the drop by judges who avoid a long case before a break. So the claim is disputed, not proven. See <a href="#b-limits">section 8</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>Is 66 days the time that a habit takes?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>No. 66 days is the average in one study of 96 people. The range was 18 to 254 days, and about half of the participants had not reached their final level by day 84. See <a href="#b-rule">section 7</a>.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================== END OF THE PAGE ============================== -->
+<p class="part">End of the page</p>
+<h2 id="recap">11. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>The claim of the book: success is sequential. Find the one action that makes everything else easier or unnecessary, and do it first.</li>
+    <li>The model is a geometric progression. With the ratio 1.5, 56 steps turn 5 cm into 369,000 km. The ratio comes from physics, not from work.</li>
+    <li>The Focusing Question has three parts: one action, a consequence, and the test “easier or unnecessary”. The Pareto principle shortens the list to that action.</li>
+    <li>The method: seven questions from some day to right now, then 4 reserved hours a day, repeated for about 66 days. Block time off first, then the ONE Thing, then planning.</li>
+    <li>The evidence of the book on willpower is disputed, and the ego depletion effect did not replicate in 23 laboratories. The method itself has no controlled test.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>Counterbalancing</dt>
+  <dd>The replacement of the book for balance. You give the ONE Thing most of your time, you let other areas wait, and you return to them before the damage is large.</dd>
+  <dt>Focusing Question</dt>
+  <dd>The question of the book that selects the single action with the largest effect on everything else. The words of the book: <span class="quoted">What’s the ONE Thing I can do such that by doing it everything else will be easier or unnecessary</span>?</dd>
+  <dt>Geometric progression</dt>
+  <dd>A sequence of numbers in which each number is the number before it multiplied by a fixed ratio.</dd>
+  <dt>Goal setting to the now</dt>
+  <dd>The chain of seven Focusing Questions from the someday goal to the action for right now.</dd>
+  <dt>Habit</dt>
+  <dd>A behavior that you perform without a decision, because you performed it many times in the same situation.</dd>
+  <dt>Lead domino</dt>
+  <dd>The first domino of a chain: the action that you do first, because it starts the sequence.</dd>
+  <dt>Multitasking</dt>
+  <dd>The attempt to do two tasks at the same time. The book says that the brain switches between the tasks, and each switch costs time.</dd>
+  <dt>The ONE Thing</dt>
+  <dd>The single action that passes the test of the Focusing Question at this moment, for this area of your life.</dd>
+  <dt>Pareto principle</dt>
+  <dd>The observation that a small share of the causes produces a large share of the results. A common form is 20% of the causes and 80% of the results.</dd>
+  <dt>Success list</dt>
+  <dd>A to-do list after you apply the Pareto principle: the few items that produce most of the result, with the ONE Thing at the top.</dd>
+  <dt>Time block</dt>
+  <dd>The fixed period in your calendar that is reserved for the ONE Thing. The book asks for 4 hours a day.</dd>
+  <dt>Time blocking</dt>
+  <dd>The practice of the book for the daily ONE Thing: you reserve the time block and treat it like an appointment that nobody can move.</dd>
+  <dt>Willpower</dt>
+  <dd>The ability to make yourself do what you decided to do. The book treats it as a supply that falls during the day.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or a source with limits. <span class="conf low">Low</span> = not verified, or sources disagree. <span class="conf given">Given</span> = a value from your message or an example value.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> The book: Gary Keller and Jay Papasan, <span class="quoted">The ONE Thing: The Surprisingly Simple Truth Behind Extraordinary Results</span>, John Murray, London, 2014. All quotations on this page were verified on 8 October 2026 with the full-text search of the Internet Archive. That search returns the sentence around each search term. Record: <a href="https://archive.org/details/onethingsurprisi0000kell">archive.org/details/onethingsurprisi0000kell</a>.</li>
+  <li><span class="conf medium">Medium</span> Publication facts of the first edition: Bard Press, 1 April 2013, 240 pages, 26 translations. Source: the Wikipedia article <span class="quoted">The One Thing (book)</span>, read on 8 October 2026. The Open Library record of the same ISBN lists the year 2012.</li>
+  <li><span class="conf high">High</span> Lorne A. Whitehead, <span class="quoted">Domino “chain reaction”</span>, American Journal of Physics 51(2), page 182, February 1983, DOI 10.1119/1.13456. The citation was verified in CrossRef. The text of the note was not accessible to me.</li>
+  <li><span class="conf medium">Medium</span> The ratio 1.5 and its attribution to Whitehead: the page <span class="quoted">Domino Chain Reaction</span> of the physics department of the University of Toronto. The page states that each domino is 1.5 times wider, higher and thicker than the one before, and it cites the note of Whitehead. <a href="https://ugdemos.physics.utoronto.ca/db/demos/domino-chain-reaction">ugdemos.physics.utoronto.ca</a>.</li>
+  <li><span class="conf medium">Medium</span> The maximum ratio near 2: Ceri Perkins, <span class="quoted">How many dominoes will topple a cathedral tower</span>?, Physics World, 15 January 2013. The article reports the model of J. M. J. van Leeuwen, <span class="quoted">Domino Magnification</span>, arXiv:1301.0615 (2013). I read the article and the abstract, not the paper.</li>
+  <li><span class="conf high">High</span> Phillippa Lally, Cornelia H. M. van Jaarsveld, Henry W. W. Potts and Jane Wardle: <span class="quoted">How are habits formed: Modelling habit formation in the real world</span>. European Journal of Social Psychology 40(6), pages 998 to 1009, 2010, DOI 10.1002/ejsp.674. The abstract (read through CrossRef) gives: 96 volunteers, 12 weeks, 82 analysed, 62 fitted, 39 with a good fit, range 18 to 254 days.</li>
+  <li><span class="conf medium">Medium</span> The average of 66 days: BPS Research Digest, <span class="quoted">How to form a habit</span>, 6 October 2010. The same article states that about half of the participants had not reached their final level by day 84. I did not open the full paper.</li>
+  <li><span class="conf high">High</span> Shai Danziger, Jonathan Levav and Liora Avnaim-Pesso, <span class="quoted">Extraneous factors in judicial decisions</span>, PNAS 108(17), pages 6889 to 6892, 2011. Read on PubMed Central: 1,112 rulings, 8 judges, 50 days, about 65% favorable rulings after a break.</li>
+  <li><span class="conf high">High</span> Keren Weinshall-Margel and John Shapard, <span class="quoted">Overlooked factors in the analysis of parole decisions</span>, PNAS 108(42), page E833, 2011. Read on PubMed Central. The reply of Danziger and colleagues is PNAS 108(42), page E834, 2011. I found its title in a search and did not read it.</li>
+  <li><span class="conf high">High</span> Andreas Glöckner, <span class="quoted">The irrational hungry judge effect revisited: Simulations reveal that the magnitude of the effect is overestimated</span>. Judgment and Decision Making 11(6), 2016, read on the site of the journal.</li>
+  <li><span class="conf high">High</span> Martin S. Hagger, Nikos L. D. Chatzisarantis and colleagues, <span class="quoted">A multilab preregistered replication of the ego-depletion effect</span>, Perspectives on Psychological Science 11(4), pages 546 to 573, 2016. Abstract read in the repository of Massey University: 23 laboratories, 2,141 participants, d = 0.04, 95% CI from −0.07 to 0.15.</li>
+  <li><span class="conf medium">Medium</span> The Basex report by Jonathan Spira, 2005: <span class="quoted">The Cost of Not Paying Attention: How Interruptions Impact Knowledge Worker Productivity</span>. Its estimate: 2.1 hours a day, 28% of the time. Read in a news article of 9 September 2005 (destinationCRM), not in the report.</li>
+  <li><span class="conf medium">Medium</span> Landmark heights, read in Wikipedia on 8 October 2026. Peyton Manning: 6 feet 5 inches. Leaning Tower of Pisa: 55.86 m on the low side, 56.67 m on the high side. Eiffel Tower: 330 m to the tip. Mount Everest: 8,848.86 m (survey of 2020).</li>
+  <li><span class="conf high">High</span> Mean distance to the Moon: NASA Moon Fact Sheet, semi-major axis 0.3844 million km; Wikipedia gives 384,399 km. Calculations: all domino heights, the ratios in the tables and the numbers of the examples come from a Python script, run on 8 October 2026. The script uses the formula of section 1.</li>
+  <li><span class="conf given">Given</span> Example values of part B: 60,000 words, 48 writing weeks, 5 writing days per week, and the 1,000 km of the self-check.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
