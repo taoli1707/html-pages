@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Romanelli Design Method</title>
+<style>
+/* ---------- Typefaces. System serif only, so the page needs no external font. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Colour tokens. Light is the default: warm paper, near-black ink. ---------- */
+:root {
+  --bg: #fdfcf9;
+  --surface: #f2efe7;
+  --text: #1a1713;
+  --muted: #5c564e;
+  --border: #d5cfc2;
+  --accent: #8a2e1c;
+  --accent-soft: #f1e7e2;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e5dfd2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16130f;
+    --surface: #221e18;
+    --text: #ece5da;
+    --muted: #a99e91;
+    --border: #3c352c;
+    --accent: #e4a392;
+    --accent-soft: #2b1f1a;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #2e2821;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16130f;
+  --surface: #221e18;
+  --text: #ece5da;
+  --muted: #a99e91;
+  --border: #3c352c;
+  --accent: #e4a392;
+  --accent-soft: #2b1f1a;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #2e2821;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 16px 5rem;
+}
+
+/* Headings carry the structure through size and space. No rules across the page,
+   except one short mark above each section heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: 2.3rem;
+  line-height: 1.17;
+  letter-spacing: -0.012em;
+  margin-bottom: 0.9rem;
+}
+h2 {
+  font-size: 1.5rem;
+  line-height: 1.26;
+  margin-top: 3.4rem;
+  margin-bottom: 0.7rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 1px solid var(--accent);
+  margin-bottom: 1.1rem;
+}
+h3 { font-size: 1.15rem; margin-top: 1.9rem; margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 2px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1rem;
+  margin: 0 0 2.6rem;
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 1.7rem; }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  border-top: 2px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 1.05rem 0 1.15rem;
+  font-size: 1.16rem;
+  line-height: 1.6;
+}
+.bottom-line .label { color: var(--text); }
+.example { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; font-size: 1.05rem; }
+.assume {
+  border-left: 1px solid var(--border);
+  padding-left: 1.4rem;
+  font-size: 1.05rem;
+}
+.assume .label { color: var(--muted); }
+.predict { border-left: 2px solid var(--accent); padding-left: 1.4rem; }
+.predict .label { color: var(--accent); }
+.recap { border-top: 2px solid var(--text); padding-top: 1rem; }
+.recap .label { color: var(--text); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 1.02rem;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 1.02rem; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--text);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 1rem; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--surface); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+}
+figure .fig-title { font-weight: 600; font-size: 1.08rem; margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: 0.98rem; margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 1rem; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-style: italic; font-size: 0.93rem; margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--muted); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 1.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1.04rem; font-weight: 600; }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--text);
+  padding-top: 1rem;
+  margin: 0 0 1.8rem;
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 1.7rem;
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: 4rem 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--text);
+  font-size: 1.02rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.part + h2 { margin-top: 1.3rem; }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92rem;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 1.05rem; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- Narrow screens. The title drops one step, the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  body { font-size: 1.06rem; }
+  main { padding: 2.2rem 16px 4rem; }
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.32rem; margin-top: 2.8rem; }
+  .bottom-line { font-size: 1.1rem; }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  nav.contents { display: none; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: GSAP, RAL, PS2, PS, SOTD, FWA, MKRM, CSS, HTML -->
+<h1>How does Mirko Romanelli design a product, and how was his website designed?</h1>
+<p class="meta">Written 2026-10-11 · Reading time: about 30 minutes · You need to know: what a 3D model and a web page are</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>Mirko Romanelli is a product and industrial designer in Florence, Italy. He designs a product in four steps: analysis and research, concept, 3D model, and rendering with a presentation. One idea gives the product its form. The material and the small details give it its character. His twelve published projects use steel, marble, travertine, oak, and recycled plastic.</p>
+  <p>He did not design his own website. The agency Shakuro designed and built it in 2024. Shakuro started from research and a logo, chose a palette with no accent colour, built the site in Webflow, and added custom animation code. The site won a Site of the Day award on 18 December 2024. On 18 February 2025 it won a Special Kudos award with a judges' score of <strong>7.48 of 10</strong>.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>You ask because you build your own product and website, and you want a method that you can copy.</li>
+    <li>"Design a product" means a physical object, which is the field of this designer. The page does not cover software product design.</li>
+    <li>All facts come from public pages, read on 11 October 2026. Romanelli did not publish his sketches or his working hours. Where a step is not documented, the page says so.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#a-example">Part A, one product: the Oscar wardrobe, painted steel, 14.5 kg, EUR 349</a></li>
+    <li><a href="#a-rule">The rule for products: one concept, then material and detail</a></li>
+    <li><a href="#a-data">Twelve projects in 3.5 years: seven name their material</a></li>
+    <li><a href="#a-mistake">Wrong idea corrected: minimal design is not less work</a></li>
+    <li><a href="#b-example">Part B, the website: Shakuro built it in seven steps</a></li>
+    <li><a href="#b-rule">The rule for the website: the work is the colour</a></li>
+    <li><a href="#b-data">The code behind the calm page: a 355 KB script with GSAP and WebGL</a></li>
+    <li><a href="#b-awards">Three awards, and what the scores mean</a></li>
+    <li><a href="#limits">Limits: what the sources do not say</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<!-- ===================== PART A ===================== -->
+<p class="part">Part A</p>
+<h2 id="a-example">1. One product: the Oscar wardrobe, painted steel, 14.5 kg, EUR 349</h2>
+
+<div class="box bottom-line">
+  <span class="label">Short answer for Part A</span>
+  <p>Romanelli works in four steps: research, concept, 3D model, rendering. The concept is one simple form that you can recognise at once. The material and the details then carry the quality. Many of his projects are concept studies with no manufacturer.</p>
+</div>
+
+<p>Oscar is an open wardrobe that Romanelli designed with Anna Fiore for the Italian furniture brand Hiro Design. It is the project with the most published numbers, so it is the main example of this page.</p>
+
+<p>The product is a piece of <dfn>industrial design</dfn>. Industrial design is the design of an object that a factory makes in many copies: its form, material, parts, and joints.</p>
+
+<div class="box example">
+  <span class="label">Worked example: Oscar from the public facts</span>
+  <ol class="steps">
+    <li><strong>The need.</strong> A wardrobe for an entrance or a bedroom, with a shelf and a bar for hangers. It must stand on its own and must not damage the floor.
+      <span class="why">The Hiro page lists these uses and the hard rubber feet.</span></li>
+    <li><strong>The concept.</strong> Two side frames, two tubular bars, and one shelf. Nothing else. The product arrives disassembled in these five parts, and screws join them.
+      <span class="why">A small number of parts is the visible form of what Romanelli calls the "essentiality of forms". Five parts also pack flat.</span></li>
+    <li><strong>The material.</strong> Painted steel with a polyester <dfn>powder coating</dfn>. A powder coating is a dry paint powder that is sprayed on the metal and then baked hard in an oven. Hiro states that the surface is scratch-resistant and holds its colour.
+      <span class="why">Steel tube gives a thin frame that carries a load. The coating gives colour and protection in one layer.</span></li>
+    <li><strong>The dimensions.</strong> Width 100 cm, depth 58 cm, height 160.5 cm. Weight 14.5 kg. Maximum load 20 kg, evenly distributed. The bar leaves 71 cm of space for hangers. The shelf is 44.7 cm by 95.5 cm.
+      <span class="why">These values come from the 3D model, where the designer fixes every size before the factory sees the design.</span></li>
+    <li><strong>The colours.</strong> Seven colours. Six are standard <dfn>RAL colours</dfn> (a European catalogue of numbered paint colours, for example RAL 9001 "Shell White"). One is a custom code for "Midnight Blue".
+      <span class="why">A RAL number lets any paint shop mix the same colour. The frame is one shape; only the coating changes.</span></li>
+    <li><strong>The production.</strong> Price EUR 349. Hiro makes the product after the order and delivers in 4 to 6 weeks.
+      <span class="why">This is <dfn>on-demand production</dfn>: the factory makes one unit for each order. There is no stock, so the brand can offer seven colours at no extra cost.</span></li>
+  </ol>
+  <p><strong>Result:</strong> a product with five parts, one material, one surface finish, and seven colours. The idea is simple. The specification is exact.</p>
+</div>
+
+<h2 id="a-rule">2. The rule for products: one concept, then material and detail</h2>
+
+<p>Romanelli states his process in one sentence on his site. The sentence is: <span class="quoted">Analysis and research, development of concepts, ideas and projects, creation of 3D models, product rendering and presentation.</span> That is four steps. The diagram shows them with the Oscar values.</p>
+
+<figure class="diagram">
+  <p class="fig-title">A product goes from research to a presentation in four steps; a factory step follows only when a brand orders the product.</p>
+  <p class="fig-sub">The values under each step are the values of the Oscar wardrobe.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 700 230" role="img" aria-label="Diagram of five boxes in a row. Research, then concept, then 3D model, then rendering and presentation, then a dashed box for production by the brand. Each arrow means 'gives the input for'. The dashed box only exists when a brand orders the product.">
+    <defs>
+      <marker id="ah-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/>
+      </marker>
+    </defs>
+    <rect class="node" x="6" y="40" width="128" height="74" rx="8"/>
+    <text class="node-name" x="70" y="66" text-anchor="middle">1. Research</text>
+    <text class="node-value" x="70" y="86" text-anchor="middle">need: hang coats,</text>
+    <text class="node-value" x="70" y="102" text-anchor="middle">stand alone</text>
+
+    <rect class="node" x="146" y="40" width="128" height="74" rx="8"/>
+    <text class="node-name" x="210" y="66" text-anchor="middle">2. Concept</text>
+    <text class="node-value" x="210" y="86" text-anchor="middle">2 frames, 2 bars,</text>
+    <text class="node-value" x="210" y="102" text-anchor="middle">1 shelf</text>
+
+    <rect class="node" x="286" y="40" width="128" height="74" rx="8"/>
+    <text class="node-name" x="350" y="66" text-anchor="middle">3. 3D model</text>
+    <text class="node-value" x="350" y="86" text-anchor="middle">100 × 58 × 160.5 cm</text>
+    <text class="node-value" x="350" y="102" text-anchor="middle">steel, 14.5 kg</text>
+
+    <rect class="node" x="426" y="40" width="128" height="74" rx="8"/>
+    <text class="node-name" x="490" y="66" text-anchor="middle">4. Rendering</text>
+    <text class="node-value" x="490" y="86" text-anchor="middle">7 colours shown,</text>
+    <text class="node-value" x="490" y="102" text-anchor="middle">presentation</text>
+
+    <rect class="node" x="566" y="40" width="128" height="74" rx="8" stroke-dasharray="6 4"/>
+    <text class="node-name" x="630" y="66" text-anchor="middle">5. Production</text>
+    <text class="node-value" x="630" y="86" text-anchor="middle">Hiro, on demand,</text>
+    <text class="node-value" x="630" y="102" text-anchor="middle">EUR 349</text>
+
+    <line class="arrow" x1="136" y1="77" x2="143" y2="77" marker-end="url(#ah-a)"/>
+    <line class="arrow" x1="276" y1="77" x2="283" y2="77" marker-end="url(#ah-a)"/>
+    <line class="arrow" x1="416" y1="77" x2="423" y2="77" marker-end="url(#ah-a)"/>
+    <line class="arrow" x1="556" y1="77" x2="563" y2="77" marker-end="url(#ah-a)" stroke-dasharray="4 3"/>
+
+    <text class="arrow-label" x="280" y="150" text-anchor="middle">Steps 1 to 4 are the designer's work. Step 5 exists only when a brand orders the product.</text>
+    <text class="arrow-label" x="280" y="172" text-anchor="middle">Of the 12 published projects, 2 name a client: Littera (Hiro Design) and Augen (Augen Pro).</text>
+    <text class="arrow-label" x="280" y="210" text-anchor="middle">Oscar is on the Hiro site and on Behance, but not on the designer's own works list.</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is one step. Each arrow means "gives the input for the next step". A dashed box or arrow means "only in some projects".</p>
+</figure>
+
+<p>The four steps are common to every industrial designer. Specific to Romanelli is the rule inside step 2. He writes that he creates products <span class="quoted">expressed through the simplicity of the form and the iconization of the concept</span>. He calls this the <dfn>iconization of the concept</dfn>: the product has one idea, and its form is a picture of that idea.</p>
+
+<p>Three projects show the rule with their names. <strong>Capitello</strong> is a metal storage table shaped like the capital, the top block of a classical column. <strong>Nest</strong> is a pair of marble salt and pepper shakers that sit in one base, like eggs in a nest. <strong>Kombo</strong> is a desk organiser in recycled plastic whose stepped form comes from the rice terraces of Yuanyang and Yunhe in China. In each case one sentence states the idea, and the form shows it.</p>
+
+<p>After the concept, the material does the rest. His own words on the home page are: <span class="quoted">Minimal design, enhanced by details and materials.</span> The Oscar example shows what "details" means in practice. The details are rubber feet, a shelf size, a 20 kg load limit, and a coating that holds its colour. None of these change the form. All of them decide whether the product works for ten years.</p>
+
+<h3>Compare a concept study with a product for sale</h3>
+<p>Ten of the twelve projects on his site name no client. These are <dfn>concept studies</dfn>: complete designs with a 3D model and renderings, but no factory and no price. The two cases differ in one feature: a brand that orders the product.</p>
+<div class="compare">
+  <div>
+    <h4>PS 2.0, a concept study</h4>
+    <p>A redesign of the PlayStation 2 Slim console, published 11 December 2021.</p>
+    <p>Steps 1 to 4 only. The goal is to keep the identity of the console and update some features. No manufacturer, no price, no dimensions published.</p>
+  </div>
+  <div>
+    <h4>Oscar, a product for sale</h4>
+    <p>An open wardrobe for Hiro Design, EUR 349, seven colours.</p>
+    <p>Steps 1 to 5. The brand adds a price, a delivery time, a load limit, and an assembly guide. The published facts are exact because a customer can check them.</p>
+  </div>
+</div>
+<p>The principle: the method is the same in both cases. The difference is who checks the result: the designer for a study, the customer for a product. So the exact numbers come from the products for sale.</p>
+
+<h2 id="a-data">3. Twelve projects in 3.5 years: seven name their material</h2>
+<p>The works page lists twelve projects, from 10 September 2021 to 22 March 2025. That is 3.5 years, or about one project every 3.5 months. The table shows all twelve, newest first.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Seven of the twelve projects state their material; only two name a client</caption>
+  <thead>
+    <tr><th>Project</th><th>What it is</th><th>Published</th><th>Main material</th><th>Client named</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Capitello</th><td>Storage table, family of three</td><td style="white-space:nowrap">2025-03-22</td><td>Metal</td><td>No</td></tr>
+    <tr><th scope="row">Augen</th><td>Wearable device</td><td style="white-space:nowrap">2024-06-25</td><td>Not stated</td><td>Augen Pro</td></tr>
+    <tr><th scope="row">Kombo</th><td>Desk organiser</td><td style="white-space:nowrap">2024-04-01</td><td>Recycled plastic</td><td>No</td></tr>
+    <tr class="highlight"><th scope="row">Littera</th><td>Writing desk, two sizes</td><td style="white-space:nowrap">2023-10-05</td><td>Painted steel, oak top</td><td>Hiro Design</td></tr>
+    <tr><th scope="row">Nest</th><td>Salt and pepper shakers</td><td style="white-space:nowrap">2023-02-07</td><td>Black and white marble</td><td>No</td></tr>
+    <tr><th scope="row">Flow</th><td>Electronic cigarette</td><td style="white-space:nowrap">2022-05-22</td><td>Not stated (finishes only)</td><td>No</td></tr>
+    <tr><th scope="row">Mushroom</th><td>Wireless charger</td><td style="white-space:nowrap">2022-04-10</td><td>Not stated</td><td>No</td></tr>
+    <tr><th scope="row">PS 2.0</th><td>PlayStation 2 Slim redesign</td><td style="white-space:nowrap">2021-12-11</td><td>Not stated</td><td>No</td></tr>
+    <tr><th scope="row">Gluglu</th><td>Water bottle, 0.5 L</td><td style="white-space:nowrap">2021-12-10</td><td>Steel, rubber coating</td><td>No</td></tr>
+    <tr><th scope="row">Zephyr</th><td>Electric scooter</td><td style="white-space:nowrap">2021-11-17</td><td>Not stated</td><td>No</td></tr>
+    <tr><th scope="row">Shot</th><td>Progressive tap</td><td style="white-space:nowrap">2021-10-12</td><td>Steel and silicone</td><td>No</td></tr>
+    <tr><th scope="row">Litus</th><td>Modular bench</td><td style="white-space:nowrap">2021-09-10</td><td>Travertine waste blocks</td><td>No</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one project from the works page. "Not stated" means that the project text names no material. The highlighted row is the second product for Hiro Design, which is the brand of the Oscar example.</p>
+
+<p>Two rows show the material rule at its strongest. <strong>Gluglu</strong> is a steel bottle, 70 mm wide, 246 mm high, 0.5 L, with a rubber coating below and a brushed cap. <strong>Litus</strong> is a bench made from travertine waste blocks, the pieces that the stone industry discards. Here the material comes first and the form follows from it.</p>
+
+<h2 id="a-mistake">4. Wrong idea corrected: minimal design is not less work</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "A minimal product has few parts, so the design takes less work than a complex product."</p>
+  <p><strong>Correct:</strong> the form takes less time to draw. The details take more. Oscar has five parts. Its specification still has a load limit, a shelf size, a hanger length, a hook length, rubber feet, seven colour codes, and a coating type.</p>
+  <p><strong>Why the wrong idea fails:</strong> on a complex product, a weak detail hides among many others. On a product with five parts, every joint, every edge, and every surface is visible. Romanelli says this himself: Capitello is <span class="quoted">simple and compact at first glance</span> but <span class="quoted">studied down to the smallest detail at a closer look</span>. The work moves from the form to the details; it does not disappear.</p>
+</div>
+
+<div class="check">
+  <span class="label">Check Part A before you continue.</span>
+  <ol>
+    <li>A customer orders an Oscar wardrobe in Terracotta. Which step of the four produced the number "RAL 3012", and why does a standard number matter?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Step 4, rendering and presentation, chose the colour. The RAL number matters because any paint supplier can mix it exactly.</strong></p>
+          <p>The frame is the same in all seven colours, so the colour is a presentation choice, not a form choice. A typical wrong answer is step 3, the 3D model. The model fixes the sizes, not the paint.</p>
+        </div>
+      </details>
+    </li>
+    <li>Litus and Kombo both come from a material or a landscape. Which one applies the "iconization of the concept" rule, and which one starts from the material?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Kombo applies the rule: the stepped form is a picture of rice terraces. Litus starts from the material: the waste blocks decide the form.</strong></p>
+          <p>Both are minimal. The order of the steps differs. In Kombo the concept comes first and the recycled plastic serves it. In Litus the available blocks come first and the bench form serves them.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<!-- ===================== PART B ===================== -->
+<p class="part">Part B</p>
+<h2 id="b-example">5. The website: Shakuro built it in seven steps</h2>
+
+<div class="box bottom-line">
+  <span class="label">Short answer for Part B</span>
+  <p>Romanelli did not build his site. The agency Shakuro did, and his site says "Made by Shakuro" in its footer. Shakuro worked in seven steps: research, logo, brand identity system, wireframes, user interface design, a Webflow build, and custom animation code. One decision shapes the whole site: a palette with no accent colour. The product images are then the only colour on the page.</p>
+</div>
+
+<p>The site is at mirkoromanelli.com, with four pages: Home, About, Works, and Contact. The source of this section is Shakuro's own case study. I checked it against the HTML of the live site. HTML is the text file that a browser turns into a page.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the seven steps of the site, with Shakuro's reasons</span>
+  <ol class="steps">
+    <li><strong>Research.</strong> Shakuro collected the client's preferences, style guidelines, brand attributes, and user personas. From these it made <dfn>stylescapes</dfn>. A stylescape is one wide image that collects colours, type, photos, and layout fragments to show one possible visual direction.
+      <span class="why">It is cheaper to reject an image than a finished page design.</span></li>
+    <li><strong>Logo.</strong> Shakuro tried different shapes, line weights, and typefaces, and gave Romanelli a set of logo options to choose from. The live site uses the mark "MKRM".
+      <span class="why">The logo is the smallest element. The rest of the identity follows its weight and proportions.</span></li>
+    <li><strong>Brand identity system.</strong> A <dfn>brand identity system</dfn> is the set of rules for a brand's type, colours, spacing, and other visual elements. Shakuro first explored colour variations. Then it chose a palette with no accent colour at all.
+      <span class="why">Shakuro gives the reason. <span class="quoted">This decision allows Mirko's work to take center stage on the website.</span> A marble or terracotta product is the only colour on a grey page.</span></li>
+    <li><strong>Wireframes.</strong> A <dfn>wireframe</dfn> is a page layout drawn with boxes and lines, without colour or final text. Shakuro drew the wireframes at the same time as the identity system.
+      <span class="why">Structure and style were designed together, so neither had to be redone.</span></li>
+    <li><strong>User interface design.</strong> User interface (UI) design, from here <dfn>UI design</dfn>, is how a page looks and how its controls are arranged. The home page uses a <span class="quoted">rhythmic, flowing arrangement</span> of projects with no strict hierarchy. The Works page moves <span class="quoted">beyond a traditional grid</span>.
+      <span class="why">Different image sizes invite the visitor to scroll. Equal tiles look like a catalogue.</span></li>
+    <li><strong>Webflow build.</strong> <dfn>Webflow</dfn> is a visual tool that builds a website without hand-written code and hosts it. Shakuro used its <dfn>content management system</dfn> (from here: CMS), which stores each project as a record and generates one page per record.
+      <span class="why">Romanelli can add a thirteenth project as a record, without the agency.</span></li>
+    <li><strong>Custom code.</strong> Webflow's built-in animations were not enough for the planned effects. Shakuro added <dfn>GSAP</dfn> (GreenSock Animation Platform, a JavaScript library that moves elements on a timeline) for transitions. For the header it wrote a <dfn>WebGL fragment shader</dfn>. A fragment shader is a small program that runs on the graphics processor and computes the colour of every pixel. This shader produces a 3D blur effect.
+      <span class="why">The graphics processor computes all pixels in parallel, so the blur stays smooth.</span></li>
+  </ol>
+  <p><strong>Result:</strong> a grey site with one typeface and no accent colour. The product images are the only colour. A separate script adds the motion.</p>
+</div>
+
+<h2 id="b-rule">6. The rule for the website: the work is the colour</h2>
+<p>Shakuro's seven steps follow the product rule of Part A. For a product, the form is simple and the material gives the character. For the site, the layout and the palette are neutral, and the product images give the character. Shakuro states this in its case study. The palette has no accent colour. The reason given is this: <span class="quoted">A neutral color palette was chosen to keep the design flexible and adaptable to various types of products.</span></p>
+
+<figure class="diagram">
+  <p class="fig-title">Four design steps run first, then two build steps; the identity and the wireframes run at the same time.</p>
+  <p class="fig-sub">The steps are the steps of Shakuro's case study. The values are facts from the live site.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 700 250" role="img" aria-label="Diagram of the website process. Research leads to a logo. The logo leads to two parallel boxes: the brand identity system and the wireframes. Both lead to the user interface design. That leads to the Webflow build, and the build leads to the custom code. Each arrow means 'gives the input for'.">
+    <defs>
+      <marker id="ah-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/>
+      </marker>
+    </defs>
+    <rect class="node" x="10" y="88" width="110" height="64" rx="8"/>
+    <text class="node-name" x="65" y="114" text-anchor="middle">1. Research</text>
+    <text class="node-value" x="65" y="134" text-anchor="middle">stylescapes</text>
+
+    <rect class="node" x="150" y="88" width="110" height="64" rx="8"/>
+    <text class="node-name" x="205" y="114" text-anchor="middle">2. Logo</text>
+    <text class="node-value" x="205" y="134" text-anchor="middle">mark "MKRM"</text>
+
+    <rect class="node" x="290" y="20" width="130" height="64" rx="8"/>
+    <text class="node-name" x="355" y="46" text-anchor="middle">3. Identity</text>
+    <text class="node-value" x="355" y="66" text-anchor="middle">no accent colour</text>
+
+    <rect class="node" x="290" y="156" width="130" height="64" rx="8"/>
+    <text class="node-name" x="355" y="182" text-anchor="middle">4. Wireframes</text>
+    <text class="node-value" x="355" y="202" text-anchor="middle">4 pages</text>
+
+    <rect class="node" x="450" y="88" width="110" height="64" rx="8"/>
+    <text class="node-name" x="505" y="114" text-anchor="middle">5. Interface</text>
+    <text class="node-value" x="505" y="134" text-anchor="middle">rhythm, no grid</text>
+
+    <rect class="node" x="582" y="20" width="114" height="64" rx="8"/>
+    <text class="node-name" x="639" y="46" text-anchor="middle">6. Webflow</text>
+    <text class="node-value" x="639" y="66" text-anchor="middle">CMS, 12 records</text>
+
+    <rect class="node" x="582" y="156" width="114" height="64" rx="8"/>
+    <text class="node-name" x="639" y="182" text-anchor="middle">7. Custom code</text>
+    <text class="node-value" x="639" y="202" text-anchor="middle">GSAP, WebGL</text>
+
+    <line class="arrow" x1="122" y1="120" x2="147" y2="120" marker-end="url(#ah-b)"/>
+    <path class="arrow" d="M 262 120 L 275 120 L 275 52 L 287 52" fill="none" marker-end="url(#ah-b)"/>
+    <path class="arrow" d="M 262 120 L 275 120 L 275 188 L 287 188" fill="none" marker-end="url(#ah-b)"/>
+    <path class="arrow" d="M 422 52 L 435 52 L 435 120 L 447 120" fill="none" marker-end="url(#ah-b)"/>
+    <path class="arrow" d="M 422 188 L 435 188 L 435 120 L 447 120" fill="none" marker-end="url(#ah-b)"/>
+    <path class="arrow" d="M 562 120 L 572 120 L 572 52 L 579 52" fill="none" marker-end="url(#ah-b)"/>
+    <path class="arrow" d="M 639 86 L 639 153" fill="none" marker-end="url(#ah-b)"/>
+    <text class="arrow-label" x="355" y="243" text-anchor="middle">Steps 3 and 4 ran at the same time. Step 7 runs on top of step 6.</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is one step of the agency. Each arrow means "gives the input for". Two boxes at the same horizontal position ran at the same time.</p>
+</figure>
+
+<p>The contrast with a standard portfolio is one feature: a standard grid has equal tiles and an accent colour on links. Here the images differ in size, and the only colour is the product. Remove every colour that is not the product, and the product becomes the accent.</p>
+
+<h2 id="b-data">7. The code behind the calm page: a 355 KB script with GSAP and WebGL</h2>
+<p>A minimal look does not mean minimal code. I downloaded the home page and its scripts on 11 October 2026 and searched them. The table lists what the site loads.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>The site loads Webflow's own scripts plus one custom script that holds all the motion code</caption>
+  <thead>
+    <tr><th>Layer</th><th>What the HTML or the script shows</th><th>How I found it</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Platform</th><td>Webflow. The HTML carries a Webflow site identifier, and the stylesheet comes from Webflow's content network.</td><td>Attribute <code>data-wf-site</code> in the HTML</td></tr>
+    <tr><th scope="row">Base library</th><td>jQuery 3.5.1, loaded by Webflow.</td><td>Script file name</td></tr>
+    <tr><th scope="row">Typeface</th><td>One typeface, Suisse Int'l, in all text styles.</td><td>Six rules in the stylesheet name it; no other text typeface appears</td></tr>
+    <tr class="highlight"><th scope="row">Custom script</th><td>One file of 363,659 bytes (355 KB), hosted outside Webflow on Vercel.</td><td>Script address in the HTML; file downloaded</td></tr>
+    <tr><th scope="row">Animation</th><td>GSAP version 3.12.5, with the ScrollTrigger and SplitText plug-ins.</td><td>Version string and plug-in names inside the custom script</td></tr>
+    <tr><th scope="row">Scroll</th><td>Lenis, a library that replaces the browser's scroll with a smooth scroll.</td><td>Twelve occurrences of its name inside the custom script</td></tr>
+    <tr><th scope="row">Header effect</th><td>WebGL with fragment shaders. The shader source is inside the script.</td><td>Five occurrences of <code>gl_FragColor</code>, the output variable of a fragment shader</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one layer of the site. The platform is at the top and the single effect is at the bottom. The third column says which text in the downloaded files proves the row.</p>
+
+<p>The heavy part is not Webflow. The custom 355 KB script holds all the motion. If you want the look without the motion, you need only Webflow, one typeface, and the palette.</p>
+
+
+<h2 id="b-awards">8. Three awards, and what the scores mean</h2>
+<p>Three award sites list the site. The chart shows the four scores from CSS Design Awards, the only site that publishes the votes.</p>
+
+<figure>
+  <p class="fig-title">On CSS Design Awards the public rated the user experience highest, 7.67 of 10; the judges gave 7.48.</p>
+  <p class="fig-sub">Scores out of 10. The three public scores each come from 20 votes. The judges' score is the average of 7 judges.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 640 300" role="img" aria-label="Bar chart of four scores out of 10. Public user interface design 7.39. Public user experience design 7.67. Public innovation 7.40. Judges final score 7.48. All four bars are between 7 and 8.">
+    <line class="grid" x1="60" y1="40" x2="600" y2="40"/>
+    <line class="grid" x1="60" y1="90" x2="600" y2="90"/>
+    <line class="grid" x1="60" y1="140" x2="600" y2="140"/>
+    <line class="grid" x1="60" y1="190" x2="600" y2="190"/>
+    <line class="axis" x1="60" y1="240" x2="600" y2="240"/>
+    <text class="axis-label" x="52" y="244" text-anchor="end">0</text>
+    <text class="axis-label" x="52" y="194" text-anchor="end">2.5</text>
+    <text class="axis-label" x="52" y="144" text-anchor="end">5</text>
+    <text class="axis-label" x="52" y="94" text-anchor="end">7.5</text>
+    <text class="axis-label" x="52" y="44" text-anchor="end">10</text>
+    <!-- bars: height = score/10*200, baseline y=240 -->
+    <rect x="95" y="92.2" width="90" height="147.8" fill="var(--s1)"/>
+    <rect x="225" y="86.6" width="90" height="153.4" fill="var(--s1)"/>
+    <rect x="355" y="92.0" width="90" height="148.0" fill="var(--s1)"/>
+    <rect x="485" y="90.4" width="90" height="149.6" fill="var(--s2)"/>
+    <text x="140" y="80" font-size="14" font-weight="650" text-anchor="middle">7.39</text>
+    <text x="270" y="74" font-size="14" font-weight="650" text-anchor="middle">7.67</text>
+    <text x="400" y="80" font-size="14" font-weight="650" text-anchor="middle">7.40</text>
+    <text x="530" y="78" font-size="14" font-weight="650" text-anchor="middle">7.48</text>
+    <text class="axis-label" x="140" y="262" text-anchor="middle">Public: interface</text>
+    <text class="axis-label" x="270" y="262" text-anchor="middle">Public: experience</text>
+    <text class="axis-label" x="400" y="262" text-anchor="middle">Public: innovation</text>
+    <text class="axis-label" x="530" y="262" text-anchor="middle">Judges: final</text>
+    <text class="axis-label" x="140" y="282" text-anchor="middle">20 votes</text>
+    <text class="axis-label" x="270" y="282" text-anchor="middle">20 votes</text>
+    <text class="axis-label" x="400" y="282" text-anchor="middle">20 votes</text>
+    <text class="axis-label" x="530" y="282" text-anchor="middle">7 judges</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each bar is one score out of 10. The three left bars are public votes. The right bar, in a second colour, is the judges' average. A longer bar is a higher score.</p>
+  <p class="fig-source">Source: CSS Design Awards page of the site, read in the downloaded HTML on 11 October 2026.</p>
+</figure>
+
+<p>In the chart, UI design scores 7.39. User experience (UX) design, from here <dfn>UX design</dfn>, is how the whole visit feels from the first page to the last. It scores 7.67. The difference is 0.28 points, from 20 votes. So the public liked the flow of the visit a little more than the look of the pages.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Three award listings, two with a published score</caption>
+  <thead>
+    <tr><th>Award site</th><th>Award</th><th>Date</th><th class="num">Score (of 10)</th><th>Credited to</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Orpetron</th><td>Site of the Day</td><td style="white-space:nowrap">2024-12-18</td><td class="num">7.9</td><td>Shakuro, USA</td></tr>
+    <tr class="highlight"><th scope="row">CSS Design Awards</th><td>Special Kudos</td><td style="white-space:nowrap">2025-02-18</td><td class="num">7.48</td><td>Shakuro, USA</td></tr>
+    <tr><th scope="row">The FWA</th><td>Listed; type not readable</td><td>Not verified</td><td class="num">None published</td><td>Not verified</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one award site. The CSS Design Awards page explains its rule. A judges' average above 6 gives Special Kudos. Website of the Day needs an average above 8. The Orpetron score is the "final score" on its page.</p>
+
+<div class="check">
+  <span class="label">Check Part B before you continue.</span>
+  <ol>
+    <li>Romanelli wants to add a thirteenth project next month. Which of the seven steps must be repeated, and which not?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>None of the design steps. He adds one CMS record in Webflow (step 6), and the existing templates and scripts apply to it.</strong></p>
+          <p>Steps 1 to 5 defined the rules once. Step 7's code reads the page structure, so a new project heading with the same attribute gets the same animation. A typical wrong answer is "step 5, because the new page must be designed". The page template already exists.</p>
+        </div>
+      </details>
+    </li>
+    <li>A client asks you for "a minimal site like this one, so it should be light". What do the numbers of section 7 say?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>The look is minimal; the code is not. The custom script alone is 355 KB, and it loads GSAP, two plug-ins, Lenis, and a shader.</strong></p>
+          <p>If "light" means a small download, you must drop the motion and keep only Webflow, one typeface, and the palette. If "light" means the look, the motion can stay. The two meanings need different budgets.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="limits">9. Limits: what the sources do not say</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>No sketches, hours, or tools for the products.</strong> The designer publishes no sketch, no software name, and no project duration. Step 2 of the worked example is read from the finished product.</li>
+    <li><strong>Oscar is a two-person design.</strong> Hiro credits it to Mirko Romanelli and Anna Fiore. The public pages do not say which decisions were whose.</li>
+    <li><strong>The website case study is written by the agency.</strong> Its technical claims held against the live HTML. Its process claims, for example that two steps ran in parallel, cannot be checked.</li>
+    <li><strong>The palette is read from a compiled stylesheet.</strong> It holds a dark grey, two off-whites, two mid greys, and two blues that are Webflow defaults. I did not confirm which appear on screen.</li>
+    <li><strong>Two award pages gave only a title.</strong> The FWA page and the Behance profile returned no readable body text to my tools. So the FWA award and the Behance statistics are not on this page as facts.</li>
+    <li><strong>The site changes.</strong> The script size and the library versions are as read on 11 October 2026.</li>
+  </ul>
+</div>
+
+<h2 id="check">10. Check your understanding</h2>
+<div class="check">
+  <span class="label">Two questions that join the two parts.</span>
+  <ol>
+    <li>State in one sentence the rule that Part A and Part B share.
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Keep the form or the layout neutral, and let one element carry the character: the material for a product, the product image for the site.</strong></p>
+          <p>Romanelli's words for the product are "minimal design, enhanced by details and materials". Shakuro's words for the site are a palette with "no accent colors" so the work takes "center stage". A typical wrong answer names only "minimal", which describes the form but not where the character comes from.</p>
+        </div>
+      </details>
+    </li>
+    <li>Who designed the website, and how do you know from the site itself?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>The agency Shakuro. The footer of every page says "Made by Shakuro", and both award listings credit Shakuro.</strong></p>
+          <p>A typical wrong answer is "Romanelli, because it is his portfolio". He supplied the brand and the content; the agency designed and built the pages.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">11. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>Romanelli designs a product in four steps: research, concept, 3D model, rendering. A fifth step, production, exists only when a brand orders the product.</li>
+    <li>The concept is one idea that the form shows at once. The material and the details then carry the quality: Oscar has five parts, one coating, seven RAL colours, and a 20 kg load limit.</li>
+    <li>The agency Shakuro designed and built the website in seven steps. The deciding choice was no accent colour, so the product images are the only colour.</li>
+    <li>The calm page runs on a 355 KB custom script with GSAP 3.12.5, Lenis, and a WebGL shader. The look is minimal. The code is not.</li>
+    <li>The site scored 7.48 from the CSS Design Awards judges and 7.9 on Orpetron; both credit Shakuro.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>Brand identity system</dt>
+  <dd>The set of rules for a brand's type, colours, spacing, and other visual elements.</dd>
+  <dt>Concept study</dt>
+  <dd>A complete design with a 3D model and renderings, but with no factory and no price.</dd>
+  <dt>Content management system (CMS)</dt>
+  <dd>A part of a website tool that stores each item, for example a project, as a record and generates a page from it.</dd>
+  <dt>GSAP</dt>
+  <dd>GreenSock Animation Platform, a JavaScript library that moves page elements along a timeline.</dd>
+  <dt>Iconization of the concept</dt>
+  <dd>Romanelli's term: the form of the product is a picture of its one idea, so the product becomes a symbol of that idea.</dd>
+  <dt>Industrial design</dt>
+  <dd>The design of an object that a factory makes in many copies: its form, material, parts, and joints.</dd>
+  <dt>On-demand production</dt>
+  <dd>The factory makes one unit for each order; there is no stock.</dd>
+  <dt>Powder coating</dt>
+  <dd>A dry paint powder that is sprayed on metal and baked hard in an oven.</dd>
+  <dt>RAL colour</dt>
+  <dd>A colour from a European catalogue of numbered paint colours, for example RAL 9001.</dd>
+  <dt>Stylescape</dt>
+  <dd>One wide image that collects colours, type, photos, and layout fragments to show a possible visual direction.</dd>
+  <dt>UI design</dt>
+  <dd>User interface design: how a page looks and how its controls are arranged.</dd>
+  <dt>UX design</dt>
+  <dd>User experience design: how the whole visit feels, from the first page to the last.</dd>
+  <dt>Webflow</dt>
+  <dd>A visual tool that builds and hosts a website without hand-written code.</dd>
+  <dt>WebGL fragment shader</dt>
+  <dd>A small program that runs on the graphics processor and computes the colour of every pixel.</dd>
+  <dt>Wireframe</dt>
+  <dd>A page layout drawn with boxes and lines, without colour or final text.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or sources with limits. <span class="conf low">Low</span> = not verified, or sources disagree. <span class="conf given">Given</span> = a value from your message or an example value.</p>
+<p>How I read the sources: I downloaded each page as raw HTML on 11 October 2026. Then I searched the text for every number and quotation on this page. Where a page returned no body text, the label says so.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> Designer's own site, mirkoromanelli.com: philosophy sentences, the four-step process sentence, the twelve projects with dates and materials. Also the "Made by Shakuro" footer and the work history. Raw HTML searched.</li>
+  <li><span class="conf high">High</span> Hiro Design product page for the Oscar open wardrobe: material, coating, dimensions, weight, load limit, parts, colours, price, delivery time. Raw HTML searched. The designers page of Hiro credits the product to Mirko Romanelli and Anna Fiore.</li>
+  <li><span class="conf high">High</span> Shakuro case study, shakuro.com/works/mirko-romanelli: the seven steps, the quoted reasons, GSAP, WebGL, the client testimonial. Raw HTML searched. Process claims are the agency's own account.</li>
+  <li><span class="conf high">High</span> Live site HTML, stylesheet, and the custom script at mirkosite.vercel.app, downloaded 11 October 2026. Found there: Webflow identifiers, jQuery 3.5.1, the typeface, the 363,659-byte script, GSAP 3.12.5, ScrollTrigger, SplitText, Lenis, <code>gl_FragColor</code>. Counted with a text search.</li>
+  <li><span class="conf high">High</span> CSS Design Awards page: Special Kudos, 18 February 2025, credit to Shakuro, the award rule. Public scores 7.39 / 7.67 / 7.40 with 20 votes each. Judges' final score 7.48 from seven listed judges. Raw HTML searched.</li>
+  <li><span class="conf medium">Medium</span> Orpetron page: Site of the Day, 18 December 2024, final score 7.9, credit to Shakuro. Raw HTML searched, but the page lists "7.9" four times without clear labels for usability, design, and development.</li>
+  <li><span class="conf medium">Medium</span> Webflow "Made in Webflow" listing: the site description and the tags "custom code", "scroll", "parallax". Read through a summary tool, not in raw text.</li>
+  <li><span class="conf low">Low</span> The FWA case page: returned only its title. Not verified.</li>
+  <li><span class="conf high">High</span> Calculated: 3.5 years from 10 September 2021 to 22 March 2025. 355 KB from 363,659 bytes. Bar heights in the chart are score ÷ 10 × 200.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
