@@ -1,0 +1,1090 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shadow Base 800 FX</title>
+<style>
+/* ---------- Typefaces. One text typeface, a system serif, so the page needs no external font.
+   One typeface for everything is the rule of the Romanelli site (Suisse Int'l there). ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Type scale. One fluid scale, five steps, so every size on the page is one of these.
+   The scale follows the Romanelli site: small print 14 px, text 16 to 22 px, display large. ---------- */
+:root {
+  --step--1: clamp(0.9rem, 0.86rem + 0.2vw, 0.98rem);   /* small print: meta line, sources, captions */
+  --step-0: clamp(1.06rem, 1rem + 0.3vw, 1.2rem);        /* running text */
+  --step-1: clamp(1.16rem, 1.1rem + 0.35vw, 1.3rem);     /* the short answer */
+  --step-2: clamp(1.4rem, 1.22rem + 0.9vw, 1.8rem);      /* section heading */
+  --step-3: clamp(2.1rem, 1.3rem + 3.6vw, 3.5rem);       /* page title */
+  /* Spacing scale: 16, 24, 40, 64 px, and one large step above the title. */
+  --space-1: 1rem;
+  --space-2: 1.5rem;
+  --space-3: 2.5rem;
+  --space-4: 4rem;
+  --space-top: clamp(3rem, 9vw, 6.5rem);
+  /* The measure of the text column, the side gutter, and the width of the wide stage (see below). */
+  --measure: 40rem;
+  --gutter: 1rem;
+  --wide: 56rem;
+}
+
+/* ---------- Colour tokens. Ink and paper from the Romanelli site (ink #292b34, paper #f9f6f0),
+   and three accents, each with one fixed role, so a colour always means the same kind of thing:
+     terracotta (--accent)   the reader's path: links, key terms, the short answer, the self-check
+     teal (--accent2)        the evidence: worked examples, figures, tables, section headings
+     ochre (--accent3)       the reader's own work: the guess box, the part labels
+   Chart series and confidence labels keep their own colours because there the colour is information. ---------- */
+:root {
+  --bg: #f9f6f0;
+  --surface: #efece7;
+  --text: #292b34;
+  --muted: #5f6168;
+  --border: rgb(41 43 52 / 22%);
+  --accent: #a6472a;
+  --accent-soft: #f3e6df;
+  --accent2: #1a6460;
+  --accent2-soft: #e3efed;
+  --accent3: #7d5a0c;
+  --accent3-soft: #f5ecd6;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e0ded9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1c22;
+    --surface: #28292e;
+    --text: #f9f6f0;
+    --muted: #aeb0b6;
+    --border: rgb(249 246 240 / 32%);
+    --accent: #f0a58f;
+    --accent-soft: #2e2320;
+    --accent2: #7fd0c9;
+    --accent2-soft: #1e2b2a;
+    --accent3: #eac066;
+    --accent3-soft: #2c2719;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #3a3b3f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1c22;
+  --surface: #28292e;
+  --text: #f9f6f0;
+  --muted: #aeb0b6;
+  --border: rgb(249 246 240 / 32%);
+  --accent: #f0a58f;
+  --accent-soft: #2e2320;
+  --accent2: #7fd0c9;
+  --accent2-soft: #1e2b2a;
+  --accent3: #eac066;
+  --accent3-soft: #2c2719;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #3a3b3f;
+  color-scheme: dark;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space-top) var(--gutter) var(--space-4);
+}
+
+/* Headings carry the structure through size and space. The title is large and set tight, as on
+   the Romanelli site. No rule across the page, except one short mark above each section
+   heading, in the colour of the heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: var(--step-3);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-1);
+}
+h2 {
+  font-size: var(--step-2);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--accent2);
+  margin-top: var(--space-4);
+  margin-bottom: 0.8rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 2px solid var(--accent2);
+  margin-bottom: var(--space-2);
+}
+h3 { font-size: 1.15em; margin-top: var(--space-3); margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+/* A link is set in the accent, with a thin underline. */
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: var(--step--1);
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line of small print under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  margin: 0 0 var(--space-3);
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 var(--space-2); }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  background: var(--accent-soft);
+  border-top: 2px solid var(--accent);
+  padding: 1.05rem 1.3rem 1.15rem;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  margin-bottom: var(--space-3);
+}
+.bottom-line .label { color: var(--accent); }
+.example { border-left: 2px solid var(--accent2); padding-left: 1.4rem; }
+.example .label { color: var(--accent2); }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; }
+.assume { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.assume .label { color: var(--accent); }
+.predict { background: var(--accent3-soft); border-left: 2px solid var(--accent3); padding: 0.9rem 1.3rem 1rem 1.4rem; }
+.predict .label { color: var(--accent3); }
+.recap { background: var(--accent2-soft); border-top: 2px solid var(--accent2); padding: 1rem 1.3rem 1.1rem; }
+.recap .label { color: var(--accent2); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 2px solid var(--accent2);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 var(--space-3);
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent2);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; color: var(--accent2); margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--accent2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.95em;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: var(--step--1);
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 0.95em; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--accent2);
+  color: var(--accent2);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 0.95em; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--accent2-soft); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+  margin-bottom: var(--space-2);
+}
+figure .fig-title { font-weight: 600; color: var(--accent2); margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: var(--step--1); margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 0.95em; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-size: var(--step--1); margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: var(--step--1);
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--accent2); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 var(--space-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1em; font-weight: 600; color: var(--accent2); }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--accent);
+  padding-top: 1rem;
+  margin: 0 0 var(--space-3);
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 var(--space-2);
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 400;
+}
+/* An optional block directly after a comparison or a figure shares their closing rule,
+   so the page does not show two rules with an empty row between them. */
+.compare + details.optional, figure + details.optional {
+  border-top: 0;
+  margin-top: calc(-1 * var(--space-2));
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: var(--space-4) 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--accent3);
+  font-size: var(--step--1);
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--accent3);
+}
+.part + h2 { margin-top: var(--space-2); }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92em;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1em;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 0.95em; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- The wide stage. On a wide screen the title, the figures, and the tables are wider than
+   the text column and centred on it. The text keeps its measure; the work of the page gets the room.
+   On the Romanelli site the images are wider than the text grid, and the change of width gives the
+   page its rhythm. ---------- */
+@media (min-width: 64rem) {
+  h1, .meta, figure, .table-wrap {
+    width: var(--wide);
+    margin-left: calc((var(--measure) - 2 * var(--gutter) - var(--wide)) / 2);
+  }
+  /* The drawing of a figure is wide; its title and its text stay in the text column, so that
+     no line of running text is longer than the measure. */
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source {
+    width: calc(var(--measure) - 2 * var(--gutter));
+    margin-left: calc((var(--wide) - var(--measure) + 2 * var(--gutter)) / 2);
+  }
+}
+
+/* ---------- Narrow screens. The fluid scale already lowers every size; the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  main { padding-bottom: var(--space-3); }
+  h2 { margin-top: var(--space-3); }
+  .bottom-line { margin-bottom: var(--space-2); }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  h1, .meta, figure, .table-wrap,
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source { width: auto; margin-left: 0; }
+  nav.contents { display: none; }
+  .bottom-line, .recap, .predict { background: none; padding-left: 0; padding-right: 0; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: ATX, E-ATX, M-ATX, ITX, PWM, ARGB, RGB, USB, GPU, CPU, PSU, HDD, SSD, PCIe, PCI, AIO, LED, LEDs, FX, DX, RTX, FE, MSRP, RRP, US, EU, UK, SGCC, ABS, NH, D15S, U12S, X3D, LAeq, dB, dBA, CFM, HD, EVO, NV7, C301, H7, III, HAF, KitGuru, HWBusters, HWCooling, BL074, BGW63, BGW64, EAN, OC, Hz, kHz, PBO, R23, TDP, NVIDIA, NZXT, AMD, PDF, H2O, V1, V2, I/O, IO, VRM, NVMe, DDR5, SFX, PS2, 500DX, Ti, 7950X3D, 12700KF, 3900X, 4090, 4060, 3070, Club386, Tom's, OverclockersUK, Q -->
+
+<h1>What do you get with the be quiet! Shadow Base 800 FX case, and how well does it cool and stay quiet?</h1>
+<p class="meta">Written 2026-10-11 · Reading time: about 30 minutes · You need to know: the parts of a desktop PC (motherboard, CPU cooler, graphics card, power supply)</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>The Shadow Base 800 FX is a large mid-tower case (a case for a standard ATX motherboard) from the German company be quiet!. It is built for airflow. The front and the top are open mesh. Four 140 mm fans with ARGB lighting (lighting where each LED can show its own colour) are included. It holds graphics cards up to 430 mm, CPU coolers up to 180 mm and radiators up to 420 mm.</p>
+  <p><strong>Measured:</strong> in the Tom's Hardware test it ran 7 °C to 10 °C cooler on average than five other cases. At full fan speed it was the quietest of six cases: 39 dB at 60 cm. In the HWBusters test, the step from the quietest fan setting to full speed changed the CPU temperature by only 0.67 °C. So you can run the fans slow.</p>
+  <p><strong>Price:</strong> the launch price was US$219.90 in black and $229.90 in white. The plain Shadow Base 800 cost $169.90 and has the same steel body with three fans, no lighting and no fan hub. Buy the FX for the fourth fan, the lit fans and the 8-port hub. Choose a smaller case when your build has no large graphics card and no 360 mm or 420 mm radiator.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>Your request "be quiet 800fx case" means the be quiet! Shadow Base 800 FX, on sale since 5 September 2023. No other be quiet! product carries the name 800 FX.</li>
+    <li>The example build uses an NVIDIA GeForce RTX 4090 Founders Edition and a be quiet! Dark Rock Pro 5 cooler. These are example parts.</li>
+    <li>Prices are the launch prices. Street prices in October 2026 are lower; one example is given.</li>
+    <li>Three reviews with three different test systems supplied the measurements. Numbers from different reviews are never compared.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#example">One example: an RTX 4090 and a 168 mm cooler fit, with 126 mm and 12 mm to spare</a></li>
+    <li><a href="#rule">The rule: three intake fans and one exhaust fan replace the air in the case 67 times per minute</a></li>
+    <li><a href="#data">Measured: 7 °C to 10 °C cooler than five other cases, and 12.6 dB(A) at half fan speed</a></li>
+    <li><a href="#variants">The five variants: the FX adds a fourth fan, lit fans and a hub for US$50</a></li>
+    <li><a href="#mistake">Wrong idea corrected: the case is quiet because the fans are slow, not because it blocks sound</a></li>
+    <li><a href="#limits">Limits: three test systems, rated airflow, prices from 2023</a></li>
+    <li><a href="#words">Words that you will hear</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One example: an RTX 4090 and a 168 mm cooler fit, with 126 mm and 12 mm to spare</h2>
+<p>A PC case is sold by its <dfn>clearance</dfn>. The clearance is the largest part that fits in a given place: the longest graphics card, the highest CPU cooler, the largest liquid cooler. The Shadow Base 800 FX is a <dfn>mid-tower</dfn>. A mid-tower stands upright, holds a standard ATX motherboard and is smaller than a full tower.</p>
+<p>It also accepts an <dfn>E-ATX</dfn> motherboard. E-ATX (Extended ATX) is a motherboard format up to 330 mm wide, instead of the 244 mm of ATX. And it accepts a <dfn>radiator</dfn> of up to 420 mm. A radiator is the part of a liquid cooler that gives the heat to the air. Its size is the sum of the fans on it, so a 420 mm radiator carries three 140 mm fans.</p>
+<p>The example build has two large parts. The graphics card is an NVIDIA GeForce RTX 4090 Founders Edition: 304 mm long, 137 mm wide, 3 slots (61 mm) thick. NVIDIA asks for 36 mm more space for the power cable. The CPU cooler is a be quiet! Dark Rock Pro 5: 168 mm high with its fans.</p>
+
+<div class="box example">
+  <span class="label">Worked example: does the build fit?</span>
+  <ol class="steps">
+    <li>Graphics card length: 430 mm − 304 mm = <strong>126 mm to spare</strong>.
+      <span class="why">The limit of 430 mm is for the delivered case, which has the three front fans in place.</span></li>
+    <li>Power cable: 126 mm − 36 mm = <strong>90 mm still to spare</strong>.
+      <span class="why">NVIDIA asks for 36 mm beyond the card for the cable.</span></li>
+    <li>Slots: the card covers 3 of the 7 expansion slots. <strong>4 slots remain</strong>.
+      <span class="why">The case has 7 slot covers at the rear. A 3-slot card needs 3 of them.</span></li>
+    <li>CPU cooler height: 180 mm − 168 mm = <strong>12 mm to spare</strong>.
+      <span class="why">Both numbers are measured from the motherboard surface. 12 mm is not much, but it is positive, so the glass panel closes.</span></li>
+    <li>Alternative with liquid: a 420 mm radiator (3 × 140 mm) fits in the top or in the front.
+      <span class="why">The datasheet lists both positions. The HWCooling launch report says that the 430 mm card limit also holds with a radiator in the front.</span></li>
+  </ol>
+  <p><strong>Result:</strong> a very large graphics card and a very large air cooler fit, with room to spare.</p>
+</div>
+
+<div class="table-wrap">
+<table>
+  <caption>Official limits of the Shadow Base 800 FX (be quiet! datasheet V2/23)</caption>
+  <thead>
+    <tr><th>Item</th><th class="num">Limit or count</th><th>Note</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Graphics card length (mm)</th><td class="num">430</td><td>As delivered, with the front fans in place</td></tr>
+    <tr class="highlight"><th scope="row">CPU cooler height (mm)</th><td class="num">180</td><td>Measured from the motherboard surface</td></tr>
+    <tr><th scope="row">Power supply length (mm)</th><td class="num">250</td><td>ATX format, not included</td></tr>
+    <tr><th scope="row">Radiator, front or top (mm)</th><td class="num">420</td><td>Also 120, 140, 240, 280, 360</td></tr>
+    <tr><th scope="row">Radiator, rear (mm)</th><td class="num">120</td><td></td></tr>
+    <tr><th scope="row">Fan positions (count)</th><td class="num">8</td><td>3 front, 3 top, 1 rear, 1 bottom; 140 mm or 120 mm each</td></tr>
+    <tr><th scope="row">Fans included (count)</th><td class="num">4</td><td>3 front, 1 rear; Light Wings 140 mm, 1,500 rpm</td></tr>
+    <tr><th scope="row">Expansion slots (count)</th><td class="num">7</td><td>The slot bracket rotates for a vertical card</td></tr>
+    <tr><th scope="row">2.5-inch drives (count)</th><td class="num">7</td><td>3 trays included</td></tr>
+    <tr><th scope="row">3.5-inch drives (count)</th><td class="num">3</td><td>1 tray included</td></tr>
+    <tr><th scope="row">Motherboard formats</th><td class="num">4</td><td>E-ATX, ATX, M-ATX, Mini-ITX</td></tr>
+    <tr><th scope="row">Size, L × W × H (mm)</th><td class="num">550 × 247 × 522</td><td>With stands</td></tr>
+    <tr><th scope="row">Weight, empty (kg)</th><td class="num">12.3</td><td>13.8 kg with the box</td></tr>
+    <tr><th scope="row">Front ports (count)</th><td class="num">3</td><td>1 USB 3.2 Gen 2 Type C, 2 USB 3.2 Type A, plus audio and a lighting button</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one limit. Compare your part with the middle column. The highlighted rows decide most builds.</p>
+
+<h2 id="rule">2. The rule: three intake fans and one exhaust fan replace the air in the case 67 times per minute</h2>
+<p>The Shadow Base 800 FX is an <dfn>airflow case</dfn>. An airflow case has open mesh panels in front of its fans, so the air meets little resistance. Three of the four fans are <dfn>intake fans</dfn> (fans that push outside air into the case). They sit behind the front mesh. One fan is an <dfn>exhaust fan</dfn> (a fan that pushes the warm air out). It sits at the top of the rear panel.</p>
+<p>All four fans are <dfn>PWM</dfn> fans. PWM (pulse width modulation) is the speed signal on the fourth wire of a fan connector. It sets the fan speed. The fans connect to a <dfn>fan hub</dfn>, a small board with 8 ports behind the motherboard tray. It takes one PWM signal and one ARGB signal from the motherboard and passes them to up to 8 fans or light strips. <dfn>ARGB</dfn> (addressable RGB) means that each LED in the fan frame can show its own colour, over a 5 V 3-pin cable.</p>
+
+<div class="box example">
+  <span class="label">Worked example: how much air moves</span>
+  <ol class="steps">
+    <li>One Light Wings 140 mm PWM fan moves <strong>95.1 m³/h</strong> (56 CFM) at 1,500 rpm.
+      <span class="why">This is the be quiet! rating in free air, with nothing in front of the fan.</span></li>
+    <li>Intake: 3 × 95.1 = <strong>285.3 m³/h</strong>. Exhaust: 95.1 m³/h. The surplus of 190.2 m³/h leaves through the top mesh and the gaps.
+      <span class="why">More air is pushed in than pulled out. This is <dfn>positive pressure</dfn>: the pressure inside is a little above the room pressure, so air leaks out, not in. Dust then enters mainly through the filtered intakes.</span></li>
+    <li>Volume of the case: 0.550 m × 0.247 m × 0.522 m = <strong>70.9 l</strong>.
+      <span class="why">This is the outer box. The usable inside is smaller: be quiet! states 62.74 l in its full table.</span></li>
+    <li>285.3 m³/h = 4,755 l/min. 4,755 ÷ 70.9 = <strong>67 box volumes per minute</strong>, one every 0.89 s.
+      <span class="why">The real flow is lower, because the mesh, the dust filter and the parts resist the air. No one measured the real flow.</span></li>
+    <li>At 600 rpm (50% of the maximum): 95.1 × 600 ÷ 1,500 = 38.0 m³/h per fan. Intake 114.1 m³/h = <strong>27 box volumes per minute</strong>.
+      <span class="why">For one fan, the airflow is proportional to the speed (the first fan affinity law). HWBusters logged 600 rpm at the 50% setting.</span></li>
+    <li>Electric power: 4 × 3.8 W = 15.2 W for the motors, 4 × 0.67 A × 5 V = 13.4 W for the LEDs. <strong>28.6 W at most.</strong>
+      <span class="why">Values from the be quiet! fan page.</span></li>
+  </ol>
+</div>
+
+<figure class="diagram">
+  <p class="fig-title">Air enters through the front mesh, passes the motherboard and the graphics card, and leaves at the rear and through the top mesh.</p>
+  <p class="fig-sub">Side view through the glass panel, front at the left. Proportions are real: 550 mm long, 522 mm high. The motherboard is drawn in ATX size.</p>
+  <div class="fig-scroll">
+<svg viewBox="0 0 700 400" role="img" aria-label="Side view of the Shadow Base 800 FX. Three intake fans at the front push air over the motherboard, the CPU cooler and the graphics card. One exhaust fan at the top rear and the open top mesh let the air out. The power supply and the drive cage sit under a shroud at the bottom.">
+<defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<rect x="70" y="40" width="330" height="313" fill="none" stroke="var(--text)" stroke-width="2"/>
+<text x="72" y="32" font-size="13" fill="var(--muted)">Top panel (mesh)</text>
+<text x="70" y="398" font-size="13" fill="var(--muted)">Front (mesh)</text>
+<text x="400" y="398" font-size="13" fill="var(--muted)" text-anchor="end">Rear</text>
+<line x1="70" y1="366" x2="400" y2="366" stroke="var(--muted)" stroke-width="1"/>
+<line x1="70" y1="360" x2="70" y2="372" stroke="var(--muted)" stroke-width="1"/>
+<line x1="400" y1="360" x2="400" y2="372" stroke="var(--muted)" stroke-width="1"/>
+<text x="235" y="382" font-size="13" text-anchor="middle" fill="var(--muted)">550 mm (height 522 mm, same scale)</text>
+<rect x="140" y="43" width="252" height="12" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<rect x="110" y="340" width="84" height="11" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<rect class="node" x="150" y="62" width="183" height="146" rx="4"/>
+<text class="node-name" x="241" y="78" text-anchor="middle" font-size="13">Motherboard (ATX shown)</text>
+<rect class="node" x="201" y="110" width="80" height="60" rx="4"/>
+<text class="node-name" x="241" y="144" text-anchor="middle" font-size="13">CPU cooler</text>
+<rect class="node" x="114" y="222" width="258" height="18" rx="3"/>
+<text class="node-name" x="243" y="235" text-anchor="middle" font-size="13">Graphics card, up to 430 mm</text>
+<line x1="70" y1="285" x2="400" y2="285" stroke="var(--text)" stroke-width="1.5"/>
+<text x="300" y="276" font-size="13" fill="var(--muted)" text-anchor="middle">PSU shroud</text>
+<rect class="node" x="250" y="294" width="140" height="42" rx="4"/>
+<text class="node-name" x="320" y="311" text-anchor="middle" font-size="13">Power supply</text>
+<text class="node-value" x="320" y="328" text-anchor="middle" font-size="13">up to 250 mm</text>
+<rect class="node" x="100" y="294" width="110" height="42" rx="4"/>
+<text class="node-name" x="155" y="311" text-anchor="middle" font-size="13">Drive cage</text>
+<text class="node-value" x="155" y="328" text-anchor="middle" font-size="13">(removable)</text>
+<rect x="78" y="58" width="15" height="84" fill="var(--s1)"/>
+<rect x="78" y="142" width="15" height="84" fill="var(--s1)"/>
+<rect x="78" y="226" width="15" height="84" fill="var(--s1)"/>
+<rect x="377" y="58" width="15" height="84" fill="var(--s2)"/>
+<line class="arrow" x1="38" y1="100" x2="74" y2="100" marker-end="url(#ah1)"/>
+<line class="arrow" x1="38" y1="184" x2="74" y2="184" marker-end="url(#ah1)"/>
+<line class="arrow" x1="38" y1="268" x2="74" y2="268" marker-end="url(#ah1)"/>
+<text x="28" y="76" font-size="13" font-weight="650">Air in</text>
+<line class="arrow" x1="100" y1="96" x2="370" y2="96" marker-end="url(#ah1)"/>
+<path class="arrow" fill="none" d="M 100 184 H 290 Q 330 184 345 148" marker-end="url(#ah1)"/>
+<path class="arrow" fill="none" d="M 100 268 Q 150 268 165 244" marker-end="url(#ah1)"/>
+<text x="172" y="262" font-size="13" fill="var(--muted)">Air guide</text>
+<line class="arrow" x1="396" y1="100" x2="432" y2="100" marker-end="url(#ah1)"/>
+<text x="404" y="76" font-size="13" font-weight="650">Air out</text>
+<line class="arrow" x1="220" y1="40" x2="220" y2="16" stroke-dasharray="4 3" marker-end="url(#ah1)"/>
+<line class="arrow" x1="290" y1="40" x2="290" y2="16" stroke-dasharray="4 3" marker-end="url(#ah1)"/>
+<line class="arrow" x1="360" y1="40" x2="360" y2="16" stroke-dasharray="4 3" marker-end="url(#ah1)"/>
+<line class="arrow" x1="462" y1="60" x2="492" y2="60" marker-end="url(#ah1)"/>
+<text x="502" y="64" font-size="13">Direction of the air</text>
+<rect x="462" y="84" width="30" height="10" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="502" y="93" font-size="13">Optional fan position,</text>
+<text x="502" y="109" font-size="13">no fan included</text>
+<rect x="462" y="126" width="30" height="12" fill="var(--s1)"/>
+<text x="502" y="136" font-size="13">Intake fan: Light Wings</text>
+<text x="502" y="152" font-size="13">140 mm PWM, 1,500 rpm at most</text>
+<rect x="462" y="168" width="30" height="12" fill="var(--s2)"/>
+<text x="502" y="178" font-size="13">Exhaust fan: the same model</text>
+<text x="462" y="214" font-size="13" fill="var(--muted)">The CPU cooler height (up to</text>
+<text x="462" y="230" font-size="13" fill="var(--muted)">180 mm) points towards you,</text>
+<text x="462" y="246" font-size="13" fill="var(--muted)">out of the drawing.</text>
+<text x="462" y="276" font-size="13" fill="var(--muted)">Radiators up to 420 mm fit in</text>
+<text x="462" y="292" font-size="13" fill="var(--muted)">the front or in the top.</text>
+<text x="462" y="322" font-size="13" fill="var(--muted)">Scale: 0.6 px per mm.</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is a part. Each arrow shows the direction of the air. A dashed box is a fan position without a fan. The air guide on the PSU shroud (the cover over the power supply) turns the air of the lowest fan up towards the graphics card.</p>
+  <p class="fig-source">Source: be quiet! datasheet for the positions and limits; igor'sLAB and Club386 for the air guide.</p>
+</figure>
+
+<h3>Why the fan speed hardly changes the temperature in this case</h3>
+<p>With 27 to 67 box volumes per minute, the air inside the case stays close to the room temperature at every fan setting. The parts that then limit the temperature are the CPU cooler and the cooler of the graphics card, not the case. In the HWBusters torture test, with the case fans set to produce 25 dB(A), the CPU reached 88.05 °C. At full fan speed it reached 87.38 °C, which is 0.67 °C less.</p>
+<p>KitGuru wrote the same about its test. A higher fan speed <span class="quoted">made absolutely no difference to the temperature of either the CPU or GPU</span>. The igor'sLAB reviewer ran the case fans at about 700 rpm, which is 44.4 m³/h per fan by the affinity law. A 145 W CPU stayed at 79.8 °C on average, and a 290 W graphics card stayed at 72.3 °C. The consequence for you: set a fan curve near 600 rpm to 700 rpm for normal load.</p>
+
+<h2 id="data">3. Measured: 7 °C to 10 °C cooler than five other cases, and 12.6 dB(A) at half fan speed</h2>
+<p>Noise is given as a <dfn>sound pressure level</dfn> in dB(A). The level is a logarithmic scale: 10 dB more means 10 times the sound power. The "A" means that the meter weights the frequencies like a human ear. Tom's Hardware measured at 60 cm, HWBusters at 1 m in a chamber without echo. So the two sets of numbers cannot be compared with each other.</p>
+
+<div class="box predict">
+  <span class="label">Guess first</span>
+  <p>HWBusters ran the four case fans alone at 50% speed, 600 rpm. How loud were they at 1 m: about 10 dB(A), about 20 dB(A), or about 30 dB(A)?</p>
+</div>
+
+<figure>
+  <p class="fig-title">The Shadow Base 800 FX had the lowest CPU and GPU temperatures of six cases: 63 °C and 52 °C.</p>
+  <p class="fig-sub">Tom's Hardware test. Temperatures in °C, corrected to a 20 °C room. Test system: Intel Core i7-12700KF at a fixed 4.7 GHz and 1.3 V, Noctua NH-U12S cooler. Graphics card: Gigabyte RTX 3070 Ti Gaming OC at 75% fan speed. Case fans at 100%.</p>
+  <div class="fig-scroll">
+<svg viewBox="0 0 680 300" role="img" aria-label="Dot chart of CPU and GPU temperatures in six cases from the Tom's Hardware test. The Shadow Base 800 FX has the lowest values: CPU 63 degrees, GPU 52 degrees. The other five cases have CPU values from 68 to 74 degrees and GPU values from 60 to 61 degrees.">
+<line class="axis" x1="215.0" y1="44" x2="215.0" y2="268"/>
+<text class="axis-label" x="215.0" y="288" text-anchor="middle">40 °C</text>
+<line class="grid" x1="311.2" y1="44" x2="311.2" y2="268"/>
+<text class="axis-label" x="311.2" y="288" text-anchor="middle">50 °C</text>
+<line class="grid" x1="407.5" y1="44" x2="407.5" y2="268"/>
+<text class="axis-label" x="407.5" y="288" text-anchor="middle">60 °C</text>
+<line class="grid" x1="503.8" y1="44" x2="503.8" y2="268"/>
+<text class="axis-label" x="503.8" y="288" text-anchor="middle">70 °C</text>
+<line class="grid" x1="600.0" y1="44" x2="600.0" y2="268"/>
+<text class="axis-label" x="600.0" y="288" text-anchor="middle">80 °C</text>
+<text x="338.5" y="36" font-size="13" text-anchor="end">GPU temperature (square)</text>
+<rect x="344.5" y="27" width="10" height="10" fill="var(--s2)"/>
+<circle cx="424.4" cy="32" r="5" fill="var(--s1)"/>
+<text x="434.4" y="36" font-size="13">CPU temperature (circle)</text>
+<text x="205" y="67" font-size="13" text-anchor="end" font-weight="650">be quiet! Shadow Base 800 FX</text>
+<rect x="322.5" y="54.0" width="16" height="16" fill="var(--s2)"/>
+<circle cx="436.4" cy="62" r="8" fill="var(--s1)"/>
+<text x="318.5" y="67" font-size="13" text-anchor="end" font-weight="650">52 °C</text>
+<text x="448.4" y="67" font-size="13" font-weight="650">63 °C</text>
+<text x="205" y="105" font-size="13" text-anchor="end">Fractal Design North</text>
+<rect x="401.5" y="94.0" width="12" height="12" fill="var(--s2)"/>
+<circle cx="494.1" cy="100" r="6" fill="var(--s1)"/>
+<text x="395.5" y="105" font-size="13" text-anchor="end">60 °C</text>
+<text x="506.1" y="105" font-size="13">69 °C</text>
+<text x="205" y="143" font-size="13" text-anchor="end">NZXT H7 Flow</text>
+<rect x="411.1" y="132.0" width="12" height="12" fill="var(--s2)"/>
+<circle cx="484.5" cy="138" r="6" fill="var(--s1)"/>
+<text x="405.1" y="143" font-size="13" text-anchor="end">61 °C</text>
+<text x="496.5" y="143" font-size="13">68 °C</text>
+<text x="205" y="181" font-size="13" text-anchor="end">Gigabyte C301 Glass</text>
+<rect x="411.1" y="170.0" width="12" height="12" fill="var(--s2)"/>
+<circle cx="503.8" cy="176" r="6" fill="var(--s1)"/>
+<text x="405.1" y="181" font-size="13" text-anchor="end">61 °C</text>
+<text x="515.8" y="181" font-size="13">70 °C</text>
+<text x="205" y="219" font-size="13" text-anchor="end">Phanteks NV7</text>
+<rect x="401.5" y="208.0" width="12" height="12" fill="var(--s2)"/>
+<circle cx="532.6" cy="214" r="6" fill="var(--s1)"/>
+<text x="395.5" y="219" font-size="13" text-anchor="end">60 °C</text>
+<text x="544.6" y="219" font-size="13">73 °C</text>
+<text x="205" y="257" font-size="13" text-anchor="end">Lian Li Lancool III</text>
+<rect x="411.1" y="246.0" width="12" height="12" fill="var(--s2)"/>
+<circle cx="542.2" cy="252" r="6" fill="var(--s1)"/>
+<text x="405.1" y="257" font-size="13" text-anchor="end">61 °C</text>
+<text x="554.2" y="257" font-size="13">74 °C</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each row is one case. The square is the GPU temperature, the circle is the CPU temperature. The cases are sorted by the average of the two values, best at the top.</p>
+  <p class="fig-source">Source: Tom's Hardware review, thermal chart, read from the published image.</p>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <caption>Tom's Hardware: temperatures and noise of six cases with the same parts inside</caption>
+  <thead>
+    <tr><th>Case</th><th class="num">CPU (°C)</th><th class="num">GPU (°C)</th><th class="num">Average (°C)</th><th class="num">Noise A (dB)</th><th class="num">Noise B (dB)</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Shadow Base 800 FX</th><td class="num">63</td><td class="num">52</td><td class="num">57.5</td><td class="num">39.0</td><td class="num">46.0</td></tr>
+    <tr><th scope="row">Fractal Design North</th><td class="num">69</td><td class="num">60</td><td class="num">64.5</td><td class="num">53.0</td><td class="num">55.0</td></tr>
+    <tr><th scope="row">NZXT H7 Flow</th><td class="num">68</td><td class="num">61</td><td class="num">64.5</td><td class="num">no data</td><td class="num">no data</td></tr>
+    <tr><th scope="row">Gigabyte C301 Glass</th><td class="num">70</td><td class="num">61</td><td class="num">65.5</td><td class="num">49.0</td><td class="num">47.0</td></tr>
+    <tr><th scope="row">Phanteks NV7</th><td class="num">73</td><td class="num">60</td><td class="num">66.5</td><td class="num">49.0</td><td class="num">54.0</td></tr>
+    <tr><th scope="row">Lian Li Lancool III</th><td class="num">74</td><td class="num">61</td><td class="num">67.5</td><td class="num">no data</td><td class="num">no data</td></tr>
+    <tr><th scope="row">Lian Li Lancool 216</th><td class="num">no data</td><td class="num">no data</td><td class="num">no data</td><td class="num">45.0</td><td class="num">46.0</td></tr>
+    <tr><th scope="row">Cooler Master HAF 700 Evo</th><td class="num">no data</td><td class="num">no data</td><td class="num">no data</td><td class="num">43.5</td><td class="num">45.5</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> Noise A: all fans at 100%. Noise B: CPU fan at 100%, case fans at 50%, GPU fans at 75%. Measured at 60 cm. A case that appears in only one chart of the review shows "no data" in the other columns. All six cases measured 34 dB at idle.</p>
+
+<p>On average the Shadow Base 800 FX was 7.0 °C cooler than the best of the other five cases. It was 10.0 °C cooler than the Lian Li Lancool III, which also ships with four 140 mm fans. One reader of the review doubted a difference of this size. The review gives no second run, so the size of the difference carries a Medium label on this page.</p>
+
+<figure>
+  <p class="fig-title">At 50% speed the four fans produce 12.6 dB(A) at 1 m. At 100% they produce 33.5 dB(A).</p>
+  <p class="fig-sub">Noise of the included case fans alone, measured by HWBusters at 1 m in a chamber without echo. Second line: another be quiet! case, the Pure Base 500DX.</p>
+  <div class="fig-scroll">
+<svg viewBox="0 0 680 340" role="img" aria-label="Line chart of fan noise against fan speed for two cases. The four fans of the Shadow Base 800 FX produce 12.6 dB(A) at 50 percent speed and 33.5 dB(A) at 100 percent. The Pure Base 500DX produces 16.9 dB(A) at 50 percent and 32.5 dB(A) at 100 percent. The lines cross between 60 and 70 percent.">
+<line class="axis" x1="80" y1="280.0" x2="500" y2="280.0"/>
+<text class="axis-label" x="72" y="284.0" text-anchor="end">0 dB(A)</text>
+<line class="grid" x1="80" y1="226.7" x2="500" y2="226.7"/>
+<text class="axis-label" x="72" y="230.7" text-anchor="end">10 dB(A)</text>
+<line class="grid" x1="80" y1="173.3" x2="500" y2="173.3"/>
+<text class="axis-label" x="72" y="177.3" text-anchor="end">20 dB(A)</text>
+<line class="grid" x1="80" y1="120.0" x2="500" y2="120.0"/>
+<text class="axis-label" x="72" y="124.0" text-anchor="end">30 dB(A)</text>
+<line class="grid" x1="80" y1="66.7" x2="500" y2="66.7"/>
+<text class="axis-label" x="72" y="70.7" text-anchor="end">40 dB(A)</text>
+<text class="axis-label" x="80.0" y="300" text-anchor="middle">50%</text>
+<text class="axis-label" x="164.0" y="300" text-anchor="middle">60%</text>
+<text class="axis-label" x="248.0" y="300" text-anchor="middle">70%</text>
+<text class="axis-label" x="332.0" y="300" text-anchor="middle">80%</text>
+<text class="axis-label" x="416.0" y="300" text-anchor="middle">90%</text>
+<text class="axis-label" x="500.0" y="300" text-anchor="middle">100%</text>
+<text class="axis-label" x="80.0" y="318" text-anchor="middle">600 rpm</text>
+<text class="axis-label" x="500.0" y="318" text-anchor="middle">1,500 rpm</text>
+<text class="axis-label" x="290.0" y="334" text-anchor="middle">Fan speed as a share of the maximum speed</text>
+<polyline fill="none" stroke="var(--s2)" stroke-width="3" stroke-dasharray="7 5" points="80.0,189.9 164.0,171.2 248.0,154.7 290.0,142.9 332.0,138.1 416.0,121.6 500.0,106.7"/>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="80.0,212.8 164.0,188.8 248.0,147.2 290.0,124.8 332.0,126.9 416.0,107.2 500.0,101.3"/>
+<rect x="76.0" y="185.9" width="8" height="8" fill="var(--s2)"/>
+<rect x="160.0" y="167.2" width="8" height="8" fill="var(--s2)"/>
+<rect x="244.0" y="150.7" width="8" height="8" fill="var(--s2)"/>
+<rect x="286.0" y="138.9" width="8" height="8" fill="var(--s2)"/>
+<rect x="328.0" y="134.1" width="8" height="8" fill="var(--s2)"/>
+<rect x="412.0" y="117.6" width="8" height="8" fill="var(--s2)"/>
+<rect x="496.0" y="102.7" width="8" height="8" fill="var(--s2)"/>
+<circle cx="80.0" cy="212.8" r="4.5" fill="var(--s1)"/>
+<circle cx="164.0" cy="188.8" r="4.5" fill="var(--s1)"/>
+<circle cx="248.0" cy="147.2" r="4.5" fill="var(--s1)"/>
+<circle cx="290.0" cy="124.8" r="4.5" fill="var(--s1)"/>
+<circle cx="332.0" cy="126.9" r="4.5" fill="var(--s1)"/>
+<circle cx="416.0" cy="107.2" r="4.5" fill="var(--s1)"/>
+<circle cx="500.0" cy="101.3" r="4.5" fill="var(--s1)"/>
+<text x="510" y="95.3" font-size="13" font-weight="650">Shadow Base 800 FX: 33.5</text>
+<text x="510" y="120.7" font-size="13">Pure Base 500DX: 32.5</text>
+<text x="86" y="230.8" font-size="13" font-weight="650">12.6</text>
+<text x="86" y="180.9" font-size="13">16.9</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> the horizontal direction is the fan speed as a share of the maximum. The solid line with circles is the Shadow Base 800 FX. The dashed line with squares is the Pure Base 500DX. At 50% and 60% the Shadow Base 800 FX is the quieter one. From 70% up it is the louder one.</p>
+  <p class="fig-source">Source: HWBusters review, noise output charts, read from the published images. 600 rpm and 1,500 rpm are the speeds that HWBusters logged at 50% and 100%.</p>
+</figure>
+
+<p><strong>Answer to the guess:</strong> 12.6 dB(A). That is 20.9 dB(A) below the 33.5 dB(A) at full speed. A difference of 20.9 dB is a factor of 11 in sound pressure and a factor of about 120 in sound power.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>HWBusters: the temperature barely moves between the quietest fan setting and full speed</caption>
+  <thead>
+    <tr><th>Fan setting</th><th class="num">Torture: CPU (°C)</th><th class="num">Torture: GPU hot spot (°C)</th><th class="num">Gaming: CPU (°C)</th><th class="num">Gaming: GPU hot spot (°C)</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Fans set to 25 dB(A)</th><td class="num">88.05</td><td class="num">64.00</td><td class="num">64.00</td><td class="num">66.47</td></tr>
+    <tr><th scope="row">Fans set to 30 dB(A)</th><td class="num">87.60</td><td class="num">63.42</td><td class="num">64.65</td><td class="num">66.21</td></tr>
+    <tr><th scope="row">Full fan speed</th><td class="num">87.38</td><td class="num">63.06</td><td class="num">64.31</td><td class="num">65.58</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one setting of the four case fans. Test system: AMD Ryzen 9 7950X3D with a Noctua NH-D15S cooler, Galax RTX 4060, 25 °C room. Torture means Prime95 and FurMark at the same time. The hot spot is the hottest point of the GPU chip.</p>
+
+<h3>Compare: how much sound two be quiet! cases hold back</h3>
+<p>HWBusters also measured how much sound each case holds back. A speaker inside the case played test tones and noise. The <dfn>noise damping</dfn> value is this reduction in dB(A). A negative value means the case made the sound louder, because the panels vibrated with the tone. The Shadow Base 800 FX has one <dfn>insulation mat</dfn> (a sheet of foam glued to a panel to absorb sound), on the right side panel.</p>
+<div class="compare">
+  <div>
+    <h4>Shadow Base 800 FX (mesh front, mesh top, one mat)</h4>
+    <p>White noise: 5.5 dB(A) quieter.</p>
+    <p>Tone of 1 kHz: 10.5 dB(A) louder.</p>
+    <p>Tone of 500 Hz: 14.5 dB(A) louder.</p>
+  </div>
+  <div>
+    <h4>Pure Base 500DX (another be quiet! case)</h4>
+    <p>White noise: 7.1 dB(A) quieter.</p>
+    <p>Tone of 1 kHz: 9.5 dB(A) quieter.</p>
+    <p>Tone of 500 Hz: 5.7 dB(A) louder.</p>
+  </div>
+</div>
+<p>The principle: a panel that lets air through also lets sound through. The Shadow Base 800 FX holds back 1.6 dB(A) less white noise than the Pure Base 500DX. At 1 kHz the two differ by 20.0 dB(A). So the low noise of this case in the reviews does not come from its panels. It comes from the fans, which are large, slow and well made.</p>
+
+<h2 id="variants">4. The five variants: the FX adds a fourth fan, lit fans and a hub for US$50</h2>
+<p>be quiet! sells the same steel body in five versions. The body, the panels, the limits and the 3-year warranty are the same for all five.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>The five Shadow Base 800 variants and their launch prices (August 2023)</caption>
+  <thead>
+    <tr><th>Variant</th><th class="num">Fans</th><th>Fan model</th><th>Light strips</th><th>Hub</th><th class="num">US$</th><th class="num">€</th><th class="num">£</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">800 Black</th><td class="num">3</td><td>Pure Wings 3</td><td>No</td><td>No</td><td class="num">169.90</td><td class="num">149.90</td><td class="num">144.99</td></tr>
+    <tr><th scope="row">800 DX Black</th><td class="num">3</td><td>Pure Wings 3</td><td>Yes</td><td>No</td><td class="num">184.90</td><td class="num">169.90</td><td class="num">159.99</td></tr>
+    <tr><th scope="row">800 DX White</th><td class="num">3</td><td>Pure Wings 3</td><td>Yes</td><td>No</td><td class="num">189.90</td><td class="num">169.90</td><td class="num">164.99</td></tr>
+    <tr class="highlight"><th scope="row">800 FX Black</th><td class="num">4</td><td>Light Wings</td><td>Yes</td><td>8 ports</td><td class="num">219.90</td><td class="num">199.90</td><td class="num">194.99</td></tr>
+    <tr><th scope="row">800 FX White</th><td class="num">4</td><td>Light Wings White</td><td>Yes</td><td>8 ports</td><td class="num">229.90</td><td class="num">209.90</td><td class="num">204.99</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one variant of the Shadow Base 800; all fans are 140 mm PWM. The Light Wings fans have ARGB lighting, the Pure Wings 3 fans do not. The prices are the launch prices from the be quiet! press release, as printed by Club386 and KitGuru.</p>
+
+<p>The FX Black costs US$50.00 (€50.00) more than the plain Shadow Base 800. One Light Wings 140 mm PWM fan has a recommended price of €27.50, so the fourth fan alone is 55% of the €50.00 difference.</p>
+<p>The FX Black costs $35.00 (€30.00) more than the DX Black. A reader asked the HWBusters reviewer whether the FX is much better than the DX. The reviewer answered no and remembered <span class="quoted">some lighting stuff</span> and <span class="quoted">other small improvements</span>. So the FX is the right variant for the lit fans and the hub, not for a cooling reason.</p>
+<p>Street prices in 2026 are lower. On 11 October 2026 the German shop Alternate listed both FX colours at €139.90. That is 70% of the €199.90 launch price of the black version. Prices change often, so check before you buy.</p>
+
+<p>One more difference is the fan direction. In the DX, one fan blows in and two blow out, at the rear and in the top (HWCooling launch report). Then the pressure inside is negative, and dust enters through every gap. If you buy the DX, move the top fan to the front and you get the positive pressure of the FX.</p>
+
+<h2 id="mistake">5. Wrong idea corrected: the case is quiet because the fans are slow, not because it blocks sound</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "be quiet! builds silent cases, so the Shadow Base 800 FX is quiet because its panels keep the noise of the parts inside."</p>
+  <p><strong>Correct:</strong> the case has one insulation mat, on the right side panel only. HWBusters measured that the case reduces white noise from inside by only 5.5 dB(A), and that it makes a 1 kHz tone 10.5 dB(A) louder. The quiet results come from the four large fans. At 600 rpm they produce 12.6 dB(A), and the temperature stays within 1 °C.</p>
+  <p><strong>Why the wrong idea fails:</strong> an airflow case must let air pass, and sound passes wherever air passes. A case cannot be both open for air and closed for sound. The Shadow Base 800 series trades sound blocking for airflow, and then wins the noise comparison with slow fans.</p>
+</div>
+
+<h2 id="limits">6. Limits: three test systems, rated airflow, prices from 2023</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>Three reviews, three test systems.</strong> Tom's Hardware: Intel Core i7-12700KF, air cooler, RTX 3070 Ti. HWBusters: Ryzen 9 7950X3D, RTX 4060. igor'sLAB: Ryzen 9 3900X, liquid cooler, RTX 3070 Ti. No review tested a 450 W graphics card.</li>
+    <li><strong>The Tom's Hardware differences come from one run,</strong> and a reader doubted them. Their size carries a Medium label.</li>
+    <li><strong>Rated airflow is free-air airflow.</strong> The mesh, the filter and the parts reduce it, so 67 box volumes per minute is an upper value.</li>
+    <li><strong>Fan speeds between 50% and 100%</strong> are read from a line chart; only 600 rpm and 1,500 rpm are exact.</li>
+    <li><strong>Card limit with a front radiator.</strong> be quiet! states no separate value. The HWCooling launch report says 430 mm still applies. Not verified on a sample.</li>
+    <li><strong>Two review tables disagree with the datasheet.</strong> The HWBusters table lists a power supply limit of 305 mm and 2 included 3.5-inch trays. The datasheet lists 250 mm and 1 tray. This page follows the datasheet.</li>
+    <li><strong>The fan direction of the DX</strong> (one in, two out) comes from the HWCooling launch report, not from a tested sample.</li>
+    <li><strong>Prices.</strong> The launch prices are from August 2023. The street price is one shop on one day. US street prices were not checked.</li>
+    <li><strong>Not measured here:</strong> build quality over years, drive vibration, the lighting. KitGuru found the hub large and in the way of cables.</li>
+  </ul>
+</div>
+
+<h2 id="words">7. Words that you will hear</h2>
+<p>You will meet these words in reviews and in the manual. They are not part of the main idea.</p>
+<dl class="glossary">
+  <dt>AIO (all-in-one)</dt>
+  <dd>A liquid cooler that comes filled and sealed: a pump block on the CPU, two tubes and a radiator with fans.</dd>
+  <dt>Static pressure (mm H2O)</dt>
+  <dd>The pressure a fan can build against a resistance, for example a radiator. The Light Wings 140 mm PWM has 1.49 mm H2O. A fan for a thick radiator needs more. The case fans of the FX are airflow fans, made for the open mesh.</dd>
+  <dt>Dust filter</dt>
+  <dd>A fine mesh in front of an intake. The case has filters in the front, in the top and in the bottom. The front filter clips off, the top filter holds with magnets, the bottom filter pulls out to the front.</dd>
+  <dt>PSU shroud</dt>
+  <dd>The cover over the power supply and the drive cage at the bottom. It hides cables. In this case it carries the air guide of the diagram, and you can remove the cover to fit a thick front radiator.</dd>
+  <dt>Vertical GPU mount and riser cable</dt>
+  <dd>The slot bracket of this case rotates, so a graphics card can stand with its fans towards the glass. This needs a riser cable (a flexible PCIe extension), which is not included. Tom's Hardware quotes US$20 to US$50 for one.</dd>
+  <dt>HDD Cage 2</dt>
+  <dd>An extra drive cage that be quiet! sells separately. Two of them fit under the PSU shroud on an included bracket. You need it when you want more than the 3.5-inch trays of the case.</dd>
+  <dt>Cable cover and cable bar</dt>
+  <dd>A removable cover next to the motherboard that hides the cable openings. You move it to the right for an E-ATX board. Behind it sits a bracket for SSD trays.</dd>
+  <dt>Tempered glass</dt>
+  <dd>Glass that was heated and cooled fast, so it is stronger and breaks into small pieces. The left panel of this case is 4 mm tinted tempered glass in a steel frame and is held by screws.</dd>
+  <dt>Pure Wings 3 and Light Wings</dt>
+  <dd>Two fan families of be quiet!. Pure Wings 3 is the plain family and ships in the plain 800 and the DX. Light Wings is the ARGB family and ships in the FX. Silent Wings 4 and Silent Wings Pro 4 are the higher families, sold separately.</dd>
+  <dt>4-pin PWM header and 5 V 3-pin ARGB header</dt>
+  <dd>The two motherboard connectors that the hub uses. The hub needs one of each. A board without a 5 V ARGB header cannot control the lighting, but the button on the case still can.</dd>
+  <dt>Push and pull</dt>
+  <dd>Fans on both sides of a radiator, one set that pushes air through and one set that pulls. The 420 mm positions of this case support push and pull, which needs 6 fans for one radiator.</dd>
+  <dt>LAeq</dt>
+  <dd>The A-weighted sound level averaged over the measurement time. HWBusters reports its noise values as LAeq.</dd>
+  <dt>Torture test</dt>
+  <dd>A test that loads the CPU and the GPU to 100% at the same time, for example with Prime95 and FurMark. It gives the highest temperatures; games produce less heat.</dd>
+</dl>
+
+<h2 id="check">8. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>The fans run at 1,050 rpm (the 70% setting in the HWBusters test). With the rated airflow and the box volume of 70.9 l, how many box volumes per minute do the three intake fans deliver?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>About 47 per minute.</strong></p>
+          <p>One fan: 95.1 × 1,050 ÷ 1,500 = 66.6 m³/h. Three intake fans: 199.7 m³/h = 3,328 l/min. 3,328 ÷ 70.9 = 46.9. A typical wrong answer uses four fans; the exhaust fan does not add intake. See <a href="#rule">section 2</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>A graphics card is 420 mm long and has its power connector at the far end. Does it fit with the front fans installed?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>The card fits, with 10 mm to spare. The cable does not fit well.</strong></p>
+          <p>430 − 420 = 10 mm. A connector at the end needs room for the cable, for example the 36 mm that NVIDIA asks for the RTX 4090. 10 mm is less than 36 mm, so the cable would bend sharply against the front fans. A typical wrong answer stops at "420 is less than 430".</p>
+        </div>
+      </details>
+    </li>
+    <li>Which of the five variants include a fan hub, and why does it matter for a build with 7 fans?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Only the two FX variants.</strong></p>
+          <p>The hub takes one PWM header and one ARGB header from the motherboard and serves up to 8 devices. A build with 7 PWM fans without a hub needs 7 fan headers or splitters. See <a href="#variants">section 4</a>.</p>
+        </div>
+      </details>
+    </li>
+    <li>HWBusters measured 88.05 °C on the CPU at the quietest fan setting and 87.38 °C at full fan speed. What does this tell you about the limit of the cooling?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>The limit is the CPU cooler and the heat of the CPU, not the air in the case.</strong></p>
+          <p>More case airflow gave only 0.67 °C. If the case had been the limit, more airflow would have given a larger drop. A typical wrong answer is "the case fans are too weak". See <a href="#rule">section 2</a>.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">9. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>The Shadow Base 800 FX is a large airflow mid-tower: 430 mm graphics cards, 180 mm coolers, 420 mm radiators, E-ATX boards, 7 slots. An RTX 4090 Founders Edition fits with 126 mm to spare.</li>
+    <li>Four Light Wings 140 mm PWM fans, three in and one out, give positive pressure. The rated airflow is 67 box volumes per minute at full speed and 27 at 600 rpm.</li>
+    <li>In the reviews, the fan speed changed the CPU temperature by less than 1 °C. At 600 rpm the four fans produce 12.6 dB(A) at 1 m. Tom's Hardware measured it 7 °C to 10 °C cooler than five other cases.</li>
+    <li>The case does not block sound: it reduces white noise from inside by 5.5 dB(A). Its quiet results come from slow, large fans.</li>
+    <li>The FX cost US$50.00 more than the plain Shadow Base 800 at launch. The extra buys a fourth fan, lit fans and an 8-port hub, not better cooling.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>Airflow case</dt>
+  <dd>A case with open mesh panels in front of its fans, so the air meets little resistance.</dd>
+  <dt>ARGB (addressable RGB)</dt>
+  <dd>Lighting where each LED can show its own colour, controlled over a 5 V 3-pin cable.</dd>
+  <dt>Clearance</dt>
+  <dd>The largest part that fits in a given place of a case: the longest graphics card, the highest CPU cooler, the largest radiator.</dd>
+  <dt>E-ATX (Extended ATX)</dt>
+  <dd>A motherboard format up to 330 mm wide, wider than the 244 mm of ATX.</dd>
+  <dt>Exhaust fan</dt>
+  <dd>A fan that pushes the warm air out of the case.</dd>
+  <dt>Fan hub</dt>
+  <dd>A small board that takes one PWM signal and one ARGB signal and passes them to several fans or light strips. The FX hub has 8 ports.</dd>
+  <dt>Insulation mat</dt>
+  <dd>A sheet of foam glued to a panel to absorb sound. This case has one, on the right side panel.</dd>
+  <dt>Intake fan</dt>
+  <dd>A fan that pushes outside air into the case.</dd>
+  <dt>Mid-tower</dt>
+  <dd>A case that stands upright, holds a standard ATX motherboard and is smaller than a full tower. be quiet! writes midi-tower.</dd>
+  <dt>Noise damping</dt>
+  <dd>The reduction in dB(A) of a sound that comes from inside the case. A negative value means the case made the sound louder.</dd>
+  <dt>Positive pressure</dt>
+  <dd>The state when the intake fans push more air in than the exhaust fans pull out. Air leaks out through the gaps, so dust enters only through the filtered intakes.</dd>
+  <dt>PWM (pulse width modulation)</dt>
+  <dd>The speed signal on the fourth wire of a fan connector. It sets the fan speed from a minimum up to 100%.</dd>
+  <dt>Radiator</dt>
+  <dd>The part of a liquid cooler that gives the heat to the air. Its size is the sum of the fans on it: 420 mm means three 140 mm fans.</dd>
+  <dt>Sound pressure level, dB(A)</dt>
+  <dd>The loudness of a sound on a logarithmic scale, weighted like the human ear. 10 dB more means 10 times the sound power.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or a source with limits. <span class="conf low">Low</span> = not verified, or the sources disagree. <span class="conf given">Given</span> = a value from your message or an example value.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> be quiet!, datasheet <span class="quoted">Shadow Base 800 FX</span>, version V2/23, PDF from bequiet.com, downloaded 11 October 2026. All limits, counts, sizes and the fan speed of 1,500 rpm. Link: https://www.bequiet.com/en/case/4482 (section Downloads).</li>
+  <li><span class="conf high">High</span> be quiet!, product page <span class="quoted">Shadow Base 800 FX Black</span>, read 11 October 2026. Feature text: mesh design, hub for up to 8 devices, tinted tempered glass, USB 3.2 Gen 2 Type C. The technical table on this page loads by script and was not readable. The datasheet was used instead.</li>
+  <li><span class="conf high">High</span> be quiet!, comparison chart <span class="quoted">Shadow Base 800 series</span>, version V1/23, image from the same page. Fan models and fan count of the three versions, and the colours.</li>
+  <li><span class="conf high">High</span> be quiet!, product page <span class="quoted">Light Wings 140mm PWM</span>, article BL074, read 11 October 2026. Values: 1,500 rpm, 23.3 dB(A), 56 CFM = 95.1 m³/h, 1.49 mm H2O, 3.8 W, LED current 0.67 A, RRP €27.50. Link: https://www.bequiet.com/en/casefans/3451.</li>
+  <li><span class="conf medium">Medium</span> be quiet!, datasheet <span class="quoted">Dark Rock Pro 5</span>, PDF copy hosted by a retailer (cdn.iceshop.nl). Height 168 mm with fans. Medium because the copy is not from bequiet.com.</li>
+  <li><span class="conf high">High</span> NVIDIA, product page <span class="quoted">GeForce RTX 4090</span>, read 11 October 2026. Card size 304 mm × 137 mm, 3 slots (61 mm), 36 mm for the power cables. Link: https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4090/.</li>
+  <li><span class="conf high">High</span> Tom's Hardware, Myles Goldman, <span class="quoted">be quiet! Shadow Base 800 FX Review: Stealthy, Stellar Performance</span>, 8 October 2023. Test system, method, the prices of US$220 and $170, the verdict. Link: https://www.tomshardware.com/reviews/be-quiet-shadow-base-800-fx.</li>
+  <li><span class="conf medium">Medium</span> Tom's Hardware, same review, thermal chart and acoustic chart. The values were read from the published chart images. The size of the thermal difference is Medium: one run, doubted by a reader.</li>
+  <li><span class="conf high">High</span> HWBusters, crmaris, <span class="quoted">be quiet! Shadow Base 800 FX Review: Thermal &amp; Noise Damping/Output Evaluation</span>, 9 September 2023. Test system, method, the quoted be quiet! table with 62.74 l, 305 mm and 2 trays, the conclusion, and the reply in the comments. Link: https://hwbusters.com/chassis/be-quiet-shadow-base-800-fx-review/.</li>
+  <li><span class="conf medium">Medium</span> HWBusters, same review, charts for noise output, fan speed, noise damping and temperatures. The values were read from the published chart images. The fan speeds between 50% and 100% are read from a line and are approximate.</li>
+  <li><span class="conf high">High</span> igor'sLAB, Igor Wallossek, <span class="quoted">BeQuiet! Shadow Base 800 FX Review – Spacious high-end mid-tower is a dream in white!</span>, 5 September 2023, page 4. Room 22.6 °C, case fans about 700 rpm, CPU 145 W at 79.8 °C, GPU 290 W at 72.3 °C. Link: https://www.igorslab.de/en/bequiet-shadow-base-800-fx-review/4/.</li>
+  <li><span class="conf high">High</span> KitGuru, Leo Waldock, <span class="quoted">be quiet! Shadow Base 800 FX Review</span>, 11 September 2023. The quoted sentence on fan speed, the remark on the hub, the test system. Link: https://www.kitguru.net/components/cases/leo-waldock/be-quiet-shadow-base-800-fx-review/.</li>
+  <li><span class="conf high">High</span> Club386, Fahd Temsamani, <span class="quoted">be quiet! gives your hardware room to breathe with full-tower Shadow Base 800 chassis</span>, 22 August 2023. Price table of the five variants, the air guide, the dust filters, the sale date. The same table appears in a KitGuru news article of the same day by Matthew Wilson.</li>
+  <li><span class="conf medium">Medium</span> HWCooling, Ľubomír Samák, <span class="quoted">BeQuiet! pushes efficiency with new Shadow Base cases</span>, 23 August 2023. Fan directions of the DX (one intake, two exhaust) and of the FX (three intake, one exhaust). Medium: a launch report, not a tested sample.</li>
+  <li><span class="conf medium">Medium</span> Alternate (alternate.de), product page of the Shadow Base 800 FX White, read 11 October 2026: €139.90, black at the same price. One shop on one day.</li>
+  <li><span class="conf high">High</span> Calculations: all derived numbers on this page (volumes, airflow, box volumes per minute, differences, percentages) were calculated with a script from the values above. The formulas are shown in the worked examples.</li>
+  <li><span class="conf given">Given</span> Example parts: RTX 4090 Founders Edition and Dark Rock Pro 5 are example choices for the fit check. The 600 rpm and 700 rpm settings are the settings of the reviews, not a recommendation of be quiet!.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
