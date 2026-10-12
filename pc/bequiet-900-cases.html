@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>be quiet! 900 Cases</title>
+<style>
+/* ---------- Typefaces. One text typeface, a system serif, so the page needs no external font.
+   One typeface for everything is the rule of the Romanelli site (Suisse Int'l there). ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Type scale. One fluid scale, five steps, so every size on the page is one of these.
+   The scale follows the Romanelli site: small print 14 px, text 16 to 22 px, display large. ---------- */
+:root {
+  --step--1: clamp(0.9rem, 0.86rem + 0.2vw, 0.98rem);   /* small print: meta line, sources, captions */
+  --step-0: clamp(1.06rem, 1rem + 0.3vw, 1.2rem);        /* running text */
+  --step-1: clamp(1.16rem, 1.1rem + 0.35vw, 1.3rem);     /* the short answer */
+  --step-2: clamp(1.4rem, 1.22rem + 0.9vw, 1.8rem);      /* section heading */
+  --step-3: clamp(2.1rem, 1.3rem + 3.6vw, 3.5rem);       /* page title */
+  /* Spacing scale: 16, 24, 40, 64 px, and one large step above the title. */
+  --space-1: 1rem;
+  --space-2: 1.5rem;
+  --space-3: 2.5rem;
+  --space-4: 4rem;
+  --space-top: clamp(3rem, 9vw, 6.5rem);
+  /* The measure of the text column, the side gutter, and the width of the wide stage (see below). */
+  --measure: 40rem;
+  --gutter: 1rem;
+  --wide: 56rem;
+}
+
+/* ---------- Colour tokens. Ink and paper from the Romanelli site (ink #292b34, paper #f9f6f0),
+   and three accents, each with one fixed role, so a colour always means the same kind of thing:
+     terracotta (--accent)   the reader's path: links, key terms, the short answer, the self-check
+     teal (--accent2)        the evidence: worked examples, figures, tables, section headings
+     ochre (--accent3)       the reader's own work: the guess box, the part labels
+   Chart series and confidence labels keep their own colours because there the colour is information. ---------- */
+:root {
+  --bg: #f9f6f0;
+  --surface: #efece7;
+  --text: #292b34;
+  --muted: #5f6168;
+  --border: rgb(41 43 52 / 22%);
+  --accent: #a6472a;
+  --accent-soft: #f3e6df;
+  --accent2: #1a6460;
+  --accent2-soft: #e3efed;
+  --accent3: #7d5a0c;
+  --accent3-soft: #f5ecd6;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e0ded9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1c22;
+    --surface: #28292e;
+    --text: #f9f6f0;
+    --muted: #aeb0b6;
+    --border: rgb(249 246 240 / 32%);
+    --accent: #f0a58f;
+    --accent-soft: #2e2320;
+    --accent2: #7fd0c9;
+    --accent2-soft: #1e2b2a;
+    --accent3: #eac066;
+    --accent3-soft: #2c2719;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #3a3b3f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1c22;
+  --surface: #28292e;
+  --text: #f9f6f0;
+  --muted: #aeb0b6;
+  --border: rgb(249 246 240 / 32%);
+  --accent: #f0a58f;
+  --accent-soft: #2e2320;
+  --accent2: #7fd0c9;
+  --accent2-soft: #1e2b2a;
+  --accent3: #eac066;
+  --accent3-soft: #2c2719;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #3a3b3f;
+  color-scheme: dark;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space-top) var(--gutter) var(--space-4);
+}
+
+/* Headings carry the structure through size and space. The title is large and set tight, as on
+   the Romanelli site. No rule across the page, except one short mark above each section
+   heading, in the colour of the heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: var(--step-3);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-1);
+}
+h2 {
+  font-size: var(--step-2);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--accent2);
+  margin-top: var(--space-4);
+  margin-bottom: 0.8rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 2px solid var(--accent2);
+  margin-bottom: var(--space-2);
+}
+h3 { font-size: 1.15em; margin-top: var(--space-3); margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+/* A link is set in the accent, with a thin underline. */
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: var(--step--1);
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line of small print under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  margin: 0 0 var(--space-3);
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 var(--space-2); }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  background: var(--accent-soft);
+  border-top: 2px solid var(--accent);
+  padding: 1.05rem 1.3rem 1.15rem;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  margin-bottom: var(--space-3);
+}
+.bottom-line .label { color: var(--accent); }
+.example { border-left: 2px solid var(--accent2); padding-left: 1.4rem; }
+.example .label { color: var(--accent2); }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; }
+.assume { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.assume .label { color: var(--accent); }
+.predict { background: var(--accent3-soft); border-left: 2px solid var(--accent3); padding: 0.9rem 1.3rem 1rem 1.4rem; }
+.predict .label { color: var(--accent3); }
+.recap { background: var(--accent2-soft); border-top: 2px solid var(--accent2); padding: 1rem 1.3rem 1.1rem; }
+.recap .label { color: var(--accent2); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 2px solid var(--accent2);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 var(--space-3);
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent2);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; color: var(--accent2); margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--accent2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.95em;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: var(--step--1);
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 0.95em; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--accent2);
+  color: var(--accent2);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 0.95em; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--accent2-soft); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+  margin-bottom: var(--space-2);
+}
+figure .fig-title { font-weight: 600; color: var(--accent2); margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: var(--step--1); margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 0.95em; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-size: var(--step--1); margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: var(--step--1);
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--accent2); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 var(--space-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1em; font-weight: 600; color: var(--accent2); }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--accent);
+  padding-top: 1rem;
+  margin: 0 0 var(--space-3);
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 var(--space-2);
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 400;
+}
+/* An optional block directly after a comparison or a figure shares their closing rule,
+   so the page does not show two rules with an empty row between them. */
+.compare + details.optional, figure + details.optional {
+  border-top: 0;
+  margin-top: calc(-1 * var(--space-2));
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: var(--space-4) 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--accent3);
+  font-size: var(--step--1);
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--accent3);
+}
+.part + h2 { margin-top: var(--space-2); }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92em;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1em;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 0.95em; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- The wide stage. On a wide screen the title, the figures, and the tables are wider than
+   the text column and centred on it. The text keeps its measure; the work of the page gets the room.
+   On the Romanelli site the images are wider than the text grid, and the change of width gives the
+   page its rhythm. ---------- */
+@media (min-width: 64rem) {
+  h1, .meta, figure, .table-wrap {
+    width: var(--wide);
+    margin-left: calc((var(--measure) - 2 * var(--gutter) - var(--wide)) / 2);
+  }
+  /* The drawing of a figure is wide; its title and its text stay in the text column, so that
+     no line of running text is longer than the measure. */
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source {
+    width: calc(var(--measure) - 2 * var(--gutter));
+    margin-left: calc((var(--wide) - var(--measure) + 2 * var(--gutter)) / 2);
+  }
+}
+
+/* ---------- Narrow screens. The fluid scale already lowers every size; the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  main { padding-bottom: var(--space-3); }
+  h2 { margin-top: var(--space-3); }
+  .bottom-line { margin-bottom: var(--space-2); }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  h1, .meta, figure, .table-wrap,
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source { width: auto; margin-left: 0; }
+  nav.contents { display: none; }
+  .bottom-line, .recap, .predict { background: none; padding-left: 0; padding-right: 0; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: ATX, E-ATX, XL-ATX, XL, M-ATX, ITX, PWM, ARGB, RGB, USB, GPU, CPU, PSU, HDD, SSD, PCIe, PCI, AIO, LED, LEDs, FX, DX, LX, RTX, FE, RRP, US, EU, UK, SGCC, ABS, NH, D15S, X3D, LAeq, dB, dBA, CFM, HD, HWBusters, HWCooling, TweakTown, BL074, BL097, BL134, BGW50, BGW51, BGW69, BGW70, BGW71, BGW72, EAN, Hz, kHz, NVIDIA, AMD, PDF, H2O, V1, V2, I/O, IO, VRM, NVMe, DDR5, PS2, Qi, 7950X3D, 9600X, 4090, 4060, 4070, SUPER, Tom's, Alternate, Vortez, PCGH, Pro -->
+
+<h1>Which be quiet! 900 case should you choose: Dark Base Pro 901, Light Base 900 FX, or Light Base 900 DX?</h1>
+<p class="meta">Written 2026-10-11 · Reading time: about 30 minutes · You need to know: the parts of a desktop PC (motherboard, CPU cooler, graphics card, power supply)</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>be quiet! sells three cases with "900" in the name in October 2026. All three are full towers (cases larger than a mid-tower, for the largest motherboards and coolers). They hold graphics cards up to 495 mm and CPU coolers up to 190 mm. They differ in purpose, not in cooling.</p>
+  <p><strong>Dark Base Pro 901</strong> (street price €339.90) is the quiet workstation case. It has closed panels with insulation mats, three Silent Wings 4 fans, a 5.25" bay and room for 7 hard drives. In the HWBusters test it reduced sound from inside by 9.6 dB(A), the best value of the three.</p>
+  <p><strong>Light Base 900 FX</strong> (€239.90) is the show case. It has glass on the front and the side, a light strip around three sides and four lit fans. You can turn the body upside down or lay it flat. <strong>Light Base 900 DX</strong> (€179.90) is the same body without the four fans.</p>
+  <p><strong>Measured in one lab:</strong> at equal noise, the three cases and the Shadow Base 800 FX differed by at most 1.25 °C on the CPU. On the GPU the difference was at most 2.03 °C. The cheapest case was the coolest. So buy a 900 case for space, silence or looks, not for lower temperatures.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>"900 models" means the three cases that be quiet! lists in October 2026: Dark Base Pro 901, Light Base 900 FX, Light Base 900 DX. The older Dark Base Pro 900 (2016 to 2023) is no longer on the be quiet! site. Each case comes in black and in white; the white costs the same or €10.00 more.</li>
+    <li>The Shadow Base 800 FX is on every table as the reference, because the same lab tested it.</li>
+    <li>Street prices are from one German shop (Alternate) on 11 October 2026. Launch prices are from the be quiet! announcements. Prices in other countries were not checked.</li>
+    <li>The example build is the one from the earlier page: an NVIDIA GeForce RTX 4090 Founders Edition (304 mm long) and a be quiet! Dark Rock Pro 5 cooler (168 mm high).</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#example">One example: the same build fits all three, with 191 mm and 22 mm to spare</a></li>
+    <li><a href="#facts">The facts: size, limits, what is in the box, and prices</a></li>
+    <li><a href="#data">Measured: temperatures within 2 °C, damping from 5.5 to 9.6 dB(A)</a></li>
+    <li><a href="#compare">The comparison: a quiet workstation against a show case</a></li>
+    <li><a href="#recommend">Recommendation, and why</a></li>
+    <li><a href="#mistake">Wrong idea corrected: the larger case is not the cooler case</a></li>
+    <li><a href="#limits">Limits: one lab, one shop, chart readings</a></li>
+    <li><a href="#words">Words that you will hear</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One example: the same build fits all three, with 191 mm and 22 mm to spare</h2>
+<p>A case is sold by its <dfn>clearance</dfn>. The clearance is the largest part that fits in a given place, for example the longest graphics card or the highest CPU cooler. A <dfn>full tower</dfn> is a case with more clearance and more fan positions than a mid-tower such as the Shadow Base 800 FX.</p>
+<p>All three accept an <dfn>E-ATX</dfn> motherboard. E-ATX (Extended ATX) is a motherboard format up to 330 mm wide, instead of the 244 mm of ATX. They also accept a <dfn>radiator</dfn> of up to 420 mm. A radiator is the part of a liquid cooler that gives the heat to the air. Its size is the sum of the fans on it: a 420 mm radiator carries three 140 mm fans.</p>
+
+<div class="box example">
+  <span class="label">Worked example: does the RTX 4090 build fit?</span>
+  <ol class="steps">
+    <li>Graphics card: 495 mm − 304 mm = <strong>191 mm to spare</strong> in every 900 case. In the Shadow Base 800 FX the figure is 430 mm − 304 mm = 126 mm.
+      <span class="why">The three datasheets give the same card limit of 495 mm.</span></li>
+    <li>CPU cooler: 190 mm − 168 mm = <strong>22 mm to spare</strong> in every 900 case, against 12 mm in the Shadow Base 800 FX.
+      <span class="why">All three datasheets give 190 mm. The Light Base 900 is 80 mm wider than the Shadow Base 800 FX, but its rear chamber uses part of the width.</span></li>
+    <li>Power supply: the Dark Base Pro 901 takes units up to 288 mm, the Light Base 900 only up to 225 mm.
+      <span class="why">In the Light Base 900 the power supply stands in the rear chamber, behind the motherboard, so the space is shorter.</span></li>
+    <li>A 420 mm radiator fits in the front of the Dark Base Pro 901. In the Light Base 900 it fits in the top or in the bottom.
+      <span class="why">The Dark Base Pro 901 takes 360 mm at most in the top. The Light Base 900 takes two 420 mm radiators at the same time.</span></li>
+  </ol>
+  <p><strong>Result:</strong> the build fits everywhere. The 900 cases add 65 mm of card length and 10 mm of cooler height over the Shadow Base 800 FX. For this build, the extra clearance buys nothing.</p>
+</div>
+
+<h2 id="facts">2. The facts: size, limits, what is in the box, and prices</h2>
+<p>The three 900 cases have about the same volume, but different shapes. The Dark Base Pro 901 is the classic shape: tall and long, with the power supply under a shroud at the bottom. The Light Base 900 has a <dfn>dual-chamber layout</dfn>. A dual-chamber layout puts the motherboard in a front chamber behind glass. The power supply, the cables and the drives sit in a second chamber behind the motherboard. The case becomes shorter and lower, but wider.</p>
+
+<figure class="diagram">
+  <p class="fig-title">Figure 1. The Dark Base Pro 901 is the largest box, 87.3 litres; the Light Base 900 is lower but 80 mm wider, 84.2 litres</p>
+  <p class="fig-sub">Side views of the three bodies at the same scale, with the outer dimensions from the datasheets. Litres are length × width × height of the outer box.</p>
+  <div class="fig-scroll"><svg viewBox="0 0 700 325" role="img" aria-label="Side views of the three cases drawn to the same scale. The Shadow Base 800 FX is 550 by 522 mm and holds 70.9 litres. The Light Base 900 is shorter and lower, 532 by 484 mm, but 327 mm wide, so it holds 84.2 litres. The Dark Base Pro 901 is the largest, 604 by 569 mm and 87.3 litres.">
+<rect x="20.0" y="93.4" width="165.0" height="156.6" fill="none" stroke="var(--s3)" stroke-width="3"/>
+<rect x="26.0" y="238.0" width="74.1" height="6" fill="var(--s3)"/>
+<text x="26.0" y="232.0" font-size="13" fill="var(--muted)">width 247 mm</text>
+<text x="102.5" y="83.4" font-size="13" text-anchor="middle" font-weight="650">Shadow Base 800 FX</text>
+<text x="102.5" y="270" font-size="13" text-anchor="middle">550 × 247 × 522 mm</text>
+<text x="102.5" y="288" font-size="13" text-anchor="middle">70.9 litres, 12.3 kg</text>
+<text x="177.0" y="111.4" font-size="13" text-anchor="end" fill="var(--muted)">height 522 mm</text>
+<text x="102.5" y="176.7" font-size="13" text-anchor="middle" fill="var(--muted)">length 550 mm</text>
+<rect x="223.0" y="104.8" width="159.6" height="145.2" fill="none" stroke="var(--s2)" stroke-width="3"/>
+<rect x="229.0" y="238.0" width="98.1" height="6" fill="var(--s2)"/>
+<text x="229.0" y="232.0" font-size="13" fill="var(--muted)">width 327 mm</text>
+<text x="302.8" y="94.8" font-size="13" text-anchor="middle" font-weight="650">Light Base 900 FX and DX</text>
+<text x="302.8" y="270" font-size="13" text-anchor="middle">532 × 327 × 484 mm</text>
+<text x="302.8" y="288" font-size="13" text-anchor="middle">84.2 litres, 15.8 kg</text>
+<text x="374.6" y="122.8" font-size="13" text-anchor="end" fill="var(--muted)">height 484 mm</text>
+<text x="302.8" y="182.4" font-size="13" text-anchor="middle" fill="var(--muted)">length 532 mm</text>
+<rect x="420.6" y="79.3" width="181.2" height="170.7" fill="none" stroke="var(--s1)" stroke-width="3"/>
+<rect x="426.6" y="238.0" width="76.2" height="6" fill="var(--s1)"/>
+<text x="426.6" y="232.0" font-size="13" fill="var(--muted)">width 254 mm</text>
+<text x="511.2" y="69.3" font-size="13" text-anchor="middle" font-weight="650">Dark Base Pro 901</text>
+<text x="511.2" y="270" font-size="13" text-anchor="middle">604 × 254 × 569 mm</text>
+<text x="511.2" y="288" font-size="13" text-anchor="middle">87.3 litres, 17.8 kg</text>
+<text x="593.8" y="97.3" font-size="13" text-anchor="end" fill="var(--muted)">height 569 mm</text>
+<text x="511.2" y="169.7" font-size="13" text-anchor="middle" fill="var(--muted)">length 604 mm</text>
+<line x1="20" y1="250" x2="680" y2="250" stroke="var(--muted)" stroke-width="1"/>
+<text x="20" y="316" font-size="13" fill="var(--muted)">Scale: 0.3 px per mm. The Light Base 900 FX and DX have the same body.</text>
+</svg></div>
+  <p class="fig-read"><strong>How to read this figure:</strong> each box is one case seen from the side, length from left to right and height from bottom to top. The short bar at the bottom of each box shows the width at the same scale.</p>
+  <p class="fig-source">Sources: be quiet! datasheets of the three cases (High). Volumes calculated (High).</p>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <caption>Official limits from the be quiet! datasheets (the Shadow Base 800 FX for reference)</caption>
+  <thead>
+    <tr><th>Item</th><th>Dark Base Pro 901</th><th>Light Base 900 FX</th><th>Light Base 900 DX</th><th>Shadow Base 800 FX</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Size L × W × H (mm)</th><td>604 × 254 × 569</td><td>532 × 327 × 484</td><td>532 × 327 × 484</td><td>550 × 247 × 522</td></tr>
+    <tr><th scope="row">Box volume (litres)</th><td class="num">87.3</td><td class="num">84.2</td><td class="num">84.2</td><td class="num">70.9</td></tr>
+    <tr><th scope="row">Weight (kg)</th><td class="num">17.8</td><td class="num">15.8</td><td class="num">14.8</td><td class="num">12.3</td></tr>
+    <tr><th scope="row">Motherboards</th><td>XL-ATX, E-ATX, ATX, M-ATX, Mini-ATX</td><td>E-ATX, XL-ATX, ATX, M-ATX, Mini-ITX</td><td>same as FX</td><td>E-ATX, ATX, M-ATX, Mini-ITX</td></tr>
+    <tr><th scope="row">Graphics card (mm)</th><td class="num">495</td><td class="num">495</td><td class="num">495</td><td class="num">430</td></tr>
+    <tr><th scope="row">CPU cooler (mm)</th><td class="num">190</td><td class="num">190</td><td class="num">190</td><td class="num">180</td></tr>
+    <tr><th scope="row">Power supply (mm)</th><td class="num">288</td><td class="num">225</td><td class="num">225</td><td class="num">250</td></tr>
+    <tr><th scope="row">Fan positions</th><td>11: front 3, top 3, side 3, bottom 1, rear 1</td><td>10: top 3, side 3, bottom 3, rear 1</td><td>same as FX</td><td>8: front 3, top 3, bottom 1, rear 1</td></tr>
+    <tr><th scope="row">Largest radiator (mm)</th><td>front 420, top 360, side 360, rear 140</td><td>top 420, bottom 420, side 360, rear 140</td><td>same as FX</td><td>front 420, top 420, rear 120</td></tr>
+    <tr><th scope="row">Expansion slots</th><td class="num">8</td><td class="num">8</td><td class="num">8</td><td class="num">7</td></tr>
+    <tr><th scope="row">Drive bays, 2.5" / 3.5" / 5.25"</th><td>16 (6 included) / 7 (2 included) / 1 (included)</td><td>6 (4 included) / 2 (1 included) / none</td><td>same as FX</td><td>7 (3 included) / 3 (1 included) / none</td></tr>
+    <tr><th scope="row">Front panel</th><td>1 USB-C, 4 USB-A, audio, touch buttons for fans and ARGB, Qi charger</td><td>1 USB-C, 2 USB-A, audio, ARGB button, reset</td><td>same as FX</td><td>1 USB-C, 2 USB-A, audio, LED button</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each column is one case; each row is one limit or one count from the datasheet. "Same as FX" means that the DX datasheet gives the same value as the FX datasheet. The Dark Base Pro 901 datasheet lists Mini-ATX, not Mini-ITX; the review sites list Mini-ITX. The Qi charger is a wireless charging pad for phones (15 W) on the top of the Dark Base Pro 901.</p>
+
+<p>The Dark Base Pro 901 has a <dfn>silent configuration</dfn> and an airflow configuration. The silent configuration uses the closed front panel and the closed top cover. Both are lined with <dfn>insulation mats</dfn>: foam sheets glued to the inside of a panel, which absorb sound. For the airflow configuration you remove those parts, and the mesh is open.</p>
+<p>The Light Base 900 has glass on the front and on the side. Its air enters through the side panel at the rear, where three <dfn>reversed-blade fans</dfn> sit. A reversed-blade fan has its blades turned the other way, so the clean blade side faces the glass.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>What is in the box, and what it costs (launch price and one street price)</caption>
+  <thead>
+    <tr><th>Item</th><th>Dark Base Pro 901</th><th>Light Base 900 FX</th><th>Light Base 900 DX</th><th>Shadow Base 800 FX</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Included fans</th><td>3 × Silent Wings 4 140 mm PWM high-speed, 1,900 rpm (front 2, rear 1)</td><td>3 × Light Wings 140 mm PWM Reverse, 1,300 rpm (side), 1 × Light Wings 140 mm PWM, 1,500 rpm (rear)</td><td>none</td><td>4 × Light Wings 140 mm PWM, 1,500 rpm (front 3, rear 1)</td></tr>
+    <tr><th scope="row">Rated intake air (m³/h)</th><td class="num">266.4</td><td class="num">261.9</td><td class="num">0.0</td><td class="num">285.3</td></tr>
+    <tr><th scope="row">Fan and ARGB hubs</th><td>2 fan hubs with 6 headers in total; no ARGB hub</td><td>2 hubs, 12 connectors for fans and ARGB</td><td>same as FX</td><td>1 hub, 8 ports for fans and ARGB</td></tr>
+    <tr><th scope="row">Built-in lighting</th><td>strips in the front and on the shroud</td><td>light strip around three sides, 172 LEDs</td><td>same as FX</td><td>two strips in the front</td></tr>
+    <tr><th scope="row">Layout options</th><td>normal or inverted</td><td>normal, inverted, or horizontal</td><td>same as FX</td><td>normal only</td></tr>
+    <tr><th scope="row">Launch price, black (US$)</th><td class="num">299.90</td><td class="num">229.90</td><td class="num">179.90</td><td class="num">219.90</td></tr>
+    <tr><th scope="row">Launch price, black (€)</th><td class="num">319.90</td><td class="num">219.90</td><td class="num">169.90</td><td class="num">199.90</td></tr>
+    <tr><th scope="row">Street price, black (€, 11 Oct 2026)</th><td class="num">339.90</td><td class="num">239.90</td><td class="num">179.90</td><td class="num">139.90</td></tr>
+    <tr><th scope="row">Street price, white (€, 11 Oct 2026)</th><td class="num">339.90</td><td class="num">249.90</td><td class="num">189.90</td><td class="num">139.90</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> "Rated intake air" is the sum of the airflow ratings of the included intake fans at full speed. The ratings come from the be quiet! fan pages. The Dark Base Pro 901 reached the shops in June 2023 and the Shadow Base 800 FX in September 2023. The Light Base 900 followed in October 2024. The street prices are from Alternate on one day; the white Light Base 900 DX was listed but not available that day.</p>
+
+<p>Two price differences matter. The Light Base 900 FX costs €60.00 more than the DX in the shop (€50.00 at launch) and adds four fans. One Light Wings 140 mm PWM fan has a recommended price of €27.50, so four such fans would cost about €110.00 alone. The FX is the better deal when you want lit be quiet! fans. The DX is the better deal when you already own fans.</p>
+<p>The Dark Base Pro 901 costs €100.00 more than the Light Base 900 FX. That difference buys the insulation, the drive bays, the touch panel and the charger. It does not buy more cooling, as the next section shows.</p>
+
+<h2 id="data">3. Measured: temperatures within 2 °C, damping from 5.5 to 9.6 dB(A)</h2>
+<p>The site HWBusters tests every case on the same system in a climate chamber. The system is an AMD Ryzen 9 7950X3D with a Noctua NH-D15S air cooler and a GeForce RTX 4060, at 25 °C. The Light Base 900 FX review (December 2024) shows the Dark Base Pro 901 and the Shadow Base 800 FX in the same charts. One limit: the Dark Base Pro 901 was tested in its silent configuration, with the closed panels in place.</p>
+<p>HWBusters measures noise as a <dfn>sound pressure level</dfn> in dB(A). The sound pressure level is a logarithmic scale of the pressure of a sound wave. The A-weighting lowers the weight of very low and very high frequencies, as the human ear does.</p>
+<p>The lab sets the fans of each case so that the whole case produces 25 dB(A) at 1 m. This is a <dfn>noise-normalised test</dfn>: a test at equal noise, so that a case with louder fans gets no advantage. Then the lab runs a <dfn>torture test</dfn>. A torture test loads the CPU with Prime95 and the GPU with Furmark at the same time. The temperature in the charts is the average over the test.</p>
+
+<div class="box predict">
+  <span class="label">Guess first</span>
+  <p>At the same noise level of 25 dB(A), how many degrees separate the coolest and the warmest of the three cases on the CPU? Write down your guess, then look at Figure 2.</p>
+</div>
+
+<figure>
+  <p class="fig-title">Figure 2. At equal noise, the CPU temperatures of the three cases lie within 1.25 °C, the GPU temperatures within 2.03 °C</p>
+  <p class="fig-sub">HWBusters torture test, fans set so that the case produces 25 dB(A). Average temperature in °C.</p>
+  <div class="fig-scroll"><svg viewBox="0 0 680 300" role="img" aria-label="Dot chart of CPU and GPU temperatures in the HWBusters torture test at the same noise level of 25 dB(A). CPU: Shadow Base 800 FX 88.05, Light Base 900 FX 89.30, Dark Base Pro 901 89.22 degrees. GPU: Shadow Base 800 FX 77.32, Light Base 900 FX 77.88, Dark Base Pro 901 79.35 degrees. All CPU values lie within 1.25 degrees, all GPU values within 2.03 degrees.">
+<line class="axis" x1="215.0" y1="44" x2="215.0" y2="230"/>
+<text class="axis-label" x="215.0" y="250" text-anchor="middle">75 °C</text>
+<line class="grid" x1="343.3" y1="44" x2="343.3" y2="230"/>
+<text class="axis-label" x="343.3" y="250" text-anchor="middle">80 °C</text>
+<line class="grid" x1="471.7" y1="44" x2="471.7" y2="230"/>
+<text class="axis-label" x="471.7" y="250" text-anchor="middle">85 °C</text>
+<line class="grid" x1="600.0" y1="44" x2="600.0" y2="230"/>
+<text class="axis-label" x="600.0" y="250" text-anchor="middle">90 °C</text>
+<text class="axis-label" x="407.5" y="272" text-anchor="middle">Average temperature in the torture test, fans set so that the case produces 25 dB(A)</text>
+<rect x="268.0" y="27" width="10" height="10" fill="var(--s2)"/>
+<text x="284.0" y="36" font-size="13">GPU hot spot (square)</text>
+<circle cx="545.2" cy="32" r="5" fill="var(--s1)"/>
+<text x="557.2" y="36" font-size="13">CPU (circle)</text>
+<text x="205" y="75" font-size="13" text-anchor="end">Shadow Base 800 FX</text>
+<rect x="267.5" y="63" width="14" height="14" fill="var(--s2)"/>
+<circle cx="549.9" cy="70" r="7" fill="var(--s1)"/>
+<text x="286.5" y="75" font-size="13">77.32 °C</text>
+<text x="561.9" y="75" font-size="13">88.05 °C</text>
+<text x="205" y="135" font-size="13" text-anchor="end" font-weight="650">Light Base 900 FX</text>
+<rect x="281.9" y="123" width="14" height="14" fill="var(--s2)"/>
+<circle cx="582.0" cy="130" r="7" fill="var(--s1)"/>
+<text x="300.9" y="135" font-size="13" font-weight="650">77.88 °C</text>
+<text x="594.0" y="135" font-size="13" font-weight="650">89.30 °C</text>
+<text x="205" y="195" font-size="13" text-anchor="end" font-weight="650">Dark Base Pro 901</text>
+<rect x="319.6" y="183" width="14" height="14" fill="var(--s2)"/>
+<circle cx="580.0" cy="190" r="7" fill="var(--s1)"/>
+<text x="338.6" y="195" font-size="13" font-weight="650">79.35 °C</text>
+<text x="592.0" y="195" font-size="13" font-weight="650">89.22 °C</text>
+</svg></div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each row is one case. The circle is the CPU temperature. The square is the GPU hot spot temperature, the hottest point on the graphics chip. The Shadow Base 800 FX has the lowest value in both series.</p>
+  <p class="fig-source">Source: HWBusters, review of the Light Base 900 FX, the two torture charts at 25 dBA (High: the values are printed on the bars).</p>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <caption>HWBusters temperatures in °C: the Shadow Base 800 FX is coolest in every test, the differences are small</caption>
+  <thead>
+    <tr><th>Test</th><th>Part</th><th class="num">Shadow Base 800 FX</th><th class="num">Light Base 900 FX</th><th class="num">Dark Base Pro 901</th><th class="num">Spread</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Torture at 25 dB(A)</th><td>CPU</td><td class="num">88.05</td><td class="num">89.30</td><td class="num">89.22</td><td class="num">1.25</td></tr>
+    <tr><th scope="row">Torture at 25 dB(A)</th><td>GPU hot spot</td><td class="num">77.32</td><td class="num">77.88</td><td class="num">79.35</td><td class="num">2.03</td></tr>
+    <tr><th scope="row">Game at 25 dB(A)</th><td>CPU</td><td class="num">65.27</td><td class="num">66.21</td><td class="num">66.75</td><td class="num">1.48</td></tr>
+    <tr><th scope="row">Game at 25 dB(A)</th><td>GPU hot spot</td><td class="num">81.56</td><td class="num">82.05</td><td class="num">84.58</td><td class="num">3.02</td></tr>
+    <tr><th scope="row">Torture at full fan speed</th><td>CPU</td><td class="num">87.38</td><td class="num">89.25</td><td class="num">88.22</td><td class="num">1.87</td></tr>
+    <tr><th scope="row">Torture at full fan speed</th><td>GPU hot spot</td><td class="num">76.37</td><td class="num">77.10</td><td class="num">78.15</td><td class="num">1.78</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one test and one part, and the columns are the three cases. "Spread" is the warmest value minus the coolest value in the row. The CPU runs near 89 °C in the torture test, because the 7950X3D is set to hold 89 °C and lowers its clock instead. So HWBusters also reports the clock, and the reviewer wrote that the Light Base 900 FX held a low clock. Full fan speed gains little against the 25 dB(A) setting. The gain is 0.67 °C (Shadow Base 800 FX), 1.00 °C (Dark Base Pro 901) and 0.05 °C (Light Base 900 FX).</p>
+
+<p>The second measurement is <dfn>noise damping</dfn>. HWBusters places a speaker inside the closed case and plays two test sounds. Pink noise has equal energy in each octave; a chirp is a tone that sweeps through the frequencies. The damping is the sound pressure level with the case open minus the level with the case closed. A larger number means that the case blocks more of the sound from inside, for example from a hard drive or a pump.</p>
+
+<figure>
+  <p class="fig-title">Figure 3. The Dark Base Pro 901 blocks 9.6 dB(A) of pink noise, 4.1 dB(A) more than the Shadow Base 800 FX</p>
+  <p class="fig-sub">HWBusters noise damping, LAeq in dB(A). Longer bar = more sound blocked.</p>
+  <div class="fig-scroll"><svg viewBox="0 0 680 300" role="img" aria-label="Bar chart of noise damping measured by HWBusters, in dB(A) of reduction. Dark Base Pro 901: 9.6 for pink noise and 9.2 for a chirp. Light Base 900 FX: 7.5 and 5.4. Shadow Base 800 FX: 5.5 and 4.7. The Dark Base Pro 901 reduces noise about 4 dB(A) more than the Shadow Base 800 FX.">
+<line class="axis" x1="200.0" y1="40" x2="200.0" y2="248"/>
+<text class="axis-label" x="200.0" y="268" text-anchor="middle">0 dB(A)</text>
+<line class="grid" x1="280.0" y1="40" x2="280.0" y2="248"/>
+<text class="axis-label" x="280.0" y="268" text-anchor="middle">2 dB(A)</text>
+<line class="grid" x1="360.0" y1="40" x2="360.0" y2="248"/>
+<text class="axis-label" x="360.0" y="268" text-anchor="middle">4 dB(A)</text>
+<line class="grid" x1="440.0" y1="40" x2="440.0" y2="248"/>
+<text class="axis-label" x="440.0" y="268" text-anchor="middle">6 dB(A)</text>
+<line class="grid" x1="520.0" y1="40" x2="520.0" y2="248"/>
+<text class="axis-label" x="520.0" y="268" text-anchor="middle">8 dB(A)</text>
+<line class="grid" x1="600.0" y1="40" x2="600.0" y2="248"/>
+<text class="axis-label" x="600.0" y="268" text-anchor="middle">10 dB(A)</text>
+<text class="axis-label" x="400.0" y="290" text-anchor="middle">Reduction of a sound from inside the closed case, measured outside. Longer bar = more damping.</text>
+<text x="190" y="68" font-size="13" text-anchor="end" font-weight="650">Dark Base Pro 901</text>
+<rect x="200" y="52" width="384.0" height="22" fill="var(--s1)"/>
+<text x="590.0" y="68" font-size="13" font-weight="650">9.6 pink noise</text>
+<rect x="200" y="78" width="368.0" height="22" fill="var(--s2)" fill-opacity="0.22" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="574.0" y="94" font-size="13" font-weight="650">9.2 chirp</text>
+<text x="190" y="136" font-size="13" text-anchor="end">Light Base 900 FX</text>
+<rect x="200" y="120" width="300.0" height="22" fill="var(--s1)"/>
+<text x="506.0" y="136" font-size="13">7.5 pink noise</text>
+<rect x="200" y="146" width="216.0" height="22" fill="var(--s2)" fill-opacity="0.22" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="422.0" y="162" font-size="13">5.4 chirp</text>
+<text x="190" y="204" font-size="13" text-anchor="end">Shadow Base 800 FX</text>
+<rect x="200" y="188" width="220.0" height="22" fill="var(--s1)"/>
+<text x="426.0" y="204" font-size="13">5.5 pink noise</text>
+<rect x="200" y="214" width="188.0" height="22" fill="var(--s2)" fill-opacity="0.22" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 3"/>
+<text x="394.0" y="230" font-size="13">4.7 chirp</text>
+</svg></div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each case has two bars. The full bar is the damping of pink noise, the dashed bar the damping of the chirp. A difference of 4.1 dB(A) means that 1.6 times less sound pressure passes, or 2.6 times less sound power.</p>
+  <p class="fig-source">Source: HWBusters, the damping charts in the two 900 reviews (High: the values are printed on the bars).</p>
+</figure>
+
+<p>The third measurement is the noise of the included fans, all together at a fixed share of their maximum speed, at 1 m. The Dark Base Pro 901 is the loudest at every setting. Its Silent Wings 4 fans run at 1,900 rpm at full speed and move 40% more air each than a Light Wings fan. At 50% speed the three cases differ by 13.8 dB(A), at 100% by 6.5 dB(A).</p>
+
+<figure>
+  <p class="fig-title">Figure 4. At half speed the fans of the Dark Base Pro 901 produce 26.4 dB(A), the Shadow Base 800 FX 12.6 dB(A)</p>
+  <p class="fig-sub">HWBusters, noise of the included fans at 1 m, LAeq in dB(A), against fan speed in percent of the maximum.</p>
+  <div class="fig-scroll"><svg viewBox="0 0 700 340" role="img" aria-label="Line chart of the noise of the included fans against fan speed, from 50 to 100 percent, measured by HWBusters. Dark Base Pro 901: 26.4 dB(A) at 50 percent and 40.0 at 100 percent. Light Base 900 FX: about 17.9 at 50 percent and about 34.5 at 100 percent. Shadow Base 800 FX: 12.6 at 50 percent and 33.5 at 100 percent.">
+<line class="axis" x1="80" y1="280.0" x2="470" y2="280.0"/>
+<text class="axis-label" x="72" y="284.0" text-anchor="end">0 dB(A)</text>
+<line class="grid" x1="80" y1="226.7" x2="470" y2="226.7"/>
+<text class="axis-label" x="72" y="230.7" text-anchor="end">10 dB(A)</text>
+<line class="grid" x1="80" y1="173.3" x2="470" y2="173.3"/>
+<text class="axis-label" x="72" y="177.3" text-anchor="end">20 dB(A)</text>
+<line class="grid" x1="80" y1="120.0" x2="470" y2="120.0"/>
+<text class="axis-label" x="72" y="124.0" text-anchor="end">30 dB(A)</text>
+<line class="grid" x1="80" y1="66.7" x2="470" y2="66.7"/>
+<text class="axis-label" x="72" y="70.7" text-anchor="end">40 dB(A)</text>
+<text class="axis-label" x="80.0" y="300" text-anchor="middle">50%</text>
+<text class="axis-label" x="158.0" y="300" text-anchor="middle">60%</text>
+<text class="axis-label" x="236.0" y="300" text-anchor="middle">70%</text>
+<text class="axis-label" x="314.0" y="300" text-anchor="middle">80%</text>
+<text class="axis-label" x="392.0" y="300" text-anchor="middle">90%</text>
+<text class="axis-label" x="470.0" y="300" text-anchor="middle">100%</text>
+<text class="axis-label" x="275.0" y="322" text-anchor="middle">Fan speed as a share of the maximum speed (all included fans together)</text>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="80.0,139.2 158.0,134.4 236.0,107.2 275.0,108.8 314.0,100.8 392.0,81.1 470.0,66.7"/>
+<circle cx="80.0" cy="139.2" r="4.5" fill="var(--s1)"/>
+<circle cx="158.0" cy="134.4" r="4.5" fill="var(--s1)"/>
+<circle cx="236.0" cy="107.2" r="4.5" fill="var(--s1)"/>
+<circle cx="275.0" cy="108.8" r="4.5" fill="var(--s1)"/>
+<circle cx="314.0" cy="100.8" r="4.5" fill="var(--s1)"/>
+<circle cx="392.0" cy="81.1" r="4.5" fill="var(--s1)"/>
+<circle cx="470.0" cy="66.7" r="4.5" fill="var(--s1)"/>
+<polyline fill="none" stroke="var(--s2)" stroke-width="3" stroke-dasharray="7 5" points="80.0,184.5 158.0,156.3 236.0,138.7 275.0,133.3 314.0,124.3 392.0,92.3 470.0,96.0"/>
+<rect x="76.0" y="180.5" width="8" height="8" fill="var(--s2)"/>
+<rect x="154.0" y="152.3" width="8" height="8" fill="var(--s2)"/>
+<rect x="232.0" y="134.7" width="8" height="8" fill="var(--s2)"/>
+<rect x="271.0" y="129.3" width="8" height="8" fill="var(--s2)"/>
+<rect x="310.0" y="120.3" width="8" height="8" fill="var(--s2)"/>
+<rect x="388.0" y="88.3" width="8" height="8" fill="var(--s2)"/>
+<rect x="466.0" y="92.0" width="8" height="8" fill="var(--s2)"/>
+<polyline fill="none" stroke="var(--s3)" stroke-width="3" stroke-dasharray="2 4" points="80.0,212.8 158.0,188.8 236.0,147.2 275.0,124.8 314.0,126.9 392.0,107.2 470.0,101.3"/>
+<circle cx="80.0" cy="212.8" r="4.5" fill="var(--s3)"/>
+<circle cx="158.0" cy="188.8" r="4.5" fill="var(--s3)"/>
+<circle cx="236.0" cy="147.2" r="4.5" fill="var(--s3)"/>
+<circle cx="275.0" cy="124.8" r="4.5" fill="var(--s3)"/>
+<circle cx="314.0" cy="126.9" r="4.5" fill="var(--s3)"/>
+<circle cx="392.0" cy="107.2" r="4.5" fill="var(--s3)"/>
+<circle cx="470.0" cy="101.3" r="4.5" fill="var(--s3)"/>
+<text x="480" y="70.7" font-size="13" font-weight="650">Dark Base Pro 901: 40.0</text>
+<text x="480" y="94.0" font-size="13" font-weight="650">Light Base 900 FX: 34.5</text>
+<text x="480" y="117.3" font-size="13">Shadow Base 800 FX: 33.5</text>
+<text x="86" y="130.2" font-size="13" font-weight="650">26.4</text>
+<text x="92" y="202.5" font-size="13" font-weight="650">17.9</text>
+<text x="86" y="230.8" font-size="13">12.6</text>
+</svg></div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each line is one case; the horizontal axis is the fan speed setting; the vertical axis is the noise. The Light Base 900 FX line and the Shadow Base 800 FX line are approximate. HWBusters printed exact values only for the Dark Base Pro 901.</p>
+  <p class="fig-source">Source: HWBusters, the fan noise charts in the two 900 reviews. Dark Base Pro 901: High. The other two lines: Medium, read from the chart image.</p>
+</figure>
+
+<h2 id="compare">4. The comparison: a quiet workstation against a show case</h2>
+<div class="compare">
+  <div>
+    <h3>Dark Base Pro 901</h3>
+    <p>Closed steel panels with insulation mats, or open mesh when you swap the panels. Front intake and rear exhaust with three Silent Wings 4 fans. Glass on the side only.</p>
+    <p>A 5.25" bay, 2 drive cages included and 7 possible, 6 SSD brackets. Touch buttons and a Qi charger on the top. Weight 17.8 kg. Street price €339.90.</p>
+  </div>
+  <div>
+    <h3>Light Base 900 FX</h3>
+    <p>Glass on the front and on the side, no insulation. Side intake through three reversed-blade fans, rear exhaust. A light strip with 172 LEDs, and two hubs with 12 connectors.</p>
+    <p>The body stands normally, inverted, or horizontally. 2 drive bays for 3.5" and 6 for 2.5". Weight 15.8 kg. Street price €239.90; the DX is the same case without fans for €179.90.</p>
+  </div>
+</div>
+<p><strong>The principle:</strong> the two designs solve different problems. The Dark Base Pro 901 reduces the sound that leaves the case. The Light Base 900 shows the parts inside the case. Neither design lowers the temperatures.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Decision table: which case fits which need</caption>
+  <thead>
+    <tr><th>Your need</th><th>Best choice</th><th>Why</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">A quiet PC with hard drives, a pump, or an optical drive</th><td>Dark Base Pro 901</td><td>9.6 dB(A) of damping, 7 hard drive positions, the only 5.25" bay</td></tr>
+    <tr><th scope="row">A show build with lighting and glass on two sides</th><td>Light Base 900 FX</td><td>glass front and side, light strip, four lit fans, two hubs</td></tr>
+    <tr><th scope="row">A show build with your own fans</th><td>Light Base 900 DX</td><td>same body and hubs, €60.00 less, no fans</td></tr>
+    <tr><th scope="row">A horizontal case, or a case on the right side of the desk</th><td>Light Base 900 FX or DX</td><td>horizontal and inverted layouts are built in</td></tr>
+    <tr><th scope="row">Two 420 mm radiators</th><td>Light Base 900 FX or DX</td><td>top and bottom each take 420 mm</td></tr>
+    <tr><th scope="row">A power supply longer than 225 mm</th><td>Dark Base Pro 901</td><td>288 mm limit, against 225 mm in the Light Base 900</td></tr>
+    <tr><th scope="row">Lowest temperature at equal noise, lowest price</th><td>Shadow Base 800 FX</td><td>coolest in every HWBusters test, €139.90</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> find the row that describes your need. The second column names the case, and the third column gives the fact from this page that supports the choice. When two rows apply to you: the Dark Base Pro 901 wins when silence is one of them. The Light Base 900 wins when looks or layout is one of them.</p>
+
+<h2 id="recommend">5. Recommendation, and why</h2>
+<div class="box recap">
+  <span class="label">Recommendation</span>
+  <p><strong>Choose the Dark Base Pro 901 when the PC must be quiet and must hold many drives.</strong> It is the only one of the three with insulation, with a 5.25" bay and with a 288 mm power supply limit. Its fans are the loudest at a given speed setting, so set them to a low curve. Full speed gains only 1.00 °C.</p>
+  <p><strong>Choose the Light Base 900 FX when you want to see the parts.</strong> It costs €100.00 less than the Dark Base Pro 901 and includes four lit fans and two hubs. It still holds 495 mm cards and two 420 mm radiators. Choose the DX only when you already own fans, because the four fans of the FX cost only €60.00 more.</p>
+  <p><strong>Choose neither for lower temperatures.</strong> The Shadow Base 800 FX was cooler than all three in the same lab and costs €139.90. Buy a 900 case for its space, its silence or its looks.</p>
+</div>
+
+<h2 id="mistake">6. Wrong idea corrected: the larger case is not the cooler case</h2>
+<div class="box mistake">
+  <span class="label">A common wrong idea</span>
+  <p><strong>Wrong:</strong> "A full tower has more fans and more air inside, so it keeps the parts cooler than a mid-tower."</p>
+  <p><strong>Correct:</strong> the temperature of a part depends on the air that passes over its cooler, not on the air that stands in the case. At equal noise the Shadow Base 800 FX (70.9 litres) was coolest. The Light Base 900 FX (84.2 litres) came next, and the Dark Base Pro 901 (87.3 litres) was warmest on the GPU.</p>
+  <p><strong>Why the wrong idea fails:</strong> a larger case needs the fans to push the air a longer way. The Light Base 900 takes its air in through the side, so the air reaches the CPU cooler from an angle. The Dark Base Pro 901 in the silent configuration breathes through small openings around the closed panels. The HWBusters reviewer called the noise-normalised results of the Light Base 900 FX <span class="quoted">mediocre in torture testing</span>. In plain words: the large open case did not cool better than smaller cases.</p>
+</div>
+
+<h2 id="limits">7. Limits: one lab, one shop, chart readings</h2>
+<div class="box limits">
+  <span class="label">Where this page stops</span>
+  <ul>
+    <li><strong>One lab.</strong> All temperatures and all noise values come from HWBusters. Other reviews (TweakTown, HWCooling, igor'sLAB) used other systems, so their numbers are not on this page.</li>
+    <li><strong>The Dark Base Pro 901 was tested closed.</strong> HWBusters used the silent configuration. With the mesh panels, the temperatures and the damping would both be lower. No measurement of the airflow configuration exists.</li>
+    <li><strong>Chart readings.</strong> The temperatures and the damping values are printed on the HWBusters charts, so they are exact. The fan noise lines of the Light Base 900 FX and of the Shadow Base 800 FX are read from line charts. The error is about 0.5 dB(A).</li>
+    <li><strong>Prices.</strong> Street prices are one shop on one day. Prices in the United States were not checked in October 2026.</li>
+    <li><strong>Datasheet conflicts.</strong> HWBusters lists the Dark Base Pro 901 at 16.3 kg, 603 mm long, with a 325 mm power supply limit. The datasheet (version 2 of 2024) says 17.8 kg, 604 mm and 288 mm. This page follows the datasheet.</li>
+    <li><strong>Hubs of the Dark Base Pro 901.</strong> The datasheet lists a fan controller and an ARGB controller. HWBusters found two fan hubs with six headers and no ARGB hub for fans. Check this before you plan lit fans in that case.</li>
+    <li><strong>No test of the Light Base 900 DX.</strong> Its results depend on the fans that you add.</li>
+  </ul>
+</div>
+
+<h2 id="words">8. Words that you will hear</h2>
+<dl class="glossary">
+  <dt>Inverted layout</dt>
+  <dd>The motherboard is mounted upside down, so the glass side is on the right. Both the Dark Base Pro 901 and the Light Base 900 support it. It matters when the PC stands to the left of you.</dd>
+  <dt>Horizontal layout</dt>
+  <dd>The Light Base 900 can lie on its side on four stands. The top and the bottom panels are identical, so the fans and the radiators stay in place.</dd>
+  <dt>Panorama design, aquarium case</dt>
+  <dd>Shop names for a case with glass on the front and on the side, such as the Light Base 900.</dd>
+  <dt>Backside connector motherboards</dt>
+  <dd>Motherboards with all cable connectors on the rear side. The Light Base 900 datasheet lists support for them; the Dark Base Pro 901 datasheet does not.</dd>
+  <dt>Riser cable, vertical GPU mount</dt>
+  <dd>A flexible PCIe cable that lets the graphics card stand upright next to the glass. The Dark Base Pro 901 has four vertical slots; the be quiet! cable costs US$54.90 extra.</dd>
+  <dt>HDD Cage 2</dt>
+  <dd>The be quiet! drive cage for all three cases, launch price US$9.90. The Light Base 900 takes two of them, one is in the box.</dd>
+  <dt>Silent Wings 4, Light Wings</dt>
+  <dd>The two be quiet! fan families on this page. Silent Wings 4 fans have no lighting; the 140 mm high-speed model moves 133.2 m³/h at 1,900 rpm. Light Wings fans have ARGB lighting. The 140 mm model moves 95.1 m³/h at 1,500 rpm, the reversed model 87.3 m³/h at 1,300 rpm.</dd>
+</dl>
+
+<h2 id="check">9. Check your understanding</h2>
+<div class="check">
+  <details>
+    <summary>1. You want a PC that is as quiet as possible with two hard drives and a water pump. Which case, and which measured number supports it?</summary>
+    <p>The Dark Base Pro 901. Its noise damping is 9.6 dB(A) for pink noise, against 7.5 for the Light Base 900 FX and 5.5 for the Shadow Base 800 FX. Hard drives and pumps make sound inside the case, and damping measures how much of that sound stays inside. A typical wrong answer picks the Light Base 900 FX because its fans are quieter; but fan noise depends on the fan curve.</p>
+  </details>
+  <details>
+    <summary>2. At 25 dB(A) the CPU ran at 88.05 °C in the Shadow Base 800 FX and 89.30 °C in the Light Base 900 FX. Does the larger case cool better?</summary>
+    <p>No. The difference is 1.25 °C in favour of the smaller case. The CPU in the test is set to hold 89 °C, so a case that cools worse shows the same temperature and a lower clock. The reviewer reported a low clock for the Light Base 900 FX. A typical wrong answer reads the larger volume as better cooling.</p>
+  </details>
+  <details>
+    <summary>3. The Light Base 900 FX costs €60.00 more than the DX. Is the FX a good deal?</summary>
+    <p>Yes, when you want lit be quiet! fans. The four included fans would cost about €110.00 at the recommended price of €27.50 each. No, when you own fans or want another model. Then the DX saves €60.00 and loses nothing else, because the hubs and the light strip are in both. A typical wrong answer forgets that the DX has no fans at all.</p>
+  </details>
+  <details>
+    <summary>4. Your power supply is 240 mm long. Which cases take it?</summary>
+    <p>The Dark Base Pro 901 (limit 288 mm) and the Shadow Base 800 FX (limit 250 mm). The Light Base 900 does not (limit 225 mm), because its power supply stands in the rear chamber. A typical wrong answer assumes that a full tower takes every power supply.</p>
+  </details>
+</div>
+
+<h2 id="recap">10. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ul>
+    <li>Three current 900 cases: Dark Base Pro 901 (€339.90), Light Base 900 FX (€239.90), Light Base 900 DX (€179.90). All take 495 mm cards, 190 mm coolers and 420 mm radiators.</li>
+    <li>In the same lab at equal noise, the four cases differed by at most 1.25 °C on the CPU and 2.03 °C on the GPU. The cheapest case was the coolest.</li>
+    <li>The Dark Base Pro 901 blocks 9.6 dB(A) of sound from inside; the Light Base 900 FX 7.5; the Shadow Base 800 FX 5.5.</li>
+    <li>The Light Base 900 trades insulation and drive bays for glass on two sides, a light strip, and inverted or horizontal layouts. The FX adds four fans for €60.00, which would cost about €110.00 alone.</li>
+    <li>Choose by purpose. Silence and drives: the Dark Base Pro 901. Looks and layout: the Light Base 900. Cooling per euro: the Shadow Base 800 FX.</li>
+  </ul>
+</div>
+
+<dl class="glossary">
+  <dt>Clearance</dt><dd>The largest part that fits in a given place in the case.</dd>
+  <dt>Dual-chamber layout</dt><dd>A case design with the motherboard in a front chamber and the power supply, the cables and the drives in a chamber behind it.</dd>
+  <dt>E-ATX</dt><dd>Extended ATX, a motherboard format up to 330 mm wide.</dd>
+  <dt>Full tower</dt><dd>A case with more clearance and more fan positions than a mid-tower.</dd>
+  <dt>Insulation mats</dt><dd>Foam sheets glued to the inside of a panel, which absorb sound.</dd>
+  <dt>Noise damping</dt><dd>The sound pressure level of a source with the case open minus the level with the source inside the closed case, in dB(A).</dd>
+  <dt>Noise-normalised test</dt><dd>A test in which the fans of each case are set so that the case produces the same noise, here 25 dB(A).</dd>
+  <dt>Radiator</dt><dd>The part of a liquid cooler that gives the heat to the air; its size is the sum of the fans on it.</dd>
+  <dt>Reversed-blade fan</dt><dd>A fan with the blades turned the other way, so that the clean side faces the glass and the air still flows into the case.</dd>
+  <dt>Silent configuration</dt><dd>The Dark Base Pro 901 with its closed front panel and closed top cover, both lined with insulation mats.</dd>
+  <dt>Sound pressure level</dt><dd>A logarithmic measure of the pressure of a sound wave, in dB; dB(A) weights the frequencies as the human ear does.</dd>
+  <dt>Torture test</dt><dd>A test that loads the CPU and the GPU at the same time with Prime95 and Furmark.</dd>
+</dl>
+
+<p><strong>Confidence labels.</strong> <span class="conf high">High</span>: verified in a primary source, or calculated and checked. <span class="conf medium">Medium</span>: one good source, or a source with limits, for example a value read from a chart image. <span class="conf low">Low</span>: not verified, or the sources disagree.</p>
+
+<ol class="sources">
+  <li><span class="conf high">High</span> be quiet!, datasheet <span class="quoted">Dark Base Pro 901</span>, version V2/24. PDF downloaded from the product page (bequiet.com/en/case/4425) on 11 October 2026. Size, weight, limits, fans, bays, ports, article numbers BGW50 and BGW51.</li>
+  <li><span class="conf high">High</span> be quiet!, datasheet <span class="quoted">Light Base 900 FX</span>, version V1/24. PDF from bequiet.com/en/case/5290, 11 October 2026. Article numbers BGW71 and BGW72.</li>
+  <li><span class="conf high">High</span> be quiet!, datasheet <span class="quoted">Light Base 900 DX</span>, version V1/24. PDF from bequiet.com/en/case/5292, 11 October 2026. Article numbers BGW69 and BGW70. Also the Light Base series comparison sheet V2/24: two HDD cages possible, one in the box.</li>
+  <li><span class="conf high">High</span> be quiet!, datasheet <span class="quoted">Shadow Base 800 FX</span>, version V2/23, used on the earlier page.</li>
+  <li><span class="conf high">High</span> be quiet!, fan pages, read 11 October 2026. Silent Wings 4 140mm PWM high-speed, BL097: 1,900 rpm, 29.3 dB(A), 133.2 m³/h. Light Wings 140mm PWM, BL074: 1,500 rpm, 23.3 dB(A), 95.1 m³/h, RRP €27.50. Light Wings 140mm PWM Reverse Black, BL134: 1,300 rpm, 25.5 dB(A), 87.3 m³/h.</li>
+  <li><span class="conf high">High</span> HWBusters, <span class="quoted">be quiet! Light Base 900 FX Case Review: Thermal &amp; Noise Damping/Output Evaluation</span>, 4 December 2024. Pages 1, 3, 5, 7, 8, 10, 11 and 12: test system, specifications, hubs, damping chart, fan noise chart, thermal charts, the quoted words.</li>
+  <li><span class="conf high">High</span> HWBusters, <span class="quoted">be quiet! Dark Base Pro 901 Case Review: Thermal &amp; Noise Damping/Output Evaluation</span>, 18 January 2024. Pages 1, 3, 7, 8, 10 and 12: silent configuration in the test, fan hubs without ARGB, fan noise chart with printed values, damping chart.</li>
+  <li><span class="conf medium">Medium</span> Vortez, news <span class="quoted">be quiet! Introduces Light Base Series of PC Cases with Panorama Design</span>, with the be quiet! price list. Light Base 900 FX Black US$229.90/€219.90, FX White $239.90/€229.90, DX Black $179.90/€169.90, DX White $187.90/€179.90. On sale from 10 October 2024. A press text reproduced by a news site.</li>
+  <li><span class="conf medium">Medium</span> Vortez, news <span class="quoted">be quiet! Dark Base Pro 901: Outstanding Versatility, Performance and Silence</span>. Available from 27 June 2023 at US$299.90; riser cable $54.90; HDD Cage 2 $9.90. PC Games Hardware (German), news of June 2023: €319.90, and the predecessor Dark Base Pro 900 rev. 2 for five years.</li>
+  <li><span class="conf medium">Medium</span> Alternate (alternate.de), search listings for the three cases, read 11 October 2026. Dark Base Pro 901 black and white €339.90. Light Base 900 FX black €239.90, white €249.90. Light Base 900 DX black €179.90, white €189.90 (not available). Shadow Base 800 FX €139.90. One shop on one day.</li>
+  <li><span class="conf medium">Medium</span> TweakTown, <span class="quoted">be quiet! Light Base 900 FX Chassis Review</span>. A different test system (Ryzen 5 9600X, a GeForce RTX 4070 of the faster 2024 version) at 28 °C ambient. It reached 78 °C on the CPU and 75 °C on the GPU. Its numbers are not compared with HWBusters.</li>
+  <li><span class="conf medium">Medium</span> HWCooling, <span class="quoted">BeQuiet! Dark Base Pro 901: Nearly flawless full-tower</span>, and igor'sLAB, <span class="quoted">be quiet! Dark Base Pro 901 review</span>. Inverted layout, touch panel, Qi charger, three Silent Wings 4 fans. Their temperature results use other systems and are not on this page.</li>
+  <li><span class="conf high">High</span> Calculations on this page: volumes, airflow sums, differences, price differences. Script calc.py, run 11 October 2026.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
