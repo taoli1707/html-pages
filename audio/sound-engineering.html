@@ -1,0 +1,1244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sound Engineering Explained</title>
+<style>
+/* ---------- Typefaces. One text typeface, a system serif, so the page needs no external font.
+   One typeface for everything is the rule of the Romanelli site (Suisse Int'l there). ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Type scale. One fluid scale, five steps, so every size on the page is one of these.
+   The scale follows the Romanelli site: small print 14 px, text 16 to 22 px, display large. ---------- */
+:root {
+  --step--1: clamp(0.9rem, 0.86rem + 0.2vw, 0.98rem);   /* small print: meta line, sources, captions */
+  --step-0: clamp(1.06rem, 1rem + 0.3vw, 1.2rem);        /* running text */
+  --step-1: clamp(1.16rem, 1.1rem + 0.35vw, 1.3rem);     /* the short answer */
+  --step-2: clamp(1.4rem, 1.22rem + 0.9vw, 1.8rem);      /* section heading */
+  --step-3: clamp(2.1rem, 1.3rem + 3.6vw, 3.5rem);       /* page title */
+  /* Spacing scale: 16, 24, 40, 64 px, and one large step above the title. */
+  --space-1: 1rem;
+  --space-2: 1.5rem;
+  --space-3: 2.5rem;
+  --space-4: 4rem;
+  --space-top: clamp(3rem, 9vw, 6.5rem);
+  /* The measure of the text column, the side gutter, and the width of the wide stage (see below). */
+  --measure: 40rem;
+  --gutter: 1rem;
+  --wide: 56rem;
+}
+
+/* ---------- Colour tokens. Ink and paper from the Romanelli site (ink #292b34, paper #f9f6f0),
+   and three accents, each with one fixed role, so a colour always means the same kind of thing:
+     terracotta (--accent)   the reader's path: links, key terms, the short answer, the self-check
+     teal (--accent2)        the evidence: worked examples, figures, tables, section headings
+     ochre (--accent3)       the reader's own work: the guess box, the part labels
+   Chart series and confidence labels keep their own colours because there the colour is information. ---------- */
+:root {
+  --bg: #f9f6f0;
+  --surface: #efece7;
+  --text: #292b34;
+  --muted: #5f6168;
+  --border: rgb(41 43 52 / 22%);
+  --accent: #a6472a;
+  --accent-soft: #f3e6df;
+  --accent2: #1a6460;
+  --accent2-soft: #e3efed;
+  --accent3: #7d5a0c;
+  --accent3-soft: #f5ecd6;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e0ded9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1c22;
+    --surface: #28292e;
+    --text: #f9f6f0;
+    --muted: #aeb0b6;
+    --border: rgb(249 246 240 / 32%);
+    --accent: #f0a58f;
+    --accent-soft: #2e2320;
+    --accent2: #7fd0c9;
+    --accent2-soft: #1e2b2a;
+    --accent3: #eac066;
+    --accent3-soft: #2c2719;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #3a3b3f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1c22;
+  --surface: #28292e;
+  --text: #f9f6f0;
+  --muted: #aeb0b6;
+  --border: rgb(249 246 240 / 32%);
+  --accent: #f0a58f;
+  --accent-soft: #2e2320;
+  --accent2: #7fd0c9;
+  --accent2-soft: #1e2b2a;
+  --accent3: #eac066;
+  --accent3-soft: #2c2719;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #3a3b3f;
+  color-scheme: dark;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space-top) var(--gutter) var(--space-4);
+}
+
+/* Headings carry the structure through size and space. The title is large and set tight, as on
+   the Romanelli site. No rule across the page, except one short mark above each section
+   heading, in the colour of the heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: var(--step-3);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-1);
+}
+h2 {
+  font-size: var(--step-2);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--accent2);
+  margin-top: var(--space-4);
+  margin-bottom: 0.8rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 2px solid var(--accent2);
+  margin-bottom: var(--space-2);
+}
+h3 { font-size: 1.15em; margin-top: var(--space-3); margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+/* A link is set in the accent, with a thin underline. */
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: var(--step--1);
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line of small print under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  margin: 0 0 var(--space-3);
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 var(--space-2); }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  background: var(--accent-soft);
+  border-top: 2px solid var(--accent);
+  padding: 1.05rem 1.3rem 1.15rem;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  margin-bottom: var(--space-3);
+}
+.bottom-line .label { color: var(--accent); }
+.example { border-left: 2px solid var(--accent2); padding-left: 1.4rem; }
+.example .label { color: var(--accent2); }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; }
+.assume { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.assume .label { color: var(--accent); }
+.predict { background: var(--accent3-soft); border-left: 2px solid var(--accent3); padding: 0.9rem 1.3rem 1rem 1.4rem; }
+.predict .label { color: var(--accent3); }
+.recap { background: var(--accent2-soft); border-top: 2px solid var(--accent2); padding: 1rem 1.3rem 1.1rem; }
+.recap .label { color: var(--accent2); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 2px solid var(--accent2);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 var(--space-3);
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent2);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; color: var(--accent2); margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--accent2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.95em;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: var(--step--1);
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 0.95em; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--accent2);
+  color: var(--accent2);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 0.95em; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--accent2-soft); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+  margin-bottom: var(--space-2);
+}
+figure .fig-title { font-weight: 600; color: var(--accent2); margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: var(--step--1); margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 0.95em; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-size: var(--step--1); margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: var(--step--1);
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--accent2); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 var(--space-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1em; font-weight: 600; color: var(--accent2); }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--accent);
+  padding-top: 1rem;
+  margin: 0 0 var(--space-3);
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 var(--space-2);
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 400;
+}
+/* An optional block directly after a comparison or a figure shares their closing rule,
+   so the page does not show two rules with an empty row between them. */
+.compare + details.optional, figure + details.optional {
+  border-top: 0;
+  margin-top: calc(-1 * var(--space-2));
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: var(--space-4) 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--accent3);
+  font-size: var(--step--1);
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--accent3);
+}
+.part + h2 { margin-top: var(--space-2); }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92em;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1em;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 0.95em; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- The wide stage. On a wide screen the title, the figures, and the tables are wider than
+   the text column and centred on it. The text keeps its measure; the work of the page gets the room.
+   On the Romanelli site the images are wider than the text grid, and the change of width gives the
+   page its rhythm. ---------- */
+@media (min-width: 64rem) {
+  h1, .meta, figure, .table-wrap {
+    width: var(--wide);
+    margin-left: calc((var(--measure) - 2 * var(--gutter) - var(--wide)) / 2);
+  }
+  /* The drawing of a figure is wide; its title and its text stay in the text column, so that
+     no line of running text is longer than the measure. */
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source {
+    width: calc(var(--measure) - 2 * var(--gutter));
+    margin-left: calc((var(--wide) - var(--measure) + 2 * var(--gutter)) / 2);
+  }
+}
+
+/* ---------- Narrow screens. The fluid scale already lowers every size; the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  main { padding-bottom: var(--space-3); }
+  h2 { margin-top: var(--space-3); }
+  .bottom-line { margin-bottom: var(--space-2); }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  h1, .meta, figure, .table-wrap,
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source { width: auto; margin-left: 0; }
+  nav.contents { display: none; }
+  .bottom-line, .recap, .predict { background: none; padding-left: 0; padding-right: 0; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: SM58, AT2020, Scarlett, 2i2, Focusrite, Shure, Audio-Technica, Spotify, Apple, SPL, dBFS, dBu, dBV, LUFS, LKFS, dBTP, LU, EQ, ADC, DAC, DAW, EIN, EBU, ITU, AES, USB, XLR, IEC, PCM, FLAC, AAC, MP3, SMPTE, CD, T60, LRA, BS, Hz, kHz, mV, Pa, Larsen, Nyquist, Shannon, Wikipedia, Sound On Sound -->
+<h1>What does a sound engineer do, and which numbers decide the result at each stage from the microphone to the listener?</h1>
+<p class="meta">Written 2026-10-12 · Main path: about 25 minutes · Complete page: about 54 minutes · You need to know: what a voltage is, and how to read a logarithm with base 10</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>A sound engineer moves sound through a chain of stages: microphone, preamplifier, converter, workstation, master, listener. At every stage the engineer sets a level in decibels and keeps it between the noise and the clipping point. On this page, a Shure SM58 microphone gives 1.85 mV at 94 dB SPL. A gain of 50.3 dB brings this to −18 dBFS in the converter. A compressor (threshold −20 dBFS, ratio 4:1) reduces a 24 dB range of levels to 13.5 dB. Spotify plays the finished master at −14 LUFS, whatever its loudness was.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions</span>
+  <p>The request named no situation, so the page follows one example. One voice is recorded at home with a Shure SM58 microphone into a Focusrite Scarlett 2i2 (4th generation) audio interface. The recording uses 48 kHz and 24 bit, and the result goes to a streaming service. The levels of the voice are example values. Live sound and film sound use the same ideas (see "Words that you will hear"). The limits of the page are in section 13.</p>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <p><strong>Part A: sound as a signal, and its units</strong></p>
+  <ol>
+    <li class="core"><a href="#a-example">One example: the same voice in four units</a></li>
+    <li class="core"><a href="#a-rule">The rule: a decibel is a ratio, and the reference gives it a meaning</a></li>
+    <li class="core"><a href="#a-check">Check your understanding of part A</a></li>
+  </ol>
+  <p><strong>Part B: capture, from the microphone to the converter</strong></p>
+  <ol start="4">
+    <li class="core"><a href="#b-example">One example: 50.3 dB of gain puts the voice at −18 dBFS, and the room sets the noise floor</a></li>
+    <li><a href="#b-more">More detail: two microphone types, the level chart, sample rate, bit depth, and latency</a></li>
+    <li class="core"><a href="#b-check">Check your understanding of part B</a></li>
+  </ol>
+  <p><strong>Part C: processing in the workstation</strong></p>
+  <ol start="7">
+    <li class="core"><a href="#c-example">One example: the compressor shrinks a 24 dB range to 13.5 dB</a></li>
+    <li><a href="#c-more">More detail: the equalizer, the sum of the mix, and the time settings of the compressor</a></li>
+    <li class="core"><a href="#c-check">Check your understanding of part C</a></li>
+  </ol>
+  <p><strong>Part D: delivery, from the master to the listener</strong></p>
+  <ol start="10">
+    <li class="core"><a href="#d-example">One example: three masters of one song on Spotify</a></li>
+    <li><a href="#d-more">More detail: the targets, the loudness meter, and the final format</a></li>
+    <li class="core"><a href="#d-check">Check your understanding of part D</a></li>
+  </ol>
+  <p><strong>End of the page</strong></p>
+  <ol start="13">
+    <li><a href="#limits">Limits of this page</a></li>
+    <li><a href="#words">Words that you will hear</a></li>
+    <li class="core"><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<!-- ============================== PART A ============================== -->
+<p class="part">Part A: sound as a signal, and its units</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer for part A</span>
+  <p>Sound is a change of air pressure, in pascals (Pa). The engineer states every level in dB: 20 times the logarithm of a ratio to a reference value. The reference gives the number its meaning. Sound in air uses 20 µPa (dB SPL). A voltage uses 1 V (dBV) or 0.7746 V (dBu), and digital audio uses the largest sample (dBFS). 1 Pa is 94 dB SPL, a doubling adds 6 dB, and ten times adds 20 dB.</p>
+</div>
+
+<h2 id="a-example">1. One example: the same voice in four units</h2>
+<p>The whole page follows one <dfn>signal chain</dfn>: the sequence of devices that a sound passes from the source to the listener. Each stage gives the sound a new physical form and needs its own unit.</p>
+
+<div class="box example">
+  <span class="label">Worked example: one voice, four units</span>
+  <ol class="steps">
+    <li>A singer produces a sound pressure of 1 Pa at the microphone (example value). <span class="why">1 Pa is the standard test pressure of microphone data sheets.</span></li>
+    <li>The <dfn>sound pressure level</dfn> is the pressure in decibels, written dB SPL. A <dfn>decibel</dfn> (dB) is 20 times the logarithm of a ratio: 20 × log<sub>10</sub>(1 ÷ 0.00002) = 93.98, rounded to 94 dB SPL. <span class="why">The reference pressure is 20 µPa, the quietest sound that a healthy ear hears (Wikipedia, Sound pressure).</span></li>
+    <li>A second singer produces 2 Pa: 20 × log<sub>10</sub>(2 ÷ 0.00002) = 100.00 dB SPL. The doubling added 6.02 dB, not 94 dB. <span class="why">The logarithm of a product is a sum, so a doubling adds 20 × log<sub>10</sub>(2) = 6.02 dB.</span></li>
+    <li>The Shure SM58 gives 1.85 mV at 1 Pa, which Shure states as −54.5 dBV per pascal. The unit <dfn>dBV</dfn> is the decibel with a reference of 1 V. <span class="why">20 × log<sub>10</sub>(0.00185 ÷ 1) = −54.7 dBV; Shure rounds both values, and they differ by 0.2 dB.</span></li>
+    <li>Professional equipment states voltages in <dfn>dBu</dfn>, the decibel with a reference of 0.7746 V. A dBu value is 2.2 dB higher than the dBV value, so the microphone gives −52.3 dBu. <span class="why">20 × log<sub>10</sub>(1 ÷ 0.7746) = 2.2 dB. The reference is the voltage of 1 mW in 600 Ω (Wikipedia, Line level).</span></li>
+    <li>In the converter, the same voice sits at −18 dBFS. The unit <dfn>dBFS</dfn> is the decibel relative to full scale, the largest possible sample value. 0 dBFS is the top, and every normal signal is negative. <span class="why">A digital format has a largest number, so every digital level is a distance below it.</span></li>
+  </ol>
+  <p>Result: 94 dB SPL in the air, −54.5 dBV or −52.3 dBu at the cable, −18 dBFS in the file. The sound did not change; the reference changed.</p>
+</div>
+
+<h2 id="a-rule">2. The rule: a decibel is a ratio, and the reference gives it a meaning</h2>
+<p>For a pressure or a voltage, the level is L = 20 × log<sub>10</sub>(x ÷ x<sub>ref</sub>). For a power, the level is L = 10 × log<sub>10</sub>(P ÷ P<sub>ref</sub>), because power grows with the square of the voltage. The <dfn>reference value</dfn> x<sub>ref</sub> is the fixed value that the ratio compares with, and the suffix of the unit names it. A doubling of voltage is +6.02 dB, and ten times is +20 dB (Wikipedia, Decibel). A doubling of power is +3.01 dB.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Table 1. Four decibel units with four references. The number 0 dB means "equal to the reference", and the reference differs in each row.</caption>
+  <thead><tr><th scope="col">Unit</th><th scope="col">Reference value</th><th scope="col">What 0 dB means</th><th scope="col">Used for</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">dB SPL</th><td>20 µPa</td><td>the quietest audible sound</td><td>sound in air: voices, rooms, loudspeakers</td></tr>
+    <tr><th scope="row">dBV</th><td>1 V</td><td>one volt</td><td>microphone data sheets, consumer line level (−10 dBV = 0.316 V)</td></tr>
+    <tr><th scope="row">dBu</th><td>0.7746 V</td><td>1 mW in 600 Ω</td><td>professional line level (+4 dBu = 1.228 V), interface inputs</td></tr>
+    <tr class="highlight"><th scope="row">dBFS</th><td>the largest sample value</td><td>the top of the digital scale</td><td>every level inside the workstation</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read">How to read this table: the same sound can be positive in one row and negative in another, because only the reference differs.</p>
+
+<figure class="diagram">
+  <p class="fig-title">The voice passes eight stages, and each stage states its level in a different unit.</p>
+  <p class="fig-sub">Part B defines the converter (ADC), part C the workstation (DAW), part D the units of the master.</p>
+  <div class="fig-scroll">
+<svg viewBox="0 0 720 250" role="img" aria-label="Diagram of the signal chain in eight stages. Voice at 94 dB SPL, which is 1 pascal. Microphone: 1.85 millivolt. Preamplifier: plus 50.3 dB gives 0.62 volt. Converter: minus 18 dBFS at 48 kHz and 24 bit. Workstation: EQ, compressor, mix. Master: minus 14 LUFS, minus 1 dBTP. Streaming service: normalized to minus 14 LUFS. Loudspeaker and listener: dB SPL again. Each arrow means: the signal goes to the next stage.">
+<defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<rect class="node" x="10" y="30" width="162" height="60" rx="6"/>
+<text class="node-name" x="91" y="54" text-anchor="middle">Voice</text>
+<text class="node-value" x="91" y="75" text-anchor="middle">94 dB SPL = 1 Pa</text>
+<line class="arrow" x1="174" y1="60.0" x2="187" y2="60.0" marker-end="url(#ah1)"/>
+<rect class="node" x="190" y="30" width="162" height="60" rx="6"/>
+<text class="node-name" x="271" y="54" text-anchor="middle">Microphone</text>
+<text class="node-value" x="271" y="75" text-anchor="middle">1.85 mV (−54.5 dBV)</text>
+<line class="arrow" x1="354" y1="60.0" x2="367" y2="60.0" marker-end="url(#ah1)"/>
+<rect class="node" x="370" y="30" width="162" height="60" rx="6"/>
+<text class="node-name" x="451" y="54" text-anchor="middle">Preamplifier</text>
+<text class="node-value" x="451" y="75" text-anchor="middle">+50.3 dB → 0.62 V</text>
+<line class="arrow" x1="534" y1="60.0" x2="547" y2="60.0" marker-end="url(#ah1)"/>
+<rect class="node" x="550" y="30" width="162" height="60" rx="6"/>
+<text class="node-name" x="631" y="54" text-anchor="middle">Converter (ADC)</text>
+<text class="node-value" x="631" y="75" text-anchor="middle">−18 dBFS, 48 kHz, 24 bit</text>
+<rect class="node" x="10" y="160" width="162" height="60" rx="6"/>
+<text class="node-name" x="91" y="184" text-anchor="middle">Workstation (DAW)</text>
+<text class="node-value" x="91" y="205" text-anchor="middle">EQ, compressor, mix</text>
+<line class="arrow" x1="174" y1="190.0" x2="187" y2="190.0" marker-end="url(#ah1)"/>
+<rect class="node" x="190" y="160" width="162" height="60" rx="6"/>
+<text class="node-name" x="271" y="184" text-anchor="middle">Master</text>
+<text class="node-value" x="271" y="205" text-anchor="middle">−14 LUFS, −1 dBTP</text>
+<line class="arrow" x1="354" y1="190.0" x2="367" y2="190.0" marker-end="url(#ah1)"/>
+<rect class="node" x="370" y="160" width="162" height="60" rx="6"/>
+<text class="node-name" x="451" y="184" text-anchor="middle">Streaming service</text>
+<text class="node-value" x="451" y="205" text-anchor="middle">normalized to −14 LUFS</text>
+<line class="arrow" x1="534" y1="190.0" x2="547" y2="190.0" marker-end="url(#ah1)"/>
+<rect class="node" x="550" y="160" width="162" height="60" rx="6"/>
+<text class="node-name" x="631" y="184" text-anchor="middle">Loudspeaker, listener</text>
+<text class="node-value" x="631" y="205" text-anchor="middle">dB SPL again</text>
+<path class="arrow" d="M 631 92 L 631 122 L 91 122 L 91 157" marker-end="url(#ah1)"/>
+<text class="arrow-label" x="360" y="116" text-anchor="middle">stage 4 to stage 5: the signal is now digital</text>
+<text class="axis-label" x="10" y="243">Each arrow: the signal goes to the next stage. Values: the worked example of this page.</text>
+</svg>
+  </div>
+  <p class="fig-read">How to read this diagram: follow the arrows from the voice to the listener. Under each name stands the level of the example voice in the unit of that stage.</p>
+  <p class="fig-source">Source: the calculations of this page.</p>
+</figure>
+
+<div class="box mistake">
+  <span class="label">A common wrong idea</span>
+  <p><strong>Wrong:</strong> "0 dB means silence, and a negative decibel value means no signal."</p>
+  <p><strong>Correct:</strong> 0 dB means "equal to the reference". 0 dB SPL is the quietest audible sound, and 0 dBFS is the loudest value that a digital file can hold.</p>
+  <p><strong>Why the wrong idea fails:</strong> the decibel has no zero of its own; its zero is the reference (Table 1).</p>
+</div>
+
+<h2 id="a-check">3. Check your understanding of part A</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>A sound has a pressure of 2 Pa. What is its sound pressure level?
+      <details><summary>Show the answer</summary><div><p>100 dB SPL: 20 × log<sub>10</sub>(2 ÷ 0.00002) = 20 × 5 = 100. The typical wrong answer is 188 dB SPL (two times 94): a doubling adds 6 dB, it does not double the value.</p></div></details>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================== PART B ============================== -->
+<p class="part">Part B: capture, from the microphone to the converter</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer for part B</span>
+  <p>The SM58 gives 1.85 mV at 94 dB SPL. A gain of 50.3 dB puts the average voice at −18 dBFS and the peaks at −6 dBFS. A peak 18 dB above the average reaches 0 dBFS and clips. A very calm room at 30 dB SPL gives −82 dBFS, above the preamplifier noise (−92.7 dBFS) and the 16-bit quantization noise (−98.1 dBFS). The room sets the noise floor.</p>
+</div>
+
+<h2 id="b-example">4. One example: 50.3 dB of gain puts the voice at −18 dBFS, and the room sets the noise floor</h2>
+<p>Three devices capture the voice. The microphone converts air pressure into voltage. The <dfn>preamplifier</dfn> (from here: preamp) amplifies this voltage, and its <dfn>gain</dfn> is the amplification in dB. The <dfn>analog-to-digital converter</dfn> (ADC) measures the voltage 48,000 times per second and writes each measurement as a number.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the gain for the SM58 into the Scarlett 2i2</span>
+  <ol class="steps">
+    <li>The <dfn>microphone sensitivity</dfn> is the output voltage at 1 Pa, in mV per pascal or dBV per pascal. The SM58 has −54.5 dBV per pascal, which is −52.3 dBu (part A). <span class="why">The SM58 is a <dfn>dynamic microphone</dfn>: a coil moves in a magnetic field and makes the voltage without a power supply.</span></li>
+    <li>The Scarlett 2i2 data sheet states three values for the microphone input. The maximum input level is +16 dBu, the gain range 69 dB, and the equivalent input noise −127 dBu. <span class="why">The maximum input level fills the converter at the lowest gain, so +16 dBu gives 0 dBFS: dBFS = dBu − 16.</span></li>
+    <li>The target for the average voice is −18 dBFS, which is 16 − 18 = −2 dBu, or 0.615 V. <span class="why">Sound On Sound recommends −18 to −10 dBFS on the workstation meter; −18 dBFS is also the European alignment level (EBU R68).</span></li>
+    <li>The gain is the target minus the microphone level: −2 − (−52.3) = 50.3 dB, within the range of 69 dB. <span class="why">Gain adds in decibels.</span></li>
+    <li>Peaks 12 dB above the average (106 dB SPL) arrive at −6 dBFS. A peak 18 dB above arrives at 0 dBFS. A peak 20 dB above would need +2 dBFS, which does not exist: the converter writes its maximum value for the whole peak. <dfn>Clipping</dfn> is this cut, a distortion that no later stage removes. <span class="why">A decibel change in the air is the same change at every later stage, because every stage multiplies by a constant.</span></li>
+    <li>Below the voice lies the noise. A very calm room has 20 to 30 dB SPL (Wikipedia, Sound pressure). At 30 dB SPL it is 64 dB below the voice: −82 dBFS. The preamp noise, −127 dBu + 50.3 dB = −76.7 dBu, is −92.7 dBFS. The <dfn>noise floor</dfn> is the highest noise: the room. <span class="why">The equivalent input noise (EIN) is the preamp noise stated at its input, so it passes the same gain.</span></li>
+    <li>This choice is <dfn>gain staging</dfn>: the gain at each stage is set so that the signal stays above the noise floor and below clipping everywhere.</li>
+  </ol>
+  <p>Result: the voice occupies −18 dBFS (average) to −6 dBFS (peaks). The 6 dB above the peaks is the <dfn>headroom</dfn>: the distance to the maximum level. The noise floor is the room at −82 dBFS.</p>
+</div>
+
+<p>The rule of capture: the noise floor is the highest noise in the chain, here the room. A quieter room, a closer microphone, or a louder source helps more than a better converter.</p>
+
+<div class="box mistake">
+  <span class="label">A common wrong idea</span>
+  <p><strong>Wrong:</strong> "Record as loud as possible, with peaks close to 0 dBFS, to use all the bits."</p>
+  <p><strong>Correct:</strong> with 24 bits, peaks at −6 dBFS or even −12 dBFS lose nothing audible, because the quantization noise lies at −116 dBFS or lower.</p>
+  <p><strong>Why the wrong idea fails:</strong> the idea comes from 16-bit converters and tape, where the noise of the medium was close to the signal.</p>
+</div>
+
+<h2 id="b-more">5. More detail: two microphone types, the level chart, sample rate, bit depth, and latency</h2>
+<div class="table-wrap">
+<table>
+  <caption>Table 2. The level of the example voice at each stage of capture. All values are calculated from the data sheets and the example levels.</caption>
+  <thead><tr><th scope="col">Stage</th><th scope="col">Average voice</th><th scope="col">Peak (+12 dB)</th><th scope="col">Room noise (30 dB SPL)</th><th scope="col">How the value is found</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">Air at the microphone</th><td class="num">94 dB SPL</td><td class="num">106 dB SPL</td><td class="num">30 dB SPL</td><td>example values; room noise from Wikipedia</td></tr>
+    <tr><th scope="row">Microphone cable</th><td class="num">−52.3 dBu</td><td class="num">−40.3 dBu</td><td class="num">−116.3 dBu</td><td>sensitivity −54.5 dBV + 2.2 dB</td></tr>
+    <tr><th scope="row">After the preamp</th><td class="num">−2.0 dBu</td><td class="num">+10.0 dBu</td><td class="num">−66.0 dBu</td><td>gain +50.3 dB</td></tr>
+    <tr class="highlight"><th scope="row">In the converter</th><td class="num">−18.0 dBFS</td><td class="num">−6.0 dBFS</td><td class="num">−82.0 dBFS</td><td>dBFS = dBu − 16 (maximum input +16 dBu)</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read">How to read this table: read one column from top to bottom to follow one sound through the chain. The distance between the columns never changes. The peak is always 12 dB above the average, and the room noise is always 64 dB below it.</p>
+
+<p>The second microphone type is the <dfn>condenser microphone</dfn>. A thin charged plate moves in front of a fixed plate. The microphone needs a power supply for the charge and for a small amplifier. The comparison shows what changes.</p>
+<div class="compare">
+  <div>
+    <h4>Dynamic microphone: Shure SM58</h4>
+    <p>Sensitivity −54.5 dBV per pascal (1.85 mV). Needs no power.</p>
+    <p>Gain for −18 dBFS: 50.3 dB. The preamp noise lands at −92.7 dBFS.</p>
+  </div>
+  <div>
+    <h4>Condenser microphone: Audio-Technica AT2020</h4>
+    <p>Sensitivity −37 dBV per pascal (14.1 mV), 17.5 dB more. Needs 48 V phantom power from the interface.</p>
+    <p>Gain for −18 dBFS: 32.8 dB. The preamp noise lands at −110.2 dBFS. The microphone itself has a self-noise of 20 dB SPL, which lands at −92 dBFS.</p>
+  </div>
+</div>
+<p>The principle: a more sensitive microphone needs less gain, so the preamp noise matters less. But the room at −82 dBFS stays the noise floor with both microphones. Sources: Audio-Technica AT2020 specifications; Wikipedia, Microphone.</p>
+
+<p>The converter adds two numbers to the chain. The <dfn>sample rate</dfn> is the number of measurements per second: 48,000 per second (48 kHz) in the example. The <dfn>bit depth</dfn> is the number of bits in each measurement: 24 bits give 16,777,216 possible values. Each extra bit halves the step between values and lowers the quantization noise by 6.02 dB.</p>
+<p>An ideal converter with b bits has a noise of 1.76 + 6.02 × b dB below full scale. This is 98.1 dB for 16 bits and 146.3 dB for 24 bits (Wikipedia, Audio bit depth). A real converter does not reach the 24-bit value: the Scarlett 2i2 has a measured range of 116 dB between its noise and its maximum.</p>
+<p>The chart puts every level of the example on the dBFS scale. The signal sits at the top, and four noises sit at the bottom. The highest noise is the room.</p>
+<figure>
+  <p class="fig-title">The room noise at −82 dBFS lies 10.7 dB above the preamp noise and 16.1 dB above the 16-bit quantization noise.</p>
+  <p class="fig-sub">Levels in dBFS, with 0 at the top. Values of the worked example: SM58, Scarlett 2i2, gain 50.3 dB.</p>
+  <div class="fig-scroll">
+<svg viewBox="0 0 700 350" role="img" aria-label="Level chart in dBFS from 0 at the top to minus 120 at the bottom. Clipping at 0. Loud peaks at minus 6. Average voice at minus 18. Noise of a very calm room at minus 82. Noise of the preamplifier at minus 92.7. Quantization noise of 16 bit at minus 98.1. Dynamic range of the converter at minus 116. The room noise is the highest noise, 10.7 dB above the preamplifier noise.">
+<line class="axis" x1="120" y1="30.0" x2="132" y2="30.0"/>
+<text class="axis-label" x="112" y="34.0" text-anchor="end">0 dBFS</text>
+<line class="grid" x1="120" y1="80.0" x2="132" y2="80.0"/>
+<text class="axis-label" x="112" y="84.0" text-anchor="end">−20 dBFS</text>
+<line class="grid" x1="120" y1="130.0" x2="132" y2="130.0"/>
+<text class="axis-label" x="112" y="134.0" text-anchor="end">−40 dBFS</text>
+<line class="grid" x1="120" y1="180.0" x2="132" y2="180.0"/>
+<text class="axis-label" x="112" y="184.0" text-anchor="end">−60 dBFS</text>
+<line class="grid" x1="120" y1="230.0" x2="132" y2="230.0"/>
+<text class="axis-label" x="112" y="234.0" text-anchor="end">−80 dBFS</text>
+<line class="grid" x1="120" y1="280.0" x2="132" y2="280.0"/>
+<text class="axis-label" x="112" y="284.0" text-anchor="end">−100 dBFS</text>
+<line class="grid" x1="120" y1="330.0" x2="132" y2="330.0"/>
+<text class="axis-label" x="112" y="334.0" text-anchor="end">−120 dBFS</text>
+<line class="axis" x1="120" y1="30" x2="120" y2="330"/>
+<rect x="132" y="45.0" width="30" height="30.0" fill="var(--s2)" fill-opacity="0.25"/>
+<rect x="132" y="75.0" width="30" height="159.9" fill="var(--s2)" fill-opacity="0.08"/>
+<line x1="132" y1="30.0" x2="162" y2="30.0" stroke="var(--s1)" stroke-width="3"/>
+<text x="172" y="35.0" font-size="13">0 dBFS: clipping, the converter cannot go higher</text>
+<line x1="132" y1="45.0" x2="162" y2="45.0" stroke="var(--s2)" stroke-width="3"/>
+<text x="172" y="50.0" font-size="13">−6 dBFS: loud peaks of the singer (106 dB SPL)</text>
+<line x1="132" y1="75.0" x2="162" y2="75.0" stroke="var(--s2)" stroke-width="3"/>
+<text x="172" y="80.0" font-size="13">−18 dBFS: average level of the voice (94 dB SPL)</text>
+<line x1="132" y1="234.9" x2="162" y2="234.9" stroke="var(--s1)" stroke-width="3"/>
+<text x="172" y="239.9" font-size="13" font-weight="650">−82 dBFS: noise of a very calm room (30 dB SPL)</text>
+<line x1="132" y1="261.8" x2="162" y2="261.8" stroke="var(--s3)" stroke-width="3"/>
+<text x="172" y="266.8" font-size="13">−92.7 dBFS: noise of the preamplifier (EIN −127 dBu + 50.3 dB)</text>
+<line x1="132" y1="275.2" x2="162" y2="275.2" stroke="var(--s3)" stroke-width="3"/>
+<text x="172" y="280.2" font-size="13">−98.1 dBFS: quantization noise of 16 bit</text>
+<line x1="132" y1="320.0" x2="162" y2="320.0" stroke="var(--s3)" stroke-width="3"/>
+<text x="172" y="325.0" font-size="13">−116 dBFS: dynamic range of the converter (24 bit, measured)</text>
+<text x="172" y="159.0" font-size="13" fill="var(--muted)">64 dB between the average voice and the room noise</text>
+</svg>
+  </div>
+  <p class="fig-read">How to read this chart: higher is louder. The shaded band is the voice, from the average to the peaks. Every line below the band is a noise, and the recording hears only the highest one. The room noise and the preamp noise are calculated from the data sheets, not measured in a real room.</p>
+  <p class="fig-source">Sources: Focusrite Scarlett 2i2 specifications; Wikipedia, Audio bit depth; Wikipedia, Sound pressure. Calculation on this page.</p>
+</figure>
+<p>The sample rate sets the highest frequency that a recording can hold. The <dfn>frequency</dfn> of a sound is its number of pressure cycles per second, in hertz (Hz). Hearing covers 20 Hz to 20,000 Hz (Wikipedia, Hearing range). The <dfn>Nyquist frequency</dfn> is half the sample rate. The sampling theorem states that a signal is recorded completely if it contains no frequency above the Nyquist frequency (Wikipedia, Nyquist–Shannon sampling theorem). With 48 kHz the Nyquist frequency is 24 kHz, above the hearing range of 20 kHz, and with 44.1 kHz it is 22.05 kHz.</p>
+<p>A frequency above the Nyquist frequency does not disappear: the converter records it as a wrong, lower frequency, an error called aliasing. So every converter removes such frequencies with a filter before it samples. The Audio Engineering Society recommends 48 kHz for most work (Wikipedia, Sampling).</p>
+<p>A higher bit depth helps the engineer, not the listener. During recording and processing, the signal is scaled many times, and a 24-bit file keeps 146 dB of theoretical range for this. The final file for the listener needs only the range of a listening room. Part D gives the numbers for delivery.</p>
+<p>The converter also adds a delay. <dfn>Latency</dfn> is the time between the entry of a signal into a system and its exit (Wikipedia, Latency). The computer processes samples in blocks. One block of 256 samples at 48 kHz takes 256 ÷ 48,000 = 5.33 ms, and a block of 64 samples takes 1.33 ms. The signal passes a block on the way in and a block on the way out, plus the converters. So the singer hears their own voice later than they produce it.</p>
+<p>Wikipedia gives typical latencies of 0.5 to 10 ms for digital audio devices, and up to 30 ms for some designs. A smaller block lowers the delay but gives the computer less time per block.</p>
+
+
+<div class="check">
+  <span class="label">One more question, on section 5. Try to answer before you open the answer.</span>
+  <ol>
+    <li>With the SM58 and 50.3 dB of gain, the singer produces a peak 20 dB above the average. What happens, and what does the engineer change?
+      <details><summary>Show the answer</summary><div><p>The peak would be +2 dBFS, which does not exist, so the converter clips. The engineer lowers the gain by at least 2 dB, and a careful engineer takes 6 dB more. The noise floor falls by the same amount, so the 64 dB between the voice and the room noise stay.</p></div></details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="b-check">6. Check your understanding of part B</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>A microphone with −44 dBV per pascal replaces the SM58. How much gain gives the same −18 dBFS for the same voice?
+      <details><summary>Show the answer</summary><div><p>39.8 dB. The microphone gives −44 + 2.2 = −41.8 dBu, and −2 − (−41.8) = 39.8 dB: 10.5 dB less than for the SM58. The typical wrong answer keeps 50.3 dB, which puts the peaks at +4.5 dBFS, in clipping.</p></div></details>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================== PART C ============================== -->
+<p class="part">Part C: processing in the workstation</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer for part C</span>
+  <p>In the workstation the engineer shapes each track with a compressor and an equalizer, and then mixes the tracks. A compressor reduces the level above a threshold. With a threshold of −20 dBFS and a ratio of 4:1, a peak at −6 dBFS leaves at −16.5 dBFS. The range of the vocal shrinks from 24 dB to 13.5 dB. A make-up gain of +10 dB then raises the quiet syllables by 10 dB, and the peaks end at −6.5 dBFS.</p>
+</div>
+
+<h2 id="c-example">7. One example: the compressor shrinks a 24 dB range to 13.5 dB</h2>
+<p>The digital audio workstation (DAW) holds the tracks and runs the processors. The engineer prepares each track for the <dfn>mix</dfn>: the sum of all tracks, each with its own level and position between left and right. The vocal has peaks at −6 dBFS and quiet syllables at −30 dBFS (example values). Its <dfn>dynamic range</dfn>, the distance between its quietest and its loudest level, is 24 dB. In the mix, the quiet syllables disappear behind the instruments. A <dfn>compressor</dfn> reduces the range: it lowers the level by an amount that depends on the level itself.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the vocal through the compressor</span>
+  <ol class="steps">
+    <li>The <dfn>threshold</dfn> is the level above which the compressor acts: −20 dBFS here. A level below the threshold passes unchanged. <span class="why">The compressor should touch only the loud parts, so the threshold lies between −30 and −6.</span></li>
+    <li>The <dfn>compression ratio</dfn> compares a rise of the input above the threshold with the resulting rise of the output: 4:1 here. If the input rises 4 dB above the threshold, the output rises 1 dB (Wikipedia, Dynamic range compression).</li>
+    <li>The peak at −6 dBFS is 14 dB above the threshold. The output is 14 ÷ 4 = 3.5 dB above the threshold: −20 + 3.5 = −16.5 dBFS. The compressor reduced the gain by 10.5 dB at this moment. <span class="why">Output = threshold + (input − threshold) ÷ ratio. Gain reduction = input − output.</span></li>
+    <li>The quiet syllable at −30 dBFS is below the threshold and leaves at −30 dBFS. The new range is −16.5 − (−30) = 13.5 dB, down from 24 dB. <span class="why">Only the part above the threshold shrinks.</span></li>
+    <li>The compressor needs time. The <dfn>attack time</dfn> (10 ms here) is the time to apply the reduction after the input crosses the threshold. The <dfn>release time</dfn> (100 ms here) is the time to remove it. <span class="why">An instant reduction would cut the start of each syllable. Both are example values.</span></li>
+    <li>After the compressor, the whole track is quieter. The <dfn>make-up gain</dfn> is a fixed gain after the compressor: +10 dB here. The peaks now sit at −16.5 + 10 = −6.5 dBFS, and the quiet syllables at −30 + 10 = −20 dBFS. <span class="why">A compressor only reduces (Wikipedia, Dynamic range compression).</span></li>
+  </ol>
+  <p>Result: the peaks moved from −6 to −6.5 dBFS (0.5 dB down), the quiet syllables from −30 to −20 dBFS (10 dB up). The listener hears the quiet syllables, and the peaks are where they were.</p>
+</div>
+
+<figure>
+  <p class="fig-title">Above the threshold of −20 dBFS, the 4:1 compressor turns a rise of 14 dB into 3.5 dB. A peak at −6 dBFS leaves at −16.5 dBFS.</p>
+    <div class="fig-scroll">
+<svg viewBox="0 0 700 360" role="img" aria-label="Chart of output level against input level in dBFS, both from minus 40 to 0. Below the threshold of minus 20 dBFS the line is the identity. Above it the slope is one quarter: an input of minus 6 gives minus 16.5, an input of 0 gives minus 15. A dashed line shows the same curve after plus 10 dB make-up gain: minus 6 in gives minus 6.5 out, minus 30 in gives minus 20 out.">
+<line class="axis" x1="80.0" y1="40" x2="80.0" y2="300"/>
+<text class="axis-label" x="80.0" y="318" text-anchor="middle">−40</text>
+<line class="axis" x1="80" y1="300.0" x2="560" y2="300.0"/>
+<text class="axis-label" x="72" y="304.0" text-anchor="end">−40</text>
+<line class="grid" x1="200.0" y1="40" x2="200.0" y2="300"/>
+<text class="axis-label" x="200.0" y="318" text-anchor="middle">−30</text>
+<line class="grid" x1="80" y1="235.0" x2="560" y2="235.0"/>
+<text class="axis-label" x="72" y="239.0" text-anchor="end">−30</text>
+<line class="grid" x1="320.0" y1="40" x2="320.0" y2="300"/>
+<text class="axis-label" x="320.0" y="318" text-anchor="middle">−20</text>
+<line class="grid" x1="80" y1="170.0" x2="560" y2="170.0"/>
+<text class="axis-label" x="72" y="174.0" text-anchor="end">−20</text>
+<line class="grid" x1="440.0" y1="40" x2="440.0" y2="300"/>
+<text class="axis-label" x="440.0" y="318" text-anchor="middle">−10</text>
+<line class="grid" x1="80" y1="105.0" x2="560" y2="105.0"/>
+<text class="axis-label" x="72" y="109.0" text-anchor="end">−10</text>
+<line class="grid" x1="560.0" y1="40" x2="560.0" y2="300"/>
+<text class="axis-label" x="560.0" y="318" text-anchor="middle">0</text>
+<line class="grid" x1="80" y1="40.0" x2="560" y2="40.0"/>
+<text class="axis-label" x="72" y="44.0" text-anchor="end">0</text>
+<text class="axis-label" x="320" y="338" text-anchor="middle">Input level (dBFS)</text>
+<text class="axis-label" transform="translate(22 170) rotate(-90)" text-anchor="middle">Output level (dBFS)</text>
+<line x1="80.0" y1="300.0" x2="560.0" y2="40.0" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="2 4"/>
+<text x="554.0" y="32.0" font-size="13" fill="var(--muted)" text-anchor="end">dotted: no compression (output = input)</text>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="80.0,300.0 320.0,170.0 560.0,137.5"/>
+<polyline fill="none" stroke="var(--s2)" stroke-width="3" stroke-dasharray="7 5" points="80.0,235.0 320.0,105.0 560.0,72.5"/>
+<line x1="320.0" y1="170.0" x2="320.0" y2="300" stroke="var(--s1)" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="326.0" y="292" font-size="13">threshold −20 dBFS</text>
+<circle cx="200.0" cy="235.0" r="5" fill="var(--s1)"/>
+<rect x="195.5" y="165.5" width="9" height="9" fill="var(--s2)"/>
+<circle cx="488.0" cy="147.2" r="5" fill="var(--s1)"/>
+<rect x="483.5" y="77.8" width="9" height="9" fill="var(--s2)"/>
+<circle cx="560.0" cy="137.5" r="5" fill="var(--s1)"/>
+<rect x="555.5" y="68.0" width="9" height="9" fill="var(--s2)"/>
+<text x="496.0" y="163.2" font-size="13" font-weight="650">in −6 → out −16.5</text>
+<text x="568.0" y="142.5" font-size="13">in 0 → out −15</text>
+<text x="208.0" y="253.0" font-size="13">in −30 → out −30 (unchanged)</text>
+<text x="479.0" y="70.2" font-size="13" text-anchor="end" fill="var(--s2)" font-weight="650">with +10 dB make-up gain: −6 → −6.5</text>
+<text x="188.0" y="124.5" font-size="13" fill="var(--s2)" text-anchor="end">+10 dB make-up gain:</text>
+<text x="188.0" y="140.8" font-size="13" fill="var(--s2)" text-anchor="end">−30 → −20</text>
+<text x="416.0" y="179.0" font-size="13" fill="var(--s1)" font-weight="650">ratio 4:1 (slope 1/4)</text>
+</svg>
+  </div>
+  <p class="fig-read">How to read this chart: find the input on the bottom axis, go up to the line, and read the output on the left axis. The dotted grey line is "output equals input". Circles: the example levels. Squares: the same levels after the make-up gain.</p>
+  <p class="fig-source">Source: calculation with the formula of the worked example.</p>
+</figure>
+
+<div class="box mistake">
+  <span class="label">A common wrong idea</span>
+  <p><strong>Wrong:</strong> "A compressor makes a track louder."</p>
+  <p><strong>Correct:</strong> a compressor only makes the loud parts quieter. The make-up gain after it makes the whole track louder, so the quiet parts come up.</p>
+  <p><strong>Why the wrong idea fails:</strong> most compressors apply the make-up gain inside the same device, so the user credits the compression.</p>
+</div>
+
+<h2 id="c-more">8. More detail: the equalizer, the sum of the mix, and the time settings of the compressor</h2>
+<div class="table-wrap">
+<table>
+  <caption>Table 3. Input and output of the example compressor at four levels. Only the levels above −20 dBFS change.</caption>
+  <thead><tr><th scope="col">Input (dBFS)</th><th scope="col">Above threshold (dB)</th><th scope="col">Output (dBFS)</th><th scope="col">Gain reduction (dB)</th><th scope="col">With make-up gain +10 dB (dBFS)</th></tr></thead>
+  <tbody>
+    <tr><th scope="row">−30.0</th><td class="num">0.0</td><td class="num">−30.0</td><td class="num">0.0</td><td class="num">−20.0</td></tr>
+    <tr><th scope="row">−20.0</th><td class="num">0.0</td><td class="num">−20.0</td><td class="num">0.0</td><td class="num">−10.0</td></tr>
+    <tr class="highlight"><th scope="row">−6.0</th><td class="num">14.0</td><td class="num">−16.5</td><td class="num">10.5</td><td class="num">−6.5</td></tr>
+    <tr><th scope="row">0.0</th><td class="num">20.0</td><td class="num">−15.0</td><td class="num">15.0</td><td class="num">−5.0</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read">How to read this table: the second column is the input minus the threshold, or 0 below the threshold. The third column is the threshold plus the second column divided by 4. The last column adds 10 dB to the third. The output column never rises above the input; only the last column is louder.</p>
+
+<p>An <dfn>equalizer</dfn> (EQ) changes the level of some frequencies and leaves the others. The most flexible kind is the <dfn>parametric equalizer</dfn>, which has one or more bands with three settings each (Wikipedia, Audio equalization). The <dfn>center frequency</dfn> is the frequency at which the band acts most, in Hz. The gain is the change at the center, in dB: positive for a boost, negative for a cut. The <dfn>Q factor</dfn> is the center frequency divided by the bandwidth of the band, so a higher Q is a narrower band. A <dfn>high-pass filter</dfn> passes the frequencies above its cut-off frequency and removes the frequencies below it.</p>
+<p>The example vocal gets three bands. A high-pass filter at 80 Hz removes low rumble. A cut of −3 dB at 300 Hz with Q 1.4 reduces the lower middle frequencies. A boost of +2 dB at 4 kHz with Q 1 raises the upper middle frequencies. The bandwidth of the cut is 300 ÷ 1.4 = 214 Hz, and the bandwidth of the boost is 4,000 ÷ 1 = 4,000 Hz. All three settings are example values, chosen for the sound of the voice, which this page cannot measure.</p>
+<figure>
+  <p class="fig-title">Three bands shape the vocal, and the cut of 3 dB at 300 Hz with Q 1.4 has a bandwidth of 214 Hz.</p>
+  <p class="fig-sub">Gain in dB against frequency in Hz. The frequency axis is logarithmic: each step to the right multiplies the frequency by 10.</p>
+  <div class="fig-scroll">
+<svg viewBox="0 0 700 330" role="img" aria-label="Chart of gain in dB against frequency from 20 Hz to 20 kHz on a logarithmic axis. A high-pass filter at 80 Hz removes sound below 80 Hz. A bell cut of 3 dB at 300 Hz with Q 1.4 is 214 Hz wide. A bell boost of 2 dB at 4 kHz with Q 1 is 4 kHz wide. Everything else stays at 0 dB.">
+<line class="axis" x1="80.0" y1="40" x2="80.0" y2="270"/>
+<text class="axis-label" x="80.0" y="288" text-anchor="middle">20 Hz</text>
+<line class="grid" x1="154.3" y1="40" x2="154.3" y2="270"/>
+<text class="axis-label" x="154.3" y="288" text-anchor="middle">50</text>
+<line class="grid" x1="210.5" y1="40" x2="210.5" y2="270"/>
+<text class="axis-label" x="210.5" y="288" text-anchor="middle">100</text>
+<line class="grid" x1="266.7" y1="40" x2="266.7" y2="270"/>
+<text class="axis-label" x="266.7" y="288" text-anchor="middle">200</text>
+<line class="grid" x1="340.9" y1="40" x2="340.9" y2="270"/>
+<text class="axis-label" x="340.9" y="288" text-anchor="middle">500</text>
+<line class="grid" x1="397.1" y1="40" x2="397.1" y2="270"/>
+<text class="axis-label" x="397.1" y="288" text-anchor="middle">1 kHz</text>
+<line class="grid" x1="453.3" y1="40" x2="453.3" y2="270"/>
+<text class="axis-label" x="453.3" y="288" text-anchor="middle">2k</text>
+<line class="grid" x1="527.6" y1="40" x2="527.6" y2="270"/>
+<text class="axis-label" x="527.6" y="288" text-anchor="middle">5k</text>
+<line class="grid" x1="583.8" y1="40" x2="583.8" y2="270"/>
+<text class="axis-label" x="583.8" y="288" text-anchor="middle">10k</text>
+<line class="grid" x1="640.0" y1="40" x2="640.0" y2="270"/>
+<text class="axis-label" x="640.0" y="288" text-anchor="middle">20 kHz</text>
+<line class="axis" x1="80" y1="270.0" x2="640" y2="270.0"/>
+<text class="axis-label" x="72" y="274.0" text-anchor="end">−12 dB</text>
+<line class="grid" x1="80" y1="212.5" x2="640" y2="212.5"/>
+<text class="axis-label" x="72" y="216.5" text-anchor="end">−6 dB</text>
+<line class="grid" x1="80" y1="155.0" x2="640" y2="155.0"/>
+<text class="axis-label" x="72" y="159.0" text-anchor="end">0 dB</text>
+<line class="grid" x1="80" y1="97.5" x2="640" y2="97.5"/>
+<text class="axis-label" x="72" y="101.5" text-anchor="end">+6 dB</text>
+<line class="grid" x1="80" y1="40.0" x2="640" y2="40.0"/>
+<text class="axis-label" x="72" y="44.0" text-anchor="end">+12 dB</text>
+<text class="axis-label" x="360" y="310" text-anchor="middle">Frequency (Hz), logarithmic axis</text>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="80.0,274.8 82.4,274.8 84.8,274.8 87.2,274.8 89.6,274.8 92.0,274.8 94.4,274.8 96.8,274.8 99.2,274.8 101.6,274.8 104.0,274.8 106.4,274.8 108.8,274.8 111.2,274.8 113.5,274.8 115.9,274.8 118.3,274.8 120.7,274.8 123.1,274.8 125.5,274.8 127.9,274.8 130.3,274.8 132.7,274.8 135.1,274.8 137.5,270.7 139.9,266.1 142.3,261.5 144.7,257.0 147.1,252.6 149.5,248.2 151.9,243.9 154.3,239.6 156.7,235.4 159.1,231.2 161.5,227.2 163.9,223.2 166.3,219.4 168.7,215.6 171.1,211.9 173.5,208.4 175.9,204.9 178.2,201.6 180.6,198.5 183.0,195.5 185.4,192.6 187.8,189.8 190.2,187.2 192.6,184.8 195.0,182.5 197.4,180.3 199.8,178.4 202.2,176.5 204.6,174.8 207.0,173.2 209.4,171.8 211.8,170.5 214.2,169.4 216.6,168.3 219.0,167.4 221.4,166.6 223.8,165.9 226.2,165.3 228.6,164.8 231.0,164.4 233.4,164.0 235.8,163.8 238.2,163.6 240.6,163.6 242.9,163.6 245.3,163.7 247.7,163.8 250.1,164.1 252.5,164.4 254.9,164.8 257.3,165.3 259.7,165.9 262.1,166.6 264.5,167.4 266.9,168.3 269.3,169.3 271.7,170.4 274.1,171.7 276.5,173.0 278.9,174.4 281.3,175.9 283.7,177.4 286.1,178.9 288.5,180.3 290.9,181.6 293.3,182.6 295.7,183.4 298.1,183.8 300.5,183.8 302.9,183.4 305.3,182.7 307.6,181.6 310.0,180.3 312.4,178.9 314.8,177.3 317.2,175.7 319.6,174.1 322.0,172.6 324.4,171.2 326.8,169.8 329.2,168.5 331.6,167.4 334.0,166.3 336.4,165.3 338.8,164.4 341.2,163.6 343.6,162.8 346.0,162.2 348.4,161.5 350.8,161.0 353.2,160.4 355.6,160.0 358.0,159.5 360.4,159.1 362.8,158.7 365.2,158.4 367.6,158.1 370.0,157.8 372.3,157.5 374.7,157.2 377.1,157.0 379.5,156.7 381.9,156.5 384.3,156.3 386.7,156.1 389.1,155.9 391.5,155.7 393.9,155.5 396.3,155.3 398.7,155.1 401.1,155.0 403.5,154.8 405.9,154.6 408.3,154.4 410.7,154.2 413.1,154.0 415.5,153.9 417.9,153.7 420.3,153.5 422.7,153.2 425.1,153.0 427.5,152.8 429.9,152.6 432.3,152.3 434.6,152.1 437.0,151.8 439.4,151.5 441.8,151.2 444.2,150.9 446.6,150.5 449.0,150.2 451.4,149.8 453.8,149.4 456.2,148.9 458.6,148.4 461.0,147.9 463.4,147.4 465.8,146.8 468.2,146.2 470.6,145.6 473.0,145.0 475.4,144.3 477.8,143.5 480.2,142.8 482.6,142.0 485.0,141.3 487.4,140.5 489.8,139.7 492.2,139.0 494.6,138.3 497.0,137.7 499.3,137.1 501.7,136.6 504.1,136.3 506.5,136.0 508.9,135.9 511.3,136.0 513.7,136.1 516.1,136.4 518.5,136.8 520.9,137.3 523.3,137.9 525.7,138.6 528.1,139.3 530.5,140.0 532.9,140.8 535.3,141.5 537.7,142.3 540.1,143.0 542.5,143.8 544.9,144.5 547.3,145.1 549.7,145.7 552.1,146.3 554.5,146.9 556.9,147.4 559.3,147.9 561.7,148.4 564.0,148.8 566.4,149.2 568.8,149.6 571.2,150.0 573.6,150.3 576.0,150.6 578.4,150.9 580.8,151.1 583.2,151.4 585.6,151.6 588.0,151.8 590.4,152.0 592.8,152.2 595.2,152.4 597.6,152.6 600.0,152.7 602.4,152.9 604.8,153.0 607.2,153.1 609.6,153.2 612.0,153.3 614.4,153.4 616.8,153.5 619.2,153.6 621.6,153.7 624.0,153.8 626.4,153.9 628.7,153.9 631.1,154.0 633.5,154.1 635.9,154.1 638.3,154.2"/>
+<line x1="271.2" y1="169.4" x2="327.9" y2="169.4" stroke="var(--s2)" stroke-width="2"/>
+<line x1="271.2" y1="164.4" x2="271.2" y2="174.4" stroke="var(--s2)" stroke-width="2"/>
+<line x1="327.9" y1="164.4" x2="327.9" y2="174.4" stroke="var(--s2)" stroke-width="2"/>
+<text x="299.5" y="203.8" font-size="13" text-anchor="middle" font-weight="650">−3 dB at 300 Hz, Q 1.4</text>
+<text x="299.5" y="219.8" font-size="13" text-anchor="middle" fill="var(--s2)">bandwidth 214 Hz</text>
+<text x="509.5" y="125.8" font-size="13" text-anchor="middle" font-weight="650">+2 dB at 4 kHz, Q 1</text>
+<text x="84.0" y="64.0" font-size="13" font-weight="650">high-pass filter, 80 Hz:</text>
+<text x="84.0" y="80.0" font-size="13" fill="var(--muted)">−3 dB at 80 Hz, steeper below it</text>
+</svg>
+  </div>
+  <p class="fig-read">How to read this chart: the line shows how much the equalizer adds or removes at each frequency. On the 0 dB line nothing changes. The short bar under the 300 Hz cut marks its bandwidth of 214 Hz, from 211 Hz to 426 Hz. The curve is calculated with a standard second-order filter for each band.</p>
+  <p class="fig-source">Source: calculation on this page. The exact shape of a band differs between equalizers, because makers define the edges of the bandwidth differently.</p>
+</figure>
+<p>The Q factor needs one caution. The general definition is Q = center frequency ÷ bandwidth. The bandwidth is the distance between the two frequencies at which the effect has fallen to half (Wikipedia, Q factor). For a cut of 3 dB, "half" has several definitions, and equalizer makers choose different ones. So two equalizers with the setting Q 1.4 at 300 Hz can differ a little in width. The engineer sets Q by ear and reads the curve on the screen.</p>
+<p>The mix adds the tracks. Levels add as voltages, not as decibels. Two equal signals in phase add to a signal 6.02 dB louder. So a mix of many tracks reaches 0 dBFS sooner than any one track. The rule of the mix is the rule of part B again. Lower the tracks to keep the sum below clipping, and keep headroom for the master.</p>
+<p>The attack time and the release time decide how the compressor follows the signal. A long attack of 30 ms or more lets the start of a drum hit or a consonant pass at full level. A short attack of 1 ms catches it. A short release lets the level return quickly. When the release is shorter than one cycle of a low note, the compressor follows the wave itself and distorts it.</p>
+<p>Many compressors offer an automatic setting that changes attack and release with the signal. The values 10 ms and 100 ms of the example are a judgment of this page, not a measurement.</p>
+<p>The compressor formula of this page has a hard knee: the curve bends sharply at the threshold. Many compressors use a soft knee. The reduction then starts a few dB below the threshold and reaches the full ratio a few dB above it (Wikipedia, Dynamic range compression).</p>
+
+
+<div class="check">
+  <span class="label">One more question, on section 8. Try to answer before you open the answer.</span>
+  <ol>
+    <li>After the compressor and the make-up gain of the example, are the peaks louder than before? And how wide is a band with a center frequency of 1,000 Hz and Q 2?
+      <details><summary>Show the answer</summary><div><p>No. The peaks went from −6 to −6.5 dBFS, 0.5 dB quieter. The quiet syllables went from −30 to −20 dBFS, 10 dB louder. The track sounds louder because its quiet parts came up. The band is 1,000 ÷ 2 = 500 Hz wide; a higher Q gives a narrower band.</p></div></details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="c-check">9. Check your understanding of part C</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>A compressor has a threshold of −24 dBFS and a ratio of 3:1. The input is −9 dBFS. What is the output, and what is the gain reduction?
+      <details><summary>Show the answer</summary><div><p>Output −19 dBFS, gain reduction 10 dB. The input is 15 dB above the threshold, and 15 ÷ 3 = 5 dB above it at the output: −24 + 5 = −19. The typical wrong answer divides the whole input by 3; the ratio applies only to the part above the threshold.</p></div></details>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================== PART D ============================== -->
+<p class="part">Part D: delivery, from the master to the listener</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer for part D</span>
+  <p>The loudness of a whole track is measured in LUFS, and Spotify plays every track at −14 LUFS in its normal setting. A loud master at −9 LUFS is turned down by 5 dB. A quiet master at −20 LUFS is turned up only as far as its true peak allows, to −16 LUFS. So a loud master gains nothing on a normalized service, and it loses dynamic range.</p>
+</div>
+
+<h2 id="d-example">10. One example: three masters of one song on Spotify</h2>
+<p><dfn>Mastering</dfn> is the last step of production: the engineer prepares the master, the file from which all copies are made (Wikipedia, Mastering). Services measure the master as <dfn>loudness</dfn>: the perceived level of a track, measured by a fixed algorithm (the standard ITU-R BS.1770). The unit is <dfn>LUFS</dfn> (loudness units relative to full scale); a gain of 1 dB raises the loudness by 1 LUFS. The value for a whole track is the <dfn>integrated loudness</dfn>. The master also has a <dfn>true peak</dfn>: the highest level between the samples, in dBTP (EBU R 128). <dfn>Loudness normalization</dfn> is the adjustment of the playback gain by a service, so that every track plays at its target: −14 LUFS at Spotify.</p>
+
+<div class="box example">
+  <span class="label">Worked example: masters A, B, and C on Spotify at the normal setting</span>
+  <ol class="steps">
+    <li>Master A is loud: −9 LUFS, true peak −0.1 dBTP. Master B is normal: −14 LUFS, true peak −1 dBTP. Master C is quiet: −20 LUFS, true peak −5 dBTP. All three are example values. <span class="why">Master A also lost its peaks in the process that made it loud.</span></li>
+    <li>Spotify plays master A at −14 LUFS, so it applies −14 − (−9) = −5 dB. The peak falls to −5.1 dBTP. <span class="why">Spotify states that negative gain is applied to louder masters until the loudness is −14 LUFS.</span></li>
+    <li>Master B needs 0 dB, because its loudness already equals the target. It plays as it was mastered.</li>
+    <li>Master C would need +6 dB. But +6 dB would move its true peak from −5 to +1 dBTP, above full scale. Spotify keeps 1 dB of headroom, so the gain is −1 − (−5) = +4 dB, and master C plays at −16 LUFS. <span class="why">Spotify states this case with these numbers. The 1 dB of headroom protects the lossy encoding.</span></li>
+    <li>Result: masters A and B play at the same level, and master C plays 2 dB quieter. The extra 5 dB of master A bought nothing, and master A has the smallest dynamic range. <span class="why">Normalization reads one number, the integrated loudness.</span></li>
+  </ol>
+</div>
+
+<figure>
+  <p class="fig-title">Spotify plays the loud master and the normal master at the same −14 LUFS, and it lifts the quiet master only to −16 LUFS.</p>
+    <div class="fig-scroll">
+<svg viewBox="0 0 700 270" role="img" aria-label="Dot chart of loudness in LUFS from minus 24 to minus 6 for three masters. Master A: mastered at minus 9, played at minus 14. Master B: mastered at minus 14, played at minus 14. Master C: mastered at minus 20, played at minus 16, because the true peak leaves only 4 dB. Circles show the master, squares show playback on Spotify at the normal setting.">
+<defs><marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<line class="axis" x1="190.0" y1="40" x2="190.0" y2="200"/>
+<text class="axis-label" x="190.0" y="220" text-anchor="middle">−24</text>
+<line class="grid" x1="235.6" y1="40" x2="235.6" y2="200"/>
+<line class="grid" x1="281.1" y1="40" x2="281.1" y2="200"/>
+<text class="axis-label" x="281.1" y="220" text-anchor="middle">−20</text>
+<line class="grid" x1="326.7" y1="40" x2="326.7" y2="200"/>
+<line class="grid" x1="372.2" y1="40" x2="372.2" y2="200"/>
+<text class="axis-label" x="372.2" y="220" text-anchor="middle">−16</text>
+<line class="grid" x1="417.8" y1="40" x2="417.8" y2="200"/>
+<line class="grid" x1="463.3" y1="40" x2="463.3" y2="200"/>
+<text class="axis-label" x="463.3" y="220" text-anchor="middle">−12</text>
+<line class="grid" x1="508.9" y1="40" x2="508.9" y2="200"/>
+<line class="grid" x1="554.4" y1="40" x2="554.4" y2="200"/>
+<text class="axis-label" x="554.4" y="220" text-anchor="middle">−8</text>
+<line class="grid" x1="600.0" y1="40" x2="600.0" y2="200"/>
+<text class="axis-label" x="395" y="242" text-anchor="middle">Integrated loudness (LUFS)</text>
+<line x1="417.8" y1="30" x2="417.8" y2="76" stroke="var(--s1)" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="417.8" y1="92" x2="417.8" y2="154" stroke="var(--s1)" stroke-width="2" stroke-dasharray="6 4"/>
+<line x1="417.8" y1="170" x2="417.8" y2="205" stroke="var(--s1)" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="417.8" y="24" font-size="13" text-anchor="middle" fill="var(--s1)" font-weight="650">Spotify target −14 LUFS</text>
+<text x="178" y="67" font-size="13" text-anchor="end" font-weight="650">Master A, loud</text>
+<text x="178" y="83" font-size="13" text-anchor="end" fill="var(--muted)">true peak −0.1 dBTP</text>
+<line class="arrow" x1="531.7" y1="62" x2="425.8" y2="62" marker-end="url(#ah5)"/>
+<circle cx="531.7" cy="62" r="7" fill="var(--s2)"/>
+<rect x="411.8" y="56" width="12" height="12" fill="var(--s1)"/>
+<text x="474.7" y="86" font-size="13" text-anchor="middle">mastered at −9 (circle), played at −14 (square): −5 dB</text>
+<text x="178" y="125" font-size="13" text-anchor="end" font-weight="650">Master B, normal</text>
+<text x="178" y="141" font-size="13" text-anchor="end" fill="var(--muted)">true peak −1.0 dBTP</text>
+<circle cx="417.8" cy="120" r="7" fill="var(--s2)"/>
+<rect x="411.8" y="114" width="12" height="12" fill="var(--s1)"/>
+<text x="431.8" y="125" font-size="13">mastered and played at −14: no change</text>
+<text x="178" y="183" font-size="13" text-anchor="end" font-weight="650">Master C, quiet</text>
+<text x="178" y="199" font-size="13" text-anchor="end" fill="var(--muted)">true peak −5.0 dBTP</text>
+<line class="arrow" x1="281.1" y1="178" x2="364.2" y2="178" marker-end="url(#ah5)"/>
+<circle cx="281.1" cy="178" r="7" fill="var(--s2)"/>
+<rect x="366.2" y="172" width="12" height="12" fill="var(--s1)"/>
+<text x="269.1" y="164" font-size="13" text-anchor="start">mastered at −20, played at −16: +4 dB, limited by the true peak</text>
+</svg>
+  </div>
+  <p class="fig-read">How to read this chart: each row is one master. The circle is the loudness of the master, the square is the playback, and the arrow is the gain of Spotify. Master C stops before the dashed target line, because its true peak allows only +4 dB.</p>
+  <p class="fig-source">Sources: Spotify, Loudness normalization (target, headroom rule, and the example of master C); calculation on this page for masters A and B.</p>
+</figure>
+
+<p>The rule of delivery: every decibel above the target is removed at playback. Every decibel below the target is added only while the true peak allows. So the mastering engineer delivers two numbers: an integrated loudness near the target, and a true peak at or below −1 dBTP.</p>
+
+<div class="box mistake">
+  <span class="label">A common wrong idea</span>
+  <p><strong>Wrong:</strong> "A louder master sounds louder for the listener on a streaming service, so a loud master competes better."</p>
+  <p><strong>Correct:</strong> on a normalized service, a master at −9 LUFS and a master at −14 LUFS play at the same loudness. The louder master is turned down by 5 dB, and it has lost dynamic range.</p>
+  <p><strong>Why the wrong idea fails:</strong> it was true on the compact disc, which has no normalization. The listener never hears the extra 5 dB.</p>
+</div>
+
+<h2 id="d-more">11. More detail: the targets, the loudness meter, and the final format</h2>
+<p>A master above the target paid for its loudness with dynamic range. A mix that already peaks near 0 dBFS can become louder only through a <dfn>limiter</dfn>. A limiter is a compressor with a very high ratio that holds every peak below a ceiling. The limiter removes the peaks, and the normalization then removes the loudness. The loudness war of the years 1990 to 2010 was the race for a louder master on the compact disc (Wikipedia, Loudness war). The compact disc has no normalization, so on a normalized service the race has no prize.</p>
+<div class="table-wrap">
+<table>
+  <caption>Table 4. Loudness targets of one service and one broadcast standard. The targets differ by 9 dB, and both measure with ITU-R BS.1770.</caption>
+  <thead><tr><th scope="col">Service or standard</th><th scope="col">Target (LUFS)</th><th scope="col">True peak limit (dBTP)</th><th scope="col">Note</th><th scope="col">Source and confidence</th></tr></thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Spotify, normal setting</th><td class="num">−14</td><td class="num">−1</td><td>positive gain stops 1 dB below full scale; settings "loud" −11 and "quiet" −19</td><td>Spotify support page, High</td></tr>
+    <tr><th scope="row">Spotify, loud setting</th><td class="num">−11</td><td class="num">−1 (limiter)</td><td>a limiter at −1 dB with 5 ms attack and 100 ms release protects quiet tracks</td><td>Spotify support page, High</td></tr>
+    <tr><th scope="row">EBU R 128 (European broadcast)</th><td class="num">−23</td><td class="num">−1</td><td>tolerance ±0.5 LU, ±1 LU for live programmes</td><td>EBU R 128 (2023), High</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read">How to read this table: a master for broadcast must be 9 dB quieter than a master for Spotify. Both must keep the true peak below −1 dBTP. The "true peak limit" of Spotify is the headroom rule for positive gain, not a rejection rule for uploads.</p>
+
+<p>ITU-R BS.1770 defines the meter in four steps. First, a filter called K-weighting changes the signal like the head and the ear. It has a high-frequency shelf for the effect of the head, modelled as a rigid sphere, and a high-pass filter. Second, the meter computes the mean square of each channel. Third, it sums the channels with weights: larger weights for the surround channels, and no low-frequency effects channel.</p>
+<p>Fourth, it measures in blocks of 400 ms that overlap by 75%, and it ignores blocks below two gates. The absolute gate at −70 LUFS removes silence. The relative gate, 10 dB below the level after the first gate, removes quiet passages. The integrated loudness is the average of the remaining blocks. The standard names the unit LKFS (loudness, K-weighted, relative to full scale). EBU R 128 named the same unit LUFS, and the two are identical (Wikipedia, LUFS).</p>
+<p>The true peak comes from the same standard. The meter raises the sample rate of the signal for the measurement, so it sees the peaks that lie between two samples. A sample peak meter in a workstation can show −0.1 dBFS while the true peak is above 0 dBTP.</p>
+<p>The final format closes the chain. The compact disc takes 16 bits at 44.1 kHz. When the engineer reduces a 24-bit master to 16 bits, the last 8 bits are cut. <dfn>Dither</dfn> is a small noise added before this cut. It turns the error of the cut into a constant, quiet noise instead of a distortion that depends on the signal (Wikipedia, Dither).</p>
+<p>Streaming services receive the master as a file and convert it themselves. Apple describes its process: the sample rate conversion writes a 32-bit floating point file, so that no clipping occurs in the conversion (Apple Digital Masters). Apple also states that 24-bit recording and sample rates of 48 to 192 kHz have become standard in production.</p>
+<p>For the listener, 16 bits give 98 dB of range. This is more than the 64 dB between the voice and the room noise of part B, and 44.1 kHz covers the hearing range.</p>
+
+
+<div class="check">
+  <span class="label">One more question, on section 11. Try to answer before you open the answer.</span>
+  <ol>
+    <li>A master has −20 LUFS and a true peak of −2 dBTP. At what loudness does Spotify play it, and what must change for EBU R 128?
+      <details><summary>Show the answer</summary><div><p>−19 LUFS. The track would need +6 dB, but Spotify stops 1 dB below full scale, so the gain is at most −1 − (−2) = +1 dB. The typical wrong answer is −14 LUFS, which ignores the true peak. For EBU R 128 the level must fall by 3 dB, to −23 LUFS. The true peak is then −5 dBTP, below the limit of −1 dBTP.</p></div></details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="d-check">12. Check your understanding of part D</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>A master has an integrated loudness of −8 LUFS. What gain does Spotify apply at the normal setting?
+      <details><summary>Show the answer</summary><div><p>−6 dB: −14 − (−8) = −6 dB. The true peak plays no role for negative gain. The typical wrong answer is 0 dB, from the belief that the service does not change loud tracks. Spotify states that it applies negative gain to louder masters.</p></div></details>
+    </li>
+  </ol>
+</div>
+
+<!-- ============================== END OF THE PAGE ============================== -->
+<p class="part">End of the page</p>
+
+<h2 id="limits">13. Limits of this page</h2>
+<div class="box limits">
+  <span class="label">Where the explanation stops</span>
+  <ul>
+    <li>The levels of the voice, the vocal track, the processor settings, and the three masters are example values. A singer close to the microphone can be much louder: Wikipedia gives 135 dB SPL at 1 inch for the loudest voice. So the engineer reads the real peaks on the meter.</li>
+    <li>The room noise of 30 dB SPL is the Wikipedia value for a very calm room, without a citation there. The noise levels of part B are calculated, not measured.</li>
+    <li>The relation dBFS = dBu − 16 holds for the Scarlett 2i2 at minimum gain. Other interfaces differ, and European broadcast equipment uses +18 dBu for 0 dBFS (EBU R68).</li>
+    <li>The compressor formula has a hard knee, and the equalizer bandwidth follows one definition. Real devices differ near the threshold and at the edges of a band.</li>
+    <li>Spotify states that some third-party devices do not use loudness normalization, and listeners can switch it off. On such a device, master A does play 5 dB louder than master B. The targets of other services were not verified.</li>
+    <li>The page omits reverberation, delay, pitch correction, stereo placement, live sound, and film sound; some of their words are in the next section.</li>
+  </ul>
+</div>
+
+<h2 id="words">14. Words that you will hear</h2>
+<p>These words belong to the work of a sound engineer, but not to the level arithmetic above. Each entry gives the meaning and the connection to the main idea.</p>
+<p><strong>Phantom power.</strong> A direct voltage of 48 V that the interface sends over the microphone cable to a condenser microphone. The IEC 61938 standard also defines 24 V and 12 V versions (Wikipedia, Phantom power). The AT2020 of part B needs it, and the SM58 does not.</p>
+<p><strong>Polar pattern, cardioid.</strong> The polar pattern is the sensitivity of a microphone by direction. A cardioid pattern is most sensitive at the front and least at the back. Both the SM58 and the AT2020 are cardioid, so they take less room sound than a microphone with equal sensitivity in all directions.</p>
+<p><strong>Proximity effect.</strong> A directional microphone a few centimetres from the source gives more bass (Wikipedia, Microphone). The engineer corrects it with the high-pass filter of part C.</p>
+<p><strong>3-to-1 rule and comb filtering.</strong> With two microphones, the distance between the microphones should be at least three times the distance from each microphone to its source (Wikipedia, Microphone practice). Otherwise the same sound arrives at both microphones with a delay, and the mix cancels some frequencies: comb filtering.</p>
+<p><strong>Balanced audio, XLR.</strong> The microphone cable carries the signal on two wires with opposite polarity, and the input subtracts them. Noise that enters both wires equally cancels (Wikipedia, Balanced audio). This is why the 50.3 dB of gain in part B does not also amplify the noise that the cable collects. XLR is the three-pin connector of this cable.</p>
+<p><strong>Audio feedback, Larsen effect.</strong> A loudspeaker feeds its sound back into the microphone. When the gain around this loop reaches 1, the system oscillates at one frequency (Wikipedia, Audio feedback). In a live situation it limits the gain of part B. The engineer lowers the gain or cuts the frequency with the equalizer.</p>
+<p><strong>Reverberation time, T60.</strong> The time in which the sound in a room falls by 60 dB after the source stops (Wikipedia, Reverberation). A long time adds room sound to the recording, which the noise floor of part B does not show but the listener hears.</p>
+<p><strong>Bus, send.</strong> In the mix, a bus is a sum of several tracks that is processed as one signal. A send copies a part of a track to a bus, for example to a shared reverberation effect.</p>
+<p><strong>Plug-in.</strong> The equalizer and the compressor of part C run as software inside the workstation. Each such processor is a plug-in.</p>
+<p><strong>Aliasing, anti-aliasing filter.</strong> See part B, section 5. A frequency above the Nyquist frequency is recorded as a wrong frequency, and the filter before the converter removes it.</p>
+<p><strong>Floating point, 32-bit float.</strong> A workstation calculates with floating point numbers, which have no fixed maximum. So an internal level above 0 dBFS does not clip until the signal reaches a converter or an integer file. The headroom rule of part C still applies at the output.</p>
+<p><strong>Loudness range (LRA).</strong> A number from EBU R 128 that describes how much the loudness of a programme varies over time, in LU. R 128 sets no maximum for it. It is the dynamic range of part C, measured with the loudness meter of part D.</p>
+<p><strong>Lossy codec.</strong> A format such as AAC or MP3 that removes parts of the signal that a model of hearing predicts to be inaudible. Spotify keeps 1 dB of headroom in part D because such an encoder can raise the true peak.</p>
+
+
+<h2 id="recap">15. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>A decibel is 20 times the logarithm of a ratio, and the reference gives it a meaning. The references: 20 µPa (dB SPL), 1 V (dBV), 0.7746 V (dBu), the largest sample (dBFS).</li>
+    <li>Capture is gain staging: 50.3 dB of gain puts the SM58 voice at −18 dBFS with peaks at −6 dBFS. The room at −82 dBFS is the noise floor, above the preamp and the quantization noise.</li>
+    <li>A compressor lowers the level above a threshold by the ratio: with −20 dBFS and 4:1, a −6 dBFS peak leaves at −16.5 dBFS. Make-up gain then raises the quiet parts by 10 dB.</li>
+    <li>A parametric equalizer changes one band by center frequency, gain, and Q. The mix adds the tracks as voltages, so it needs headroom.</li>
+    <li>Delivery is measured in LUFS. Spotify plays every master at −14 LUFS and turns a −9 LUFS master down by 5 dB. EBU R 128 uses −23 LUFS and −1 dBTP. A loud master gains nothing.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>analog-to-digital converter (ADC)</dt><dd>The device that measures the voltage at the sample rate and writes each measurement as a number with the bit depth.</dd>
+  <dt>attack time</dt><dd>The time a compressor takes to apply its gain reduction after the input crosses the threshold.</dd>
+  <dt>bit depth</dt><dd>The number of bits in each sample; 24 bits give 16,777,216 values and a theoretical noise of 146.3 dB below full scale.</dd>
+  <dt>center frequency</dt><dd>The frequency at which a band of a parametric equalizer acts most.</dd>
+  <dt>clipping</dt><dd>The cut of a signal at the maximum value of a device, which adds distortion that no later stage removes.</dd>
+  <dt>compression ratio</dt><dd>The comparison between a rise of the input above the threshold and the resulting rise of the output of a compressor, for example 4:1.</dd>
+  <dt>compressor</dt><dd>A processor that lowers the level of a signal by an amount that depends on the level itself. Its settings are threshold, ratio, attack time, and release time.</dd>
+  <dt>condenser microphone</dt><dd>A microphone with a thin charged plate in front of a fixed plate; it needs a power supply such as phantom power.</dd>
+  <dt>dBFS</dt><dd>Decibels relative to full scale, the largest sample value of a digital system; 0 dBFS is the top, and every normal signal is negative.</dd>
+  <dt>dBu</dt><dd>Decibels relative to 0.7746 V, the unit of professional equipment data sheets; 2.2 dB above the dBV value.</dd>
+  <dt>dBV</dt><dd>Decibels relative to 1 V, the unit of microphone sensitivity.</dd>
+  <dt>decibel (dB)</dt><dd>A logarithmic measure of a ratio: 20 × log<sub>10</sub>(x ÷ x<sub>ref</sub>) for pressure and voltage, 10 × log<sub>10</sub> for power.</dd>
+  <dt>dither</dt><dd>A small noise added before a reduction of the bit depth, which turns the rounding error into a constant quiet noise.</dd>
+  <dt>dynamic microphone</dt><dd>A microphone in which a coil moves in a magnetic field and produces the voltage without a power supply.</dd>
+  <dt>dynamic range</dt><dd>The distance in dB between the quietest usable level and the loudest level of a signal or a device.</dd>
+  <dt>equalizer (EQ)</dt><dd>A processor that changes the level of some frequencies and leaves the others.</dd>
+  <dt>frequency</dt><dd>The number of pressure cycles per second, in hertz (Hz).</dd>
+  <dt>gain</dt><dd>An amplification stated in dB; gains add along the chain, and a loss is a negative gain.</dd>
+  <dt>gain staging</dt><dd>The choice of the gain at each stage, so that the signal stays above the noise floor and below the clipping point everywhere.</dd>
+  <dt>headroom</dt><dd>The distance in dB between the normal working level and the maximum level before distortion.</dd>
+  <dt>high-pass filter</dt><dd>A filter that passes the frequencies above its cut-off frequency and removes the frequencies below it.</dd>
+  <dt>integrated loudness</dt><dd>The loudness of a whole track, in LUFS, measured with the gated average of ITU-R BS.1770.</dd>
+  <dt>latency</dt><dd>The time between the entry of a signal into a system and its exit; one block of 256 samples at 48 kHz is 5.33 ms.</dd>
+  <dt>limiter</dt><dd>A compressor with a very high ratio that holds every peak below a ceiling.</dd>
+  <dt>loudness</dt><dd>The perceived level of a whole track, measured by the algorithm of ITU-R BS.1770.</dd>
+  <dt>loudness normalization</dt><dd>The adjustment of the playback gain by a service, so that every track plays at the same integrated loudness.</dd>
+  <dt>LUFS</dt><dd>Loudness units relative to full scale, the unit of loudness; identical to LKFS of ITU-R BS.1770.</dd>
+  <dt>make-up gain</dt><dd>A fixed gain after a compressor that raises the whole track.</dd>
+  <dt>mastering</dt><dd>The last step of production, which prepares the master file from the final mix.</dd>
+  <dt>microphone sensitivity</dt><dd>The output voltage of a microphone at 1 Pa (94 dB SPL), in mV per pascal or dBV per pascal.</dd>
+  <dt>mix</dt><dd>The sum of all tracks, each with its own level and its own position between left and right.</dd>
+  <dt>noise floor</dt><dd>The highest noise in a chain, below which no signal is usable.</dd>
+  <dt>Nyquist frequency</dt><dd>Half the sample rate, the highest frequency that a sampled signal can hold.</dd>
+  <dt>parametric equalizer</dt><dd>An equalizer with bands that each have a center frequency, a gain, and a Q factor.</dd>
+  <dt>preamplifier (preamp)</dt><dd>The amplifier that raises the small microphone voltage to a usable level.</dd>
+  <dt>Q factor</dt><dd>The center frequency of a band divided by its bandwidth; a higher Q is a narrower band.</dd>
+  <dt>reference value</dt><dd>The fixed value with which a decibel compares; the suffix of the unit names it.</dd>
+  <dt>release time</dt><dd>The time a compressor takes to remove its gain reduction after the input falls below the threshold.</dd>
+  <dt>sample rate</dt><dd>The number of measurements per second of a converter, for example 48,000 per second.</dd>
+  <dt>signal chain</dt><dd>The sequence of devices that a sound passes from the source to the listener.</dd>
+  <dt>sound pressure level (dB SPL)</dt><dd>The sound pressure in decibels relative to 20 µPa; 1 Pa is 94 dB SPL.</dd>
+  <dt>threshold</dt><dd>The level above which a compressor acts.</dd>
+  <dt>true peak</dt><dd>The highest level of the signal between the samples, in dBTP, found with a raised sample rate in the meter.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>High: verified in the original text of a primary source, or calculated and checked. Medium: one good source, or a copy of the primary text. Low: not verified. Given: an example value chosen for this page. All web pages were opened as text on 12 October 2026.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> Spotify for Artists, "Loudness normalization". Target −14 dB LUFS by ITU 1770. Negative and positive gain, with 1 dB of headroom. The example: −20 LUFS with a true peak of −5 lifted to −16 LUFS. The settings −11, −14, and −19. The limiter at −1 dB with 5 ms attack and 100 ms decay. <a href="https://support.spotify.com/us/artists/article/loudness-normalization/">support.spotify.com</a></li>
+  <li><span class="conf high">High</span> EBU R 128 (2023), "Loudness normalisation and permitted maximum level of audio signals". Target −23.0 LUFS, tolerance ±0.5 LU, and ±1.0 LU for live programmes. Maximum true peak −1 dBTP. <a href="https://tech.ebu.ch/docs/r/r128.pdf">tech.ebu.ch</a></li>
+  <li><span class="conf high">High</span> ITU-R BS.1770-5 (2023), "Algorithms to measure audio programme loudness and true-peak audio level". K-weighting, mean square, channel weights, 400 ms blocks with 75% overlap, gates at −70 LKFS and −10 dB relative, the name LKFS. <a href="https://www.itu.int/rec/R-REC-BS.1770">itu.int</a></li>
+  <li><span class="conf high">High</span> EBU R68 (2000), "Alignment level in digital audio production equipment". The alignment level is 18 dB below the maximum coding level. <a href="https://tech.ebu.ch/docs/r/r068.pdf">tech.ebu.ch</a></li>
+  <li><span class="conf high">High</span> Focusrite, Scarlett 2i2 4th Generation, specifications. Microphone input: maximum input level 16 dBu, gain range 69 dB, equivalent input noise −127 dBu (A-weighted), dynamic range 116 dB (A-weighted). Resolution 24-bit/192 kHz. <a href="https://focusrite.com/products/scarlett-2i2">focusrite.com</a></li>
+  <li><span class="conf high">High</span> Audio-Technica, AT2020 specifications. Open circuit sensitivity −37 dB (14.1 mV) re 1 V at 1 Pa. Noise 20 dB SPL. Maximum input sound level 144 dB SPL. Phantom power 48 V. <a href="https://www.audio-technica.com/en-us/at2020">audio-technica.com</a></li>
+  <li><span class="conf medium">Medium</span> Shure SM58 specifications, read in the Wikipedia article "Shure SM58", which copies the Shure data sheet. Sensitivity −54.5 dBV per pascal (1.85 mV) at 1 kHz, 1 Pa = 94 dB SPL, cardioid, dynamic. The Shure pages refused the download, so the primary text was not opened. <a href="https://en.wikipedia.org/wiki/Shure_SM58">en.wikipedia.org</a></li>
+  <li><span class="conf medium">Medium</span> Apple, "Apple Digital Masters" (technology brief). 24-bit recording and sample rates of 48 to 192 kHz as the production standard. Sample rate conversion through a 32-bit floating point file. Sound Check as loudness normalization, without a stated target. <a href="https://www.apple.com/itunes/docs/apple-digital-masters.pdf">apple.com</a></li>
+  <li><span class="conf medium">Medium</span> Sound On Sound, "Gain Staging In Your DAW Software". Channel meters configured with yellow from −18 to −10 dBFS as the healthy range. The origin of sample peak meters in the time of tape. <a href="https://www.soundonsound.com/techniques/gain-staging-your-daw-software">soundonsound.com</a></li>
+  <li><span class="conf medium">Medium</span> Wikipedia, "Sound pressure". Reference 20 µPa, 1 Pa ≈ 94 dB. Table of examples: normal conversation at 1 m 40 to 60 dB, very calm room 20 to 30 dB (without citation). Pain limit 120 to 134 dB. Loudest human voice 135 dB at 1 inch. <a href="https://en.wikipedia.org/wiki/Sound_pressure">en.wikipedia.org</a></li>
+  <li><span class="conf medium">Medium</span> Wikipedia, "Decibel" (doubling of voltage 6.02 dB, of power 3.01 dB). "Line level" (+4 dBu = 1.228 V, −10 dBV = 0.316 V, the 600 Ω origin of dBu). "dBFS" (EBU R68 +18 dBu at 0 dBFS). "Hearing range" (20 to 20,000 Hz). <a href="https://en.wikipedia.org/wiki/Line_level">en.wikipedia.org</a></li>
+  <li><span class="conf medium">Medium</span> Wikipedia, "Audio bit depth": signal-to-quantization-noise ratio 1.76 + 6.02 × b dB, 98.09 dB for 16 bits and 146.26 dB for 24 bits. "Sampling (signal processing)": Nyquist frequency, 44.1 and 48 kHz, the AES recommendation of 48 kHz. "Nyquist–Shannon sampling theorem". "Latency (audio)": typical 0.5 to 10 ms, up to 30 ms. <a href="https://en.wikipedia.org/wiki/Audio_bit_depth">en.wikipedia.org</a></li>
+  <li><span class="conf medium">Medium</span> Wikipedia, "Dynamic range compression": threshold, the 4:1 example, attack and release, knee, make-up gain, and the statement that a downward compressor only reduces. "Audio equalization": the three settings of a parametric band. "Q factor". "Audio mixing (recorded music)". <a href="https://en.wikipedia.org/wiki/Dynamic_range_compression">en.wikipedia.org</a></li>
+  <li><span class="conf medium">Medium</span> Wikipedia, "Microphone" (dynamic and condenser principle, proximity effect, sensitivity). "Microphone practice" (3-to-1 rule). "Phantom power" (IEC 61938: 48, 24, and 12 V). "Balanced audio". "Audio feedback". "Reverberation" (T60). "Dither". "LUFS". "EBU R 128" (true peak between samples, loudness range). "Loudness war". "Mastering (audio)". <a href="https://en.wikipedia.org/wiki/Microphone">en.wikipedia.org</a></li>
+  <li><span class="conf given">Given</span> Example values of this page: the voice at 94 dB SPL with peaks +12 dB. The vocal track at −6 and −30 dBFS. The compressor settings −20 dBFS, 4:1, 10 ms, 100 ms, +10 dB. The equalizer bands. The masters A, B, and C. All derived numbers are calculated from them with the formulas on the page.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
