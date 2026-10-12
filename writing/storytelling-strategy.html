@@ -1,0 +1,1116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Storytelling Strategy</title>
+<style>
+/* ---------- Typefaces. One text typeface, a system serif, so the page needs no external font.
+   One typeface for everything is the rule of the Romanelli site (Suisse Int'l there). ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Type scale. One fluid scale, five steps, so every size on the page is one of these.
+   The scale follows the Romanelli site: small print 14 px, text 16 to 22 px, display large. ---------- */
+:root {
+  --step--1: clamp(0.9rem, 0.86rem + 0.2vw, 0.98rem);   /* small print: meta line, sources, captions */
+  --step-0: clamp(1.06rem, 1rem + 0.3vw, 1.2rem);        /* running text */
+  --step-1: clamp(1.16rem, 1.1rem + 0.35vw, 1.3rem);     /* the short answer */
+  --step-2: clamp(1.4rem, 1.22rem + 0.9vw, 1.8rem);      /* section heading */
+  --step-3: clamp(2.1rem, 1.3rem + 3.6vw, 3.5rem);       /* page title */
+  /* Spacing scale: 16, 24, 40, 64 px, and one large step above the title. */
+  --space-1: 1rem;
+  --space-2: 1.5rem;
+  --space-3: 2.5rem;
+  --space-4: 4rem;
+  --space-top: clamp(3rem, 9vw, 6.5rem);
+  /* The measure of the text column, the side gutter, and the width of the wide stage (see below). */
+  --measure: 40rem;
+  --gutter: 1rem;
+  --wide: 56rem;
+}
+
+/* ---------- Colour tokens. Ink and paper from the Romanelli site (ink #292b34, paper #f9f6f0),
+   and three accents, each with one fixed role, so a colour always means the same kind of thing:
+     terracotta (--accent)   the reader's path: links, key terms, the short answer, the self-check
+     teal (--accent2)        the evidence: worked examples, figures, tables, section headings
+     ochre (--accent3)       the reader's own work: the guess box, the part labels
+   Chart series and confidence labels keep their own colours because there the colour is information. ---------- */
+:root {
+  --bg: #f9f6f0;
+  --surface: #efece7;
+  --text: #292b34;
+  --muted: #5f6168;
+  --border: rgb(41 43 52 / 22%);
+  --accent: #a6472a;
+  --accent-soft: #f3e6df;
+  --accent2: #1a6460;
+  --accent2-soft: #e3efed;
+  --accent3: #7d5a0c;
+  --accent3-soft: #f5ecd6;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e0ded9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1c22;
+    --surface: #28292e;
+    --text: #f9f6f0;
+    --muted: #aeb0b6;
+    --border: rgb(249 246 240 / 32%);
+    --accent: #f0a58f;
+    --accent-soft: #2e2320;
+    --accent2: #7fd0c9;
+    --accent2-soft: #1e2b2a;
+    --accent3: #eac066;
+    --accent3-soft: #2c2719;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #3a3b3f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1c22;
+  --surface: #28292e;
+  --text: #f9f6f0;
+  --muted: #aeb0b6;
+  --border: rgb(249 246 240 / 32%);
+  --accent: #f0a58f;
+  --accent-soft: #2e2320;
+  --accent2: #7fd0c9;
+  --accent2-soft: #1e2b2a;
+  --accent3: #eac066;
+  --accent3-soft: #2c2719;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #3a3b3f;
+  color-scheme: dark;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space-top) var(--gutter) var(--space-4);
+}
+
+/* Headings carry the structure through size and space. The title is large and set tight, as on
+   the Romanelli site. No rule across the page, except one short mark above each section
+   heading, in the colour of the heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: var(--step-3);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-1);
+}
+h2 {
+  font-size: var(--step-2);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--accent2);
+  margin-top: var(--space-4);
+  margin-bottom: 0.8rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 2px solid var(--accent2);
+  margin-bottom: var(--space-2);
+}
+h3 { font-size: 1.15em; margin-top: var(--space-3); margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+/* A link is set in the accent, with a thin underline. */
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: var(--step--1);
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line of small print under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  margin: 0 0 var(--space-3);
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 var(--space-2); }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  background: var(--accent-soft);
+  border-top: 2px solid var(--accent);
+  padding: 1.05rem 1.3rem 1.15rem;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  margin-bottom: var(--space-3);
+}
+.bottom-line .label { color: var(--accent); }
+.example { border-left: 2px solid var(--accent2); padding-left: 1.4rem; }
+.example .label { color: var(--accent2); }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; }
+.assume { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.assume .label { color: var(--accent); }
+.predict { background: var(--accent3-soft); border-left: 2px solid var(--accent3); padding: 0.9rem 1.3rem 1rem 1.4rem; }
+.predict .label { color: var(--accent3); }
+.recap { background: var(--accent2-soft); border-top: 2px solid var(--accent2); padding: 1rem 1.3rem 1.1rem; }
+.recap .label { color: var(--accent2); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 2px solid var(--accent2);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 var(--space-3);
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent2);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; color: var(--accent2); margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--accent2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.95em;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: var(--step--1);
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 0.95em; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--accent2);
+  color: var(--accent2);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 0.95em; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--accent2-soft); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+  margin-bottom: var(--space-2);
+}
+figure .fig-title { font-weight: 600; color: var(--accent2); margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: var(--step--1); margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 0.95em; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-size: var(--step--1); margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: var(--step--1);
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--accent2); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 var(--space-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1em; font-weight: 600; color: var(--accent2); }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--accent);
+  padding-top: 1rem;
+  margin: 0 0 var(--space-3);
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 var(--space-2);
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 400;
+}
+/* An optional block directly after a comparison or a figure shares their closing rule,
+   so the page does not show two rules with an empty row between them. */
+.compare + details.optional, figure + details.optional {
+  border-top: 0;
+  margin-top: calc(-1 * var(--space-2));
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: var(--space-4) 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--accent3);
+  font-size: var(--step--1);
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--accent3);
+}
+.part + h2 { margin-top: var(--space-2); }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92em;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1em;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 0.95em; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- The wide stage. On a wide screen the title, the figures, and the tables are wider than
+   the text column and centred on it. The text keeps its measure; the work of the page gets the room.
+   On the Romanelli site the images are wider than the text grid, and the change of width gives the
+   page its rhythm. ---------- */
+@media (min-width: 64rem) {
+  h1, .meta, figure, .table-wrap {
+    width: var(--wide);
+    margin-left: calc((var(--measure) - 2 * var(--gutter) - var(--wide)) / 2);
+  }
+  /* The drawing of a figure is wide; its title and its text stay in the text column, so that
+     no line of running text is longer than the measure. */
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source {
+    width: calc(var(--measure) - 2 * var(--gutter));
+    margin-left: calc((var(--wide) - var(--measure) + 2 * var(--gutter)) / 2);
+  }
+}
+
+/* ---------- Narrow screens. The fluid scale already lowers every size; the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  main { padding-bottom: var(--space-3); }
+  h2 { margin-top: var(--space-3); }
+  .bottom-line { margin-bottom: var(--space-2); }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  h1, .meta, figure, .table-wrap,
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source { width: auto; margin-left: 0; }
+  nav.contents { display: none; }
+  .bottom-line, .recap, .predict { background: none; padding-left: 0; padding-right: 0; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: Base44, Wix, NYU, Pixar, TechCrunch, Calcalist, Gutenberg, Explorium, Shlomo, Maor, Icarus, Oedipus, Cinderella, Hedges, Freytag, Minto, Vonnegut, US, LinkedIn, Lovable, Bolt, Reagan, Braddock, Dillard, Heath, Adams, Parker, Stone, Campbell, Vogler, Field, Horace, Syd, Kenn, Trey, Matt, Builder, EPJ -->
+<h1>What is a good storytelling strategy, and how do you apply it to a true story about a company?</h1>
+<p class="meta">Written 2026-10-11 · Reading time: about 38 minutes for the whole page, about 25 minutes for the main path · You need to know: nothing about writing. The data section uses two statistics, and the page explains both.</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>A good strategy has three parts. <strong>Structure:</strong> one person, one routine, one event that breaks the routine, a chain of consequences, one turning point, and a new routine. The story spine of Kenn Adams (1991) gives this structure in eight lines. <strong>Links:</strong> join every two events with "therefore" or "but", never with "and then". <strong>Shape:</strong> the fortune of the person must move, and the reader must see it move.</p>
+  <p>The evidence that this matters is measured. In 37 studies with 33,078 participants, readers understood and recalled a story better than an essay with the same content. The advantage was 0.55 standard deviations (Mar and others, 2021). Stories also moved beliefs and behaviour, but only a little: correlations of 0.17 to 0.23 (Braddock and Dillard, 2016).</p>
+  <p>In 1,327 novels, six basic shapes of fortune appeared. The three shapes with the most downloads were the ones with a fall: "Icarus", "Oedipus" and "two men in a hole" (Reagan and others, 2016). So a true story should not hide its bad moments. The bad moments are the parts that readers come for.</p>
+  <p>The example on this page is the public story of Base44. One person built that company and sold it to Wix for US$80 million in 2025. The same facts appear two times: as a list, and as a story.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>You want to tell true stories: about a company, a product, or a project. You cannot invent events. The strategy chooses the start, the end, and the links between the facts.</li>
+    <li>Your stories are short: 300 to 1,500 words. The page says in section 4 which structure fits a longer text.</li>
+    <li>The Base44 facts come from your own notes about Base44, with the sources that those notes name. This page did not verify them again.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li class="core"><a href="#example">One example: the Base44 facts as a list, and as a story in eight lines</a></li>
+    <li class="core"><a href="#rule">The rule: a routine, a break, a chain of causes, a turning point</a></li>
+    <li><a href="#data">More detail: stories with a fall are downloaded most, and stories are recalled 0.55 standard deviations better</a></li>
+    <li><a href="#compare">More detail: Base44 against Builder.ai: the same promise, two shapes, and which structure fits which text</a></li>
+    <li class="core"><a href="#mistake">Wrong idea corrected: a timeline is not a story</a></li>
+    <li class="core"><a href="#limits">Limits: the evidence comes from novels and from reading tests, not from business stories</a></li>
+    <li><a href="#words">Words that you will hear</a></li>
+    <li class="core"><a href="#check">Check your understanding</a></li>
+    <li class="core"><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One example: the Base44 facts as a list, and as a story in eight lines</h2>
+<p>Here are the facts of Base44 in time order. Maor Shlomo, age 31, had founded the data company Explorium in 2017. At the end of 2024 he started Base44 as a side project. Base44 is a tool: you describe an app in plain language, and the tool builds the app with its database, user login, and hosting.</p>
+<p>He launched it in January 2025. It had 10,000 users after three weeks. In May 2025 it made a profit of US$189,000. On 18 June 2025, Wix bought it for about US$80 million in cash. By May 2026, Base44 made subscription revenue of US$150 million a year.</p>
+<p>This list is correct and complete. It is also not a story. A <dfn>story</dfn> (also called a narrative) is a text in which one event causes the next event, and a person changes because of the events. The list above is <dfn>exposition</dfn> (also called expository text), which is a text that states facts and explains them. The difference is not the facts. The difference is the links between the facts, and the person at the centre.</p>
+<p>The person at the centre is the <dfn>protagonist</dfn>: the one person whose fortune the story follows from the first line to the last line. In the Base44 story, the protagonist is Shlomo. Base44 is a product, and Wix is a company. Neither of them can want something or lose something. Shlomo can.</p>
+<p>The eight lines below use the <dfn>story spine</dfn>. The story spine is a template of eight sentence starts, created by the improvisation teacher Kenn Adams in 1991. Each line has one job. The worked example fills each line with Base44 facts and gives the reason for each choice.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the Base44 story on the story spine</span>
+  <ol class="steps">
+    <li><strong>Once upon a time</strong> there was an engineer, Maor Shlomo, who had already founded one company that raised about US$125 million.
+      <span class="why">Line 1 names the protagonist and the starting state. The reader needs a person before the reader needs a product.</span></li>
+    <li><strong>Every day,</strong> people who could not program paid companies such as Builder.ai US$20,000 for apps that cost US$35,000 to make.
+      <span class="why">Line 2 is the routine: the world as it was, with a problem that nobody had solved. Builder.ai lost US$15,000 on each app.</span></li>
+    <li><strong>But one day,</strong> at the end of 2024, AI (artificial intelligence) models became able to write a whole app correctly.
+      <span class="why">Line 3 is the <dfn>complication</dfn>: the one event that breaks the routine and creates the problem of the story. The story needs exactly one such event. Without it, nothing that follows has a reason.</span></li>
+    <li><strong>Because of that,</strong> Shlomo did not return to his old company and built Base44 alone, as a side project.
+      <span class="why">Line 4 is the first consequence. The word "because" forces you to show the cause. Here the cause is the new ability of the models.</span></li>
+    <li><strong>Because of that,</strong> Base44 hid the server, the database and the login from the user. 10,000 people used it within three weeks of the launch in January 2025.
+      <span class="why">Line 5 is the second consequence. Competitors such as Lovable and Bolt gave users code that they still had to deploy. Base44 did not.</span></li>
+    <li><strong>Because of that,</strong> the company earned money from the first day, and in May 2025 it made a profit of US$189,000 in one month.
+      <span class="why">Line 6 is the third consequence. The numbers show the rise. A rise without numbers is a claim.</span></li>
+    <li><strong>Until finally,</strong> on 18 June 2025, Wix bought Base44 for about US$80 million in cash, five months after the launch.
+      <span class="why">Line 7 is the <dfn>turning point</dfn>: the event after which the protagonist cannot return to the routine of line 2.</span></li>
+    <li><strong>And ever since then,</strong> Base44 has grown inside Wix to US$150 million of subscription revenue a year. The next question is whether a single person can repeat this.
+      <span class="why">Line 8 is the new routine. It states the change, and it tells the reader what the story means for the reader.</span></li>
+  </ol>
+  <p><strong>Result:</strong> the same facts, but now every line answers the question "why did this happen?". The reader can predict and can be surprised. The list in the first paragraph allows neither.</p>
+</div>
+
+<p>The spine is not the text that you publish. It is the plan of the text. The published paragraph below comes from the spine. It has 123 words, and every sentence after the second one begins with a cause or a contrast.</p>
+<p class="quoted">Maor Shlomo had already built one company. At the end of 2024, AI models crossed a threshold: a generated app ran on the first try. So Shlomo built Base44 alone, as a side project, for people who cannot program. Competitors gave their users code that still had to be deployed. Base44 hid the server, the database and the login. Therefore 10,000 people used it in the first three weeks after the launch in January 2025, and they paid from the first day. In May 2025 the one-person company made US$189,000 of profit. Five months after the launch, on 18 June 2025, Wix bought it for about US$80 million in cash. Inside Wix, it reached US$150 million of yearly subscription revenue by May 2026.</p>
+
+<h2 id="rule">2. The rule: a routine, a break, a chain of causes, a turning point</h2>
+<p>Figure 1 shows the eight lines of the story spine as points on a curve. The vertical position is the fortune of the protagonist. The horizontal position is the order of the lines.</p>
+
+<figure class="diagram">
+  <p class="fig-title">The story spine has five parts: a routine, one break, a chain of consequences, one turning point, and a new routine.</p>
+  <p class="fig-sub">The eight lines of the story spine of Kenn Adams, drawn on the curve of fortune of the Base44 story. The numbers are the line numbers of the worked example.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 720 330" role="img" aria-label="Diagram of the story spine of Kenn Adams. Eight numbered points on a curve. Points 1 and 2, Once upon a time and Every day, are flat: the routine. Point 3, But one day, breaks the routine. Points 4 to 6, Because of that three times, rise step by step: the chain of consequences. Point 7, Until finally, is the highest point: the turning point. Point 8, And ever since then, is the new routine.">
+<defs><marker id="f1-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<line class="axis" x1="40" y1="270" x2="40" y2="40" marker-end="url(#f1-head)"/>
+<text class="axis-label" transform="translate(28 160) rotate(-90)" text-anchor="middle">fortune of the protagonist</text>
+<line class="axis" x1="40" y1="270" x2="680" y2="270"/>
+<text class="axis-label" x="370" y="325" text-anchor="middle">time in the story, from the first line to the last line</text>
+<line class="grid" x1="50.0" y1="300" x2="175.7" y2="300"/>
+<line class="grid" x1="50.0" y1="294" x2="50.0" y2="306"/>
+<line class="grid" x1="175.7" y1="294" x2="175.7" y2="306"/>
+<text x="112.9" y="290" font-size="13" text-anchor="middle" fill="var(--muted)">routine</text>
+<line class="grid" x1="221.4" y1="300" x2="518.6" y2="300"/>
+<line class="grid" x1="221.4" y1="294" x2="221.4" y2="306"/>
+<line class="grid" x1="518.6" y1="294" x2="518.6" y2="306"/>
+<text x="370.0" y="290" font-size="13" text-anchor="middle" fill="var(--muted)">break and chain of consequences</text>
+<line class="grid" x1="564.3" y1="300" x2="690.0" y2="300"/>
+<line class="grid" x1="564.3" y1="294" x2="564.3" y2="306"/>
+<line class="grid" x1="690.0" y1="294" x2="690.0" y2="306"/>
+<text x="627.1" y="290" font-size="13" text-anchor="middle" fill="var(--muted)">turning point, new routine</text>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="70.0,220.0 155.7,220.0 241.4,240.0 327.1,205.0 412.9,165.0 498.6,125.0 584.3,60.0 670.0,75.0"/>
+<circle cx="70.0" cy="220.0" r="12" fill="var(--s1)"/>
+<text x="70.0" y="225.0" font-size="13" font-weight="650" text-anchor="middle" fill="var(--paper, #f9f6f0)">1</text>
+<text x="58.0" y="198.0" font-size="13" text-anchor="start">Once upon a time</text>
+<circle cx="155.7" cy="220.0" r="12" fill="var(--s1)"/>
+<text x="155.7" y="225.0" font-size="13" font-weight="650" text-anchor="middle" fill="var(--paper, #f9f6f0)">2</text>
+<text x="155.7" y="250.0" font-size="13" text-anchor="middle">Every day</text>
+<circle cx="241.4" cy="240.0" r="12" fill="var(--s1)"/>
+<text x="241.4" y="245.0" font-size="13" font-weight="650" text-anchor="middle" fill="var(--paper, #f9f6f0)">3</text>
+<text x="253.4" y="266.0" font-size="13" text-anchor="start">But one day</text>
+<circle cx="327.1" cy="205.0" r="12" fill="var(--s1)"/>
+<text x="327.1" y="210.0" font-size="13" font-weight="650" text-anchor="middle" fill="var(--paper, #f9f6f0)">4</text>
+<text x="339.1" y="231.0" font-size="13" text-anchor="start">Because of that</text>
+<circle cx="412.9" cy="165.0" r="12" fill="var(--s1)"/>
+<text x="412.9" y="170.0" font-size="13" font-weight="650" text-anchor="middle" fill="var(--paper, #f9f6f0)">5</text>
+<text x="424.9" y="191.0" font-size="13" text-anchor="start">Because of that</text>
+<circle cx="498.6" cy="125.0" r="12" fill="var(--s1)"/>
+<text x="498.6" y="130.0" font-size="13" font-weight="650" text-anchor="middle" fill="var(--paper, #f9f6f0)">6</text>
+<text x="510.6" y="151.0" font-size="13" text-anchor="start">Because of that</text>
+<circle cx="584.3" cy="60.0" r="12" fill="var(--s1)"/>
+<text x="584.3" y="65.0" font-size="13" font-weight="650" text-anchor="middle" fill="var(--paper, #f9f6f0)">7</text>
+<text x="584.3" y="38.0" font-size="13" text-anchor="middle">Until finally</text>
+<circle cx="670.0" cy="75.0" r="12" fill="var(--s1)"/>
+<text x="670.0" y="80.0" font-size="13" font-weight="650" text-anchor="middle" fill="var(--paper, #f9f6f0)">8</text>
+<text x="682.0" y="105.0" font-size="13" text-anchor="end">And ever since then</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each circle is one line of the spine, in order from left to right. A higher circle means a better situation for the protagonist. The brackets below the curve group the lines into the five parts.</p>
+  <p class="fig-source">Source: the eight lines are from Kenn Adams, "Back to the Story Spine" (2013). The curve is the Base44 example of this page, drawn by hand. The heights are not measured values.</p>
+</figure>
+
+<p>Each part has one job, and the table gives the job of each line with the Base44 content. The third line is the complication. Screenwriters call the same event the inciting incident. The seventh line is the turning point. In a drama, the turning point is also called the climax.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Each line of the story spine has one job, and the Base44 story fills each job with one fact</caption>
+  <thead>
+    <tr><th class="num">Line</th><th>Sentence start</th><th>Job of the line</th><th>Base44 content</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row" class="num">1</th><td>Once upon a time</td><td>Name the protagonist and the starting state.</td><td>Shlomo, an engineer who founded a company before.</td></tr>
+    <tr><th scope="row" class="num">2</th><td>Every day</td><td>Show the routine and the unsolved problem.</td><td>Apps for non-programmers cost more than their price.</td></tr>
+    <tr class="highlight"><th scope="row" class="num">3</th><td>But one day</td><td>The complication: one event breaks the routine.</td><td>AI models can write a whole app, end of 2024.</td></tr>
+    <tr><th scope="row" class="num">4</th><td>Because of that</td><td>First consequence.</td><td>He builds Base44 alone.</td></tr>
+    <tr><th scope="row" class="num">5</th><td>Because of that</td><td>Second consequence.</td><td>10,000 users in three weeks.</td></tr>
+    <tr><th scope="row" class="num">6</th><td>Because of that</td><td>Third consequence.</td><td>Profit of US$189,000 in May 2025.</td></tr>
+    <tr class="highlight"><th scope="row" class="num">7</th><td>Until finally</td><td>The turning point: no return to the old routine.</td><td>Wix buys it for US$80 million, 18 June 2025.</td></tr>
+    <tr><th scope="row" class="num">8</th><td>And ever since then</td><td>The new routine, and what it means for the reader.</td><td>US$150 million a year inside Wix.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> one row per line of the spine, in order. The two highlighted rows are the two events that every story needs: the complication and the turning point. Pixar's story artist Emma Coats published a six-line version of the same template as rule 4 of "Pixar's 22 rules of storytelling". It drops one "Because of that" and the last line.</p>
+
+<h3>The links: "therefore" and "but", never "and then"</h3>
+<p>The second part of the strategy is a test for the links between events. Trey Parker and Matt Stone write the television series South Park. They described the test in a class at New York University (NYU) in 2011.</p>
+<p>They write the events of an episode on a board. Then they read the words between every two events. If the words are "and then", the episode has a problem. The words must be "therefore" or "but".</p>
+<p>This page calls the test the <dfn>but-therefore rule</dfn>. Every two consecutive events in a story are joined by a cause ("therefore") or by a contrast ("but"). "And then" joins two events only in time. "Therefore" joins them by cause. "But" joins them by a blocked expectation. Figure 2 applies the rule to the Base44 facts.</p>
+
+<figure class="diagram">
+  <p class="fig-title">"But" and "therefore" make each event the cause of the next one; "and then" only puts events in time order.</p>
+  <p class="fig-sub">The same Base44 facts in two chains. Chain A is the list from the first paragraph of section 1. Chain B is the story.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 720 330" role="img" aria-label="Two chains of five events from the Base44 story. The upper chain joins the events with the words and then: launch, then 10,000 users, then profit, then the sale, then revenue growth. The lower chain joins them with therefore and but: models cross a threshold, therefore Shlomo builds Base44 alone, but competitors ship code that the user must still deploy, therefore Base44 hides the server and reaches 10,000 users in three weeks, therefore Wix buys it for 80 million US dollars.">
+<defs><marker id="f2-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/></marker></defs>
+<text x="10" y="30" font-size="13" font-weight="650">A. A list of events: each link is "and then"</text>
+<rect class="node" x="10" y="42" width="98" height="70" rx="6" stroke-dasharray="6 4"/>
+<text class="node-name" x="59.0" y="64" font-size="13" text-anchor="middle">Launch,</text>
+<text class="node-name" x="59.0" y="81" font-size="13" text-anchor="middle">January 2025</text>
+<line class="arrow" x1="110" y1="77" x2="158" y2="77" marker-end="url(#f2-head)"/>
+<text class="arrow-label" x="134.0" y="70" font-size="12" text-anchor="middle">and then</text>
+<rect class="node" x="160" y="42" width="98" height="70" rx="6" stroke-dasharray="6 4"/>
+<text class="node-name" x="209.0" y="64" font-size="13" text-anchor="middle">10,000 users</text>
+<text class="node-name" x="209.0" y="81" font-size="13" text-anchor="middle">in 3 weeks</text>
+<line class="arrow" x1="260" y1="77" x2="308" y2="77" marker-end="url(#f2-head)"/>
+<text class="arrow-label" x="284.0" y="70" font-size="12" text-anchor="middle">and then</text>
+<rect class="node" x="310" y="42" width="98" height="70" rx="6" stroke-dasharray="6 4"/>
+<text class="node-name" x="359.0" y="64" font-size="13" text-anchor="middle">Profit of</text>
+<text class="node-name" x="359.0" y="81" font-size="13" text-anchor="middle">US$189,000</text>
+<text class="node-name" x="359.0" y="98" font-size="13" text-anchor="middle">in May 2025</text>
+<line class="arrow" x1="410" y1="77" x2="458" y2="77" marker-end="url(#f2-head)"/>
+<text class="arrow-label" x="434.0" y="70" font-size="12" text-anchor="middle">and then</text>
+<rect class="node" x="460" y="42" width="98" height="70" rx="6" stroke-dasharray="6 4"/>
+<text class="node-name" x="509.0" y="64" font-size="13" text-anchor="middle">Sale to Wix,</text>
+<text class="node-name" x="509.0" y="81" font-size="13" text-anchor="middle">US$80 million</text>
+<line class="arrow" x1="560" y1="77" x2="608" y2="77" marker-end="url(#f2-head)"/>
+<text class="arrow-label" x="584.0" y="70" font-size="12" text-anchor="middle">and then</text>
+<rect class="node" x="610" y="42" width="98" height="70" rx="6" stroke-dasharray="6 4"/>
+<text class="node-name" x="659.0" y="64" font-size="13" text-anchor="middle">Revenue:</text>
+<text class="node-name" x="659.0" y="81" font-size="13" text-anchor="middle">US$150 million</text>
+<text class="node-name" x="659.0" y="98" font-size="13" text-anchor="middle">a year</text>
+<text x="10" y="180" font-size="13" font-weight="650">B. A story: each link is "therefore" or "but"</text>
+<rect class="node" x="10" y="192" width="98" height="70" rx="6"/>
+<text class="node-name" x="59.0" y="214" font-size="13" text-anchor="middle">Late 2024: AI</text>
+<text class="node-name" x="59.0" y="231" font-size="13" text-anchor="middle">models write</text>
+<text class="node-name" x="59.0" y="248" font-size="13" text-anchor="middle">a whole app</text>
+<line class="arrow" x1="110" y1="227" x2="158" y2="227" marker-end="url(#f2-head)"/>
+<text class="arrow-label" x="134.0" y="220" font-size="12" text-anchor="middle">therefore</text>
+<rect class="node" x="160" y="192" width="98" height="70" rx="6"/>
+<text class="node-name" x="209.0" y="214" font-size="13" text-anchor="middle">Shlomo builds</text>
+<text class="node-name" x="209.0" y="231" font-size="13" text-anchor="middle">Base44 alone</text>
+<line class="arrow" x1="260" y1="227" x2="308" y2="227" marker-end="url(#f2-head)"/>
+<text class="arrow-label" x="284.0" y="220" font-size="12" text-anchor="middle">but</text>
+<rect class="node" x="310" y="192" width="98" height="70" rx="6"/>
+<text class="node-name" x="359.0" y="214" font-size="13" text-anchor="middle">Competitors</text>
+<text class="node-name" x="359.0" y="231" font-size="13" text-anchor="middle">ship code you</text>
+<text class="node-name" x="359.0" y="248" font-size="13" text-anchor="middle">must deploy</text>
+<line class="arrow" x1="410" y1="227" x2="458" y2="227" marker-end="url(#f2-head)"/>
+<text class="arrow-label" x="434.0" y="220" font-size="12" text-anchor="middle">therefore</text>
+<rect class="node" x="460" y="192" width="98" height="70" rx="6"/>
+<text class="node-name" x="509.0" y="214" font-size="13" text-anchor="middle">Base44 hides</text>
+<text class="node-name" x="509.0" y="231" font-size="13" text-anchor="middle">the server:</text>
+<text class="node-name" x="509.0" y="248" font-size="13" text-anchor="middle">10,000 users</text>
+<line class="arrow" x1="560" y1="227" x2="608" y2="227" marker-end="url(#f2-head)"/>
+<text class="arrow-label" x="584.0" y="220" font-size="12" text-anchor="middle">therefore</text>
+<rect class="node" x="610" y="192" width="98" height="70" rx="6"/>
+<text class="node-name" x="659.0" y="214" font-size="13" text-anchor="middle">Wix buys it,</text>
+<text class="node-name" x="659.0" y="231" font-size="13" text-anchor="middle">US$80 million</text>
+<text x="10" y="298" font-size="13" fill="var(--muted)">Dashed boxes: events in time order only. Solid boxes: each event is the cause of the next one.</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is one event. Each arrow points from an earlier event to a later event. The word on the arrow is the link that the text uses between the two events. Read each chain from left to right.</p>
+  <p class="fig-source">Source: the rule is from the NYU class of Parker and Stone (2011). Keith Cronin in Writer Unboxed (2015) and David Perell describe the class. The events are from the Base44 notes.</p>
+</figure>
+
+<p>Chain B contains one "but". A "but" is a blocked expectation: the reader expects that competitors with more money win, but Base44 hid the server and they did not. Each "but" is a small fall in the fortune of the protagonist. Each "therefore" is a step up or a step down that the reader can predict. A story needs both. A chain of only "therefore" is a proof, and a proof has no surprise.</p>
+
+<h3>The shape: the fortune must move, and the reader must see it move</h3>
+<p>The third part of the strategy is the <dfn>emotional arc</dfn>. The emotional arc is the curve of the fortune of the protagonist from the start of the story to the end. The writer Kurt Vonnegut described in a book of 1981 his idea that stories have a small number of such curves. He drew a story on two axes: time from beginning to end, and fortune from ill to great. Section 3 shows what a measurement of 1,327 novels found.</p>
+<p>For a true story, the facts fix the direction of the curve. You cannot make a failure into a success. But you choose two things. You choose the start. A story that starts in a bad routine has a different arc from a story that starts in a good one. And you choose which "but" events you keep, because each "but" is a visible fall.</p>
+<p>The Base44 story in section 1 starts in the bad routine of Builder.ai, so the curve starts low and rises. The same facts, started at the launch, give a flat curve that only rises at the sale.</p>
+
+<h2 id="data">3. More detail: stories with a fall are downloaded most, and stories are recalled 0.55 standard deviations better</h2>
+
+<div class="box predict">
+  <span class="label">Guess first</span>
+  <p>The study below measured 1,327 novels. Which shape of fortune was the most common: a rise, a fall, or a fall followed by a rise? Choose one before you continue.</p>
+</div>
+
+<p>Andrew Reagan and four colleagues at the University of Vermont measured the emotional arc of 1,327 English novels from the free library Project Gutenberg. For each novel, they scored the words of each part of the text with a dictionary of word happiness. The curve of these scores along the text is the emotional arc of the novel. Then they searched for the basic shapes from which all the curves are built. They found six.</p>
+<p>The study used only books with 20,000 to 100,000 words and more than 40 downloads. Figure 3 shows the six shapes, plus one combined shape, with the share of the novels and the downloads.</p>
+<p>The study measured success with the number of downloads of each novel from Project Gutenberg. The figure shows the <dfn>median</dfn>: the middle value, with half of the novels above it and half below it. The study reports the mean too, but the authors write that a few novels with very many downloads make the mean unreliable. This page follows their advice and uses the median.</p>
+
+<figure>
+  <p class="fig-title">The three arcs with the most downloads all contain a fall. Icarus, Oedipus and two men in a hole have medians of 97, 94 and 105.5. The other four arcs have 76 to 89.</p>
+  <p class="fig-sub">Seven shapes of the emotional arc in 1,327 novels. "Two men in a hole" is the name that this page gives to the shape with two falls and two rises. The study calls it "two sequential Man in a hole arcs". The share is the share of the 1,327 novels that are closest to each shape. The seven shapes cover 85.8% of the novels.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 720 340" role="img" aria-label="Seven small panels, one for each emotional arc found by Reagan and others in 1,327 novels. Each panel shows the shape of the arc, the share of the novels, and the median number of downloads. Rags to riches, rise, 10.0 percent, median 80. Tragedy, fall, 30.7 percent, 83. Man in a hole, fall then rise, 11.2 percent, 76. Icarus, rise then fall, 12.9 percent, 97. Cinderella, rise fall rise, 5.5 percent, 89. Oedipus, fall rise fall, 10.5 percent, 94. Two men in a hole, two dips, 5.0 percent, 105.5. The three arcs with the highest medians are Icarus, Oedipus and two men in a hole.">
+<line class="grid" x1="20" y1="48.0" x2="170" y2="48.0"/>
+<polyline fill="none" stroke="var(--s2)" stroke-width="2.5" stroke-dasharray="6 4" points="20.0,75.0 23.8,73.7 27.5,72.3 31.2,71.0 35.0,69.6 38.8,68.2 42.5,66.9 46.2,65.5 50.0,64.2 53.8,62.9 57.5,61.5 61.2,60.1 65.0,58.8 68.8,57.5 72.5,56.1 76.2,54.8 80.0,53.4 83.8,52.0 87.5,50.7 91.2,49.4 95.0,48.0 98.8,46.6 102.5,45.3 106.2,44.0 110.0,42.6 113.8,41.2 117.5,39.9 121.2,38.5 125.0,37.2 128.8,35.9 132.5,34.5 136.2,33.1 140.0,31.8 143.8,30.5 147.5,29.1 151.2,27.8 155.0,26.4 158.8,25.0 162.5,23.7 166.2,22.3 170.0,21.0"/>
+<text x="20" y="100" font-size="13">Rags to riches</text>
+<text x="20" y="118" font-size="13" fill="var(--muted)">rise</text>
+<text x="20" y="136" font-size="13">10.0% of novels</text>
+<text x="20" y="154" font-size="13">median 80 downloads</text>
+<line class="grid" x1="196" y1="48.0" x2="346" y2="48.0"/>
+<polyline fill="none" stroke="var(--s2)" stroke-width="2.5" stroke-dasharray="6 4" points="196.0,21.0 199.8,22.3 203.5,23.7 207.2,25.1 211.0,26.4 214.8,27.8 218.5,29.1 222.2,30.4 226.0,31.8 229.8,33.1 233.5,34.5 237.2,35.9 241.0,37.2 244.8,38.5 248.5,39.9 252.2,41.2 256.0,42.6 259.8,44.0 263.5,45.3 267.2,46.6 271.0,48.0 274.8,49.4 278.5,50.7 282.2,52.0 286.0,53.4 289.8,54.8 293.5,56.1 297.2,57.5 301.0,58.8 304.8,60.1 308.5,61.5 312.2,62.9 316.0,64.2 319.8,65.5 323.5,66.9 327.2,68.2 331.0,69.6 334.8,71.0 338.5,72.3 342.2,73.7 346.0,75.0"/>
+<text x="196" y="100" font-size="13">Tragedy</text>
+<text x="196" y="118" font-size="13" fill="var(--muted)">fall</text>
+<text x="196" y="136" font-size="13">30.7% of novels</text>
+<text x="196" y="154" font-size="13">median 83 downloads</text>
+<line class="grid" x1="372" y1="48.0" x2="522" y2="48.0"/>
+<polyline fill="none" stroke="var(--s2)" stroke-width="2.5" stroke-dasharray="6 4" points="372.0,75.0 375.8,74.7 379.5,73.7 383.2,72.1 387.0,69.8 390.8,67.1 394.5,63.9 398.2,60.3 402.0,56.3 405.8,52.2 409.5,48.0 413.2,43.8 417.0,39.7 420.8,35.7 424.5,32.1 428.2,28.9 432.0,26.2 435.8,23.9 439.5,22.3 443.2,21.3 447.0,21.0 450.8,21.3 454.5,22.3 458.2,23.9 462.0,26.2 465.8,28.9 469.5,32.1 473.2,35.7 477.0,39.7 480.8,43.8 484.5,48.0 488.2,52.2 492.0,56.3 495.8,60.3 499.5,63.9 503.2,67.1 507.0,69.8 510.8,72.1 514.5,73.7 518.2,74.7 522.0,75.0"/>
+<text x="372" y="100" font-size="13">Man in a hole</text>
+<text x="372" y="118" font-size="13" fill="var(--muted)">fall, rise</text>
+<text x="372" y="136" font-size="13">11.2% of novels</text>
+<text x="372" y="154" font-size="13">median 76 downloads</text>
+<line class="grid" x1="548" y1="48.0" x2="698" y2="48.0"/>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="548.0,21.0 551.8,21.3 555.5,22.3 559.2,23.9 563.0,26.2 566.8,28.9 570.5,32.1 574.2,35.7 578.0,39.7 581.8,43.8 585.5,48.0 589.2,52.2 593.0,56.3 596.8,60.3 600.5,63.9 604.2,67.1 608.0,69.8 611.8,72.1 615.5,73.7 619.2,74.7 623.0,75.0 626.8,74.7 630.5,73.7 634.2,72.1 638.0,69.8 641.8,67.1 645.5,63.9 649.2,60.3 653.0,56.3 656.8,52.2 660.5,48.0 664.2,43.8 668.0,39.7 671.8,35.7 675.5,32.1 679.2,28.9 683.0,26.2 686.8,23.9 690.5,22.3 694.2,21.3 698.0,21.0"/>
+<text x="548" y="100" font-size="13" font-weight="650">Icarus</text>
+<text x="548" y="118" font-size="13" fill="var(--muted)">rise, fall</text>
+<text x="548" y="136" font-size="13">12.9% of novels</text>
+<text x="548" y="154" font-size="13" font-weight="650">median 97 downloads</text>
+<line class="grid" x1="20" y1="218.0" x2="170" y2="218.0"/>
+<polyline fill="none" stroke="var(--s2)" stroke-width="2.5" stroke-dasharray="6 4" points="20.0,245.0 23.8,244.3 27.5,242.1 31.2,238.5 35.0,233.9 38.8,228.3 42.5,222.2 46.2,215.9 50.0,209.7 53.8,203.9 57.5,198.9 61.2,195.0 65.0,192.3 68.8,191.1 72.5,191.3 76.2,193.1 80.0,196.2 83.8,200.5 87.5,205.7 91.2,211.7 95.0,218.0 98.8,224.3 102.5,230.3 106.2,235.5 110.0,239.8 113.8,242.9 117.5,244.7 121.2,244.9 125.0,243.7 128.8,241.0 132.5,237.1 136.2,232.1 140.0,226.3 143.8,220.1 147.5,213.8 151.2,207.7 155.0,202.1 158.8,197.5 162.5,193.9 166.2,191.7 170.0,191.0"/>
+<text x="20" y="270" font-size="13">Cinderella</text>
+<text x="20" y="288" font-size="13" fill="var(--muted)">rise, fall, rise</text>
+<text x="20" y="306" font-size="13">5.5% of novels</text>
+<text x="20" y="324" font-size="13">median 89 downloads</text>
+<line class="grid" x1="196" y1="218.0" x2="346" y2="218.0"/>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="196.0,191.0 199.8,191.7 203.5,193.9 207.2,197.5 211.0,202.1 214.8,207.7 218.5,213.8 222.2,220.1 226.0,226.3 229.8,232.1 233.5,237.1 237.2,241.0 241.0,243.7 244.8,244.9 248.5,244.7 252.2,242.9 256.0,239.8 259.8,235.5 263.5,230.3 267.2,224.3 271.0,218.0 274.8,211.7 278.5,205.7 282.2,200.5 286.0,196.2 289.8,193.1 293.5,191.3 297.2,191.1 301.0,192.3 304.8,195.0 308.5,198.9 312.2,203.9 316.0,209.7 319.8,215.9 323.5,222.2 327.2,228.3 331.0,233.9 334.8,238.5 338.5,242.1 342.2,244.3 346.0,245.0"/>
+<text x="196" y="270" font-size="13" font-weight="650">Oedipus</text>
+<text x="196" y="288" font-size="13" fill="var(--muted)">fall, rise, fall</text>
+<text x="196" y="306" font-size="13">10.5% of novels</text>
+<text x="196" y="324" font-size="13" font-weight="650">median 94 downloads</text>
+<line class="grid" x1="372" y1="218.0" x2="522" y2="218.0"/>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="372.0,245.0 375.8,243.7 379.5,239.8 383.2,233.9 387.0,226.3 390.8,218.0 394.5,209.7 398.2,202.1 402.0,196.2 405.8,192.3 409.5,191.0 413.2,192.3 417.0,196.2 420.8,202.1 424.5,209.7 428.2,218.0 432.0,226.3 435.8,233.9 439.5,239.8 443.2,243.7 447.0,245.0 450.8,243.7 454.5,239.8 458.2,233.9 462.0,226.3 465.8,218.0 469.5,209.7 473.2,202.1 477.0,196.2 480.8,192.3 484.5,191.0 488.2,192.3 492.0,196.2 495.8,202.1 499.5,209.7 503.2,218.0 507.0,226.3 510.8,233.9 514.5,239.8 518.2,243.7 522.0,245.0"/>
+<text x="372" y="270" font-size="13" font-weight="650">Two men in a hole</text>
+<text x="372" y="288" font-size="13" fill="var(--muted)">fall, rise, fall, rise</text>
+<text x="372" y="306" font-size="13">5.0% of novels</text>
+<text x="372" y="324" font-size="13" font-weight="650">median 105.5 downloads</text>
+<text x="548" y="210" font-size="13" fill="var(--muted)">Solid line: one of the</text>
+<text x="548" y="228" font-size="13" fill="var(--muted)">three arcs with the</text>
+<text x="548" y="246" font-size="13" fill="var(--muted)">highest median downloads.</text>
+<text x="548" y="270" font-size="13" fill="var(--muted)">Dashed line: the other</text>
+<text x="548" y="288" font-size="13" fill="var(--muted)">four arcs.</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each panel is one shape. The line is the fortune of the protagonist from the start of the novel (left) to the end (right). A thin grey line marks the middle fortune. Below each line: the name of the shape, its direction, its share of the novels, and the median downloads of the novels with that shape.</p>
+  <p class="fig-source">Source: Reagan and others, "The emotional arcs of stories are dominated by six basic shapes", EPJ Data Science 5:31 (2016), table of download statistics. The lines are drawn from the direction words, not from the measured curves.</p>
+</figure>
+
+<p><strong>Answer to the guess:</strong> the most common shape was a fall. "Tragedy" was the closest shape for 407 of the 1,327 novels (30.7%). A plain rise, "rags to riches", was the closest shape for 133 novels (10.0%). A fall then a rise, "man in a hole", was the closest shape for 148 novels (11.2%).</p>
+<p>The result that matters for your strategy is in the last line of each panel. The novels nearest to the "man in a hole" shape had a median of 76 downloads. The novels with two such dips, "two men in a hole", had a median of 105.5 downloads. That is 1.39 times the first value.</p>
+<p>The authors name Icarus, Oedipus and the two men in a hole as the three most successful arcs. All three contain a fall that the reader sees. A story in which the protagonist only rises was not among the three.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Exact values for the seven shapes in Figure 3</caption>
+  <thead>
+    <tr><th>Shape</th><th>Direction of fortune</th><th class="num">Novels</th><th class="num">Share of 1,327 (%)</th><th class="num">Median downloads</th><th class="num">Mean downloads</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Two men in a hole</th><td>fall, rise, fall, rise</td><td class="num">66</td><td class="num">5.0</td><td class="num">105.5</td><td class="num">496.9</td></tr>
+    <tr class="highlight"><th scope="row">Icarus</th><td>rise, fall</td><td class="num">171</td><td class="num">12.9</td><td class="num">97.0</td><td class="num">251.6</td></tr>
+    <tr class="highlight"><th scope="row">Oedipus</th><td>fall, rise, fall</td><td class="num">139</td><td class="num">10.5</td><td class="num">94.0</td><td class="num">361.5</td></tr>
+    <tr><th scope="row">Cinderella</th><td>rise, fall, rise</td><td class="num">73</td><td class="num">5.5</td><td class="num">89.0</td><td class="num">221.4</td></tr>
+    <tr><th scope="row">Tragedy</th><td>fall</td><td class="num">407</td><td class="num">30.7</td><td class="num">83.0</td><td class="num">255.2</td></tr>
+    <tr><th scope="row">Rags to riches</th><td>rise</td><td class="num">133</td><td class="num">10.0</td><td class="num">80.0</td><td class="num">296.0</td></tr>
+    <tr><th scope="row">Man in a hole</th><td>fall, rise</td><td class="num">148</td><td class="num">11.2</td><td class="num">76.0</td><td class="num">240.9</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> one row per shape, sorted by the median downloads. The highlighted rows are the three shapes that the authors name as the most successful. The mean is 2.5 to 4.7 times the median in every row, because a few novels have thousands of downloads.</p>
+
+<h3>Stories are recalled and understood better than essays: 0.55 standard deviations</h3>
+<p>Why does the structure matter for a reader? Raymond Mar and three colleagues at York University collected every experiment of one kind. In these experiments, people read a story or an essay with the same content, and then answered questions. This is a <dfn>meta-analysis</dfn>: a study that combines the results of many earlier studies into one estimate. They found 37 articles with 150 comparisons, 78 samples of readers, and 33,078 participants in total.</p>
+<p>The result is given as <dfn>Hedges g</dfn>: the difference between two groups, divided by the standard deviation of the scores. A g of 1 means that the two groups differ by one standard deviation. Here is the same number in a concrete form.</p>
+<p>Suppose that the readers of an essay recall 40 of 100 facts, with a standard deviation of 15 facts. A g of 0.55 means that the readers of the story version recall 40 + 0.55 × 15 = 48.25 facts. For memory tests only, g was 0.72, so the story readers recall 40 + 0.72 × 15 = 50.8 facts. Figure 4 shows the three values with their confidence intervals.</p>
+
+<figure>
+  <p class="fig-title">Readers recalled and understood a story better than an essay: g = 0.55 over all tests, 0.72 for memory, 0.48 for comprehension.</p>
+  <p class="fig-sub">Hedges g with the 95% confidence interval (the range in which the true value lies with 95% probability, given the data). A positive value favours the story.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 680 260" role="img" aria-label="Bar chart of the advantage of stories over essays in the meta-analysis of Mar and others, 2021, as Hedges g with 95 percent confidence intervals. Memory only: 0.72, interval 0.43 to 1.01, from 57 effect sizes. All tests: 0.55, interval 0.31 to 0.79, from 150 effect sizes. Comprehension only: 0.48, interval 0.21 to 0.75, from 93 effect sizes. All three intervals exclude zero.">
+<line class="axis" x1="190.0" y1="30" x2="190.0" y2="200"/>
+<text class="axis-label" x="190.0" y="220" text-anchor="middle">0.0</text>
+<line class="grid" x1="253.6" y1="30" x2="253.6" y2="200"/>
+<text class="axis-label" x="253.6" y="220" text-anchor="middle">0.2</text>
+<line class="grid" x1="317.3" y1="30" x2="317.3" y2="200"/>
+<text class="axis-label" x="317.3" y="220" text-anchor="middle">0.4</text>
+<line class="grid" x1="380.9" y1="30" x2="380.9" y2="200"/>
+<text class="axis-label" x="380.9" y="220" text-anchor="middle">0.6</text>
+<line class="grid" x1="444.5" y1="30" x2="444.5" y2="200"/>
+<text class="axis-label" x="444.5" y="220" text-anchor="middle">0.8</text>
+<line class="grid" x1="508.2" y1="30" x2="508.2" y2="200"/>
+<text class="axis-label" x="508.2" y="220" text-anchor="middle">1.0</text>
+<text class="axis-label" x="365.0" y="244" text-anchor="middle">Advantage of stories, in standard deviations (Hedges g). 0 = no difference.</text>
+<text x="180" y="62" font-size="13" text-anchor="end">Memory only</text>
+<text x="180" y="78" font-size="12" text-anchor="end" fill="var(--muted)">57 effect sizes</text>
+<rect x="190" y="45" width="229.1" height="26" fill="var(--s2)" fill-opacity="0.22" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 3"/>
+<line x1="326.8" y1="58" x2="511.4" y2="58" stroke="var(--text)" stroke-width="2"/>
+<line x1="326.8" y1="51" x2="326.8" y2="65" stroke="var(--text)" stroke-width="2"/>
+<line x1="511.4" y1="51" x2="511.4" y2="65" stroke="var(--text)" stroke-width="2"/>
+<text x="519.4" y="63" font-size="13">g = 0.72 (0.43 to 1.01)</text>
+<text x="180" y="114" font-size="13" text-anchor="end" font-weight="650">All tests</text>
+<text x="180" y="130" font-size="12" text-anchor="end" fill="var(--muted)">150 effect sizes</text>
+<rect x="190" y="97" width="175.0" height="26" fill="var(--s1)"/>
+<line x1="288.6" y1="110" x2="441.4" y2="110" stroke="var(--text)" stroke-width="2"/>
+<line x1="288.6" y1="103" x2="288.6" y2="117" stroke="var(--text)" stroke-width="2"/>
+<line x1="441.4" y1="103" x2="441.4" y2="117" stroke="var(--text)" stroke-width="2"/>
+<text x="449.4" y="115" font-size="13" font-weight="650">g = 0.55 (0.31 to 0.79)</text>
+<text x="180" y="166" font-size="13" text-anchor="end">Comprehension only</text>
+<text x="180" y="182" font-size="12" text-anchor="end" fill="var(--muted)">93 effect sizes</text>
+<rect x="190" y="149" width="152.7" height="26" fill="var(--s2)" fill-opacity="0.22" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 3"/>
+<line x1="256.8" y1="162" x2="428.6" y2="162" stroke="var(--text)" stroke-width="2"/>
+<line x1="256.8" y1="155" x2="256.8" y2="169" stroke="var(--text)" stroke-width="2"/>
+<line x1="428.6" y1="155" x2="428.6" y2="169" stroke="var(--text)" stroke-width="2"/>
+<text x="436.6" y="167" font-size="13">g = 0.48 (0.21 to 0.75)</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> each bar is one group of tests. The length of the bar is g. The black line through the bar is the 95% confidence interval. If the line does not touch 0, the advantage of the story is unlikely to be chance.</p>
+  <p class="fig-source">Source: Mar, Li, Nguyen and Ta (2021), Table 3. The full reference is in the sources list.</p>
+</figure>
+
+<p>A second meta-analysis asked a different question: does a story change what the reader believes and does? Kurt Braddock and James Dillard combined studies in which one group read a story and another group did not. The result is given as a <dfn>correlation coefficient r</dfn>. This is a number between 0 and 1 that measures how strongly the story and the outcome move together. Jacob Cohen proposed in 1992 that r = 0.10 is a small effect, 0.30 a medium effect, and 0.50 a large effect. The table shows the four results.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>A story moves beliefs and behaviour, but the effects are small: r = 0.17 to 0.23</caption>
+  <thead>
+    <tr><th>Outcome</th><th class="num">Studies</th><th class="num">Participants</th><th class="num">r</th><th class="num">Explained variation (r², %)</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Behaviour</th><td class="num">5</td><td class="num">978</td><td class="num">0.23</td><td class="num">5.3</td></tr>
+    <tr><th scope="row">Attitudes</th><td class="num">40</td><td class="num">7,132</td><td class="num">0.19</td><td class="num">3.6</td></tr>
+    <tr><th scope="row">Beliefs</th><td class="num">37</td><td class="num">7,376</td><td class="num">0.17</td><td class="num">2.9</td></tr>
+    <tr><th scope="row">Intentions</th><td class="num">28</td><td class="num">5,211</td><td class="num">0.17</td><td class="num">2.9</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> one row per outcome, sorted by r. The last column is r squared: the share of the variation in the outcome that the story explains. The highlighted row has the largest r, but it rests on only 5 studies. Source: Braddock and Dillard (2016), abstract.</p>
+
+<p>One more number is often quoted, and it needs a warning. In the book "Made to Stick" (2007), Chip Heath describes an exercise in his class at Stanford. Students give a one-minute speech. The average speech uses 2.5 statistics, and only one student in ten tells a story.</p>
+<p>Afterwards, 63% of the listeners remember the stories, and 5% remember any single statistic. This is a class exercise, not a controlled experiment, and the book gives no sample size. So the 63% and the 5% are an illustration, not evidence of the same quality as the two meta-analyses.</p>
+
+<h2 id="compare">4. More detail: Base44 against Builder.ai: the same promise, two shapes, and which structure fits which text</h2>
+<p>Builder.ai promised the same thing as Base44: apps with no programmer. It raised US$445 million from 2016 to 2025. It sold apps for US$20,000 that cost US$35,000 to make, and people did the work behind the AI label. It collapsed in May 2025, one month before Wix bought Base44. The two stories have the same spine and opposite shapes.</p>
+
+<div class="compare">
+  <div>
+    <h4>Base44: fall, then rise</h4>
+    <p>Routine: apps for non-programmers lose money. Complication: AI models can write a whole app. Chain: one person builds the all-in-one version, 10,000 users, profit. Turning point: the sale for US$80 million.</p>
+    <p>Shape: the story starts low, in the routine of Builder.ai, and ends high. This is a "man in a hole" arc.</p>
+  </div>
+  <div>
+    <h4>Builder.ai: rise, then fall</h4>
+    <p>Routine: a company sells the promise of AI-built apps. Complication: each app costs US$15,000 more than its price. Chain: more funding, US$445 million in total, hides the loss for years. Turning point: the collapse in May 2025.</p>
+    <p>Shape: the story starts high, with funding and press, and ends low. This is an "Icarus" arc.</p>
+  </div>
+</div>
+
+<p>The principle: the spine is the same for a success and for a failure. The facts decide the direction of the arc. The writer decides the start, the end, and which "but" events the reader sees. The Base44 story becomes stronger when it starts with the failure of Builder.ai, because then the reader sees the hole before the rise. The Builder.ai story becomes stronger when it starts with the funding, because then the reader sees the height before the fall.</p>
+
+<h3>Which structure fits which text</h3>
+<p>The story spine fits a short true story. Other kinds of text use other structures, and the table says which. The last two rows are not stories. They are structures for exposition, and they belong here because people call them "storytelling" too.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Four structures, and the kind of text that each one fits</caption>
+  <thead>
+    <tr><th>Structure</th><th>Parts</th><th>Fits</th><th>Does not fit</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Story spine (Adams, 1991)</th><td>8 lines: routine, break, 3 consequences, turning point, new routine</td><td>A true story of 300 to 1,500 words with one protagonist</td><td>A report with many equal facts</td></tr>
+    <tr><th scope="row">Three-act structure (Field, 1979)</th><td>Setup, confrontation, resolution</td><td>A long story: a film, a book, a talk of 30 minutes or more</td><td>A text of one page</td></tr>
+    <tr><th scope="row">Situation, Complication, Question, Answer (SCQA) (Minto)</th><td>4 parts, then the answer first and the reasons below it</td><td>A memo or a report that supports a decision</td><td>A text in which the reader must feel the change</td></tr>
+    <tr><th scope="row">Inverted pyramid (journalism)</th><td>The most important fact first, less important facts after it</td><td>News: the reader may stop after any paragraph</td><td>A text with a turning point near the end</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> find the kind of text that you write in the third column. The first column gives the structure. The highlighted row is the structure of this page. Barbara Minto, the author of the SCQA structure, calls it "the classic pattern of story-telling". It still puts the answer first, so it is exposition with a story-shaped opening.</p>
+
+<h2 id="mistake">5. Wrong idea corrected: a timeline is not a story</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "A story is the events in the order in which they happened. If I write the timeline well, I have told the story."</p>
+  <p><strong>Correct:</strong> a timeline is exposition. A story needs a protagonist, a complication, causal links, and a turning point. The timeline of Base44 in section 1 has all the facts and none of these four.</p>
+  <p><strong>Why the wrong idea fails:</strong> time order does not tell the reader why an event happened. So the reader cannot predict the next event and cannot be surprised by it. Parker and Stone's board test finds this fault in one minute: a timeline has "and then" between every two events. The memory advantage of 0.55 standard deviations was measured for stories, not for lists of events.</p>
+</div>
+
+<h2 id="limits">6. Limits: the evidence comes from novels and from reading tests, not from business stories</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>The arcs come from old novels.</strong> The 1,327 novels are English fiction from Project Gutenberg, a library of books whose copyright has expired. Downloads from one website measured success. No study on this page measured the arcs of business stories.</li>
+    <li><strong>The download differences are small in absolute terms.</strong> The medians range from 76 to 105.5 downloads. The means are 2.5 to 4.7 times larger, so a few popular novels dominate each group.</li>
+    <li><strong>The 0.55 is an average with large variation.</strong> The 150 comparisons differ much from each other. The authors report that 97% of the variation between results is real variation, not chance. Studies with fewer participants found larger effects, which suggests some publication bias.</li>
+    <li><strong>The persuasion effects are small.</strong> An r of 0.17 to 0.23 explains 2.9% to 5.3% of the variation in the outcome. The behaviour result rests on 5 studies.</li>
+    <li><strong>The but-therefore rule has no measurement.</strong> It comes from a class, described by two secondary sources. This page did not watch the video of the class.</li>
+    <li><strong>The Base44 facts were not verified again.</strong> They come from your notes, which grade each number by its source. The user and profit numbers are founder claims.</li>
+    <li><strong>A true story cannot invent a complication.</strong> If the facts contain no break and no turning point, the honest text is exposition, and the strategy on this page does not apply.</li>
+  </ul>
+</div>
+
+<h2 id="words">7. Words that you will hear</h2>
+<p>These terms belong to the craft of stories, and you will meet them in books and in talks. They are not needed for the strategy above.</p>
+<dl class="glossary">
+  <dt>Freytag's pyramid</dt>
+  <dd>A five-part shape of a drama from Gustav Freytag's book of 1863: introduction, rise, climax, return or fall, catastrophe. The story spine is the same shape with the names of the parts changed and the ending open.</dd>
+  <dt>Hero's journey</dt>
+  <dd>A pattern of myths that Joseph Campbell described in 1949 and Christopher Vogler adapted for screenwriters in 1992. A hero leaves the ordinary world, passes tests, and returns changed. It is a long form of the spine, with many consequences.</dd>
+  <dt>Inciting incident</dt>
+  <dd>The screenwriters' name for the complication: the event that starts the problem of the story.</dd>
+  <dt>In medias res</dt>
+  <dd>A Latin phrase from the poet Horace: a story that starts in the middle of the action and adds the routine later. It moves line 3 of the spine before lines 1 and 2.</dd>
+  <dt>Narrative transportation</dt>
+  <dd>The state of a reader who is absorbed into the world of a story. Melanie Green and Timothy Brock measured it in 2000. Van Laer and others (2014) combined 132 effect sizes from 76 articles. They treat transportation as the main path from a story to a changed belief.</dd>
+  <dt>Nut graf</dt>
+  <dd>In journalism, the paragraph after the opening that states what the article is about and why it matters. In a success story, the nut graf often states the result before the story starts.</dd>
+  <dt><span class="quoted">Show, don't tell</span></dt>
+  <dd>Give the reader an action, a number, or a scene instead of a judgment. "The company made US$189,000 of profit in May" shows. "The company was very successful" tells.</dd>
+  <dt>Stakes</dt>
+  <dd>What the protagonist loses if the problem is not solved. In the Base44 story, the stakes are low for Shlomo, because he had money from his first company. Low stakes are a weakness of that story.</dd>
+</dl>
+
+<h2 id="check">8. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>In the Base44 story of section 1, why is the launch in January 2025 not the complication?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>The complication is the event that breaks the routine and that the protagonist did not control: AI models became able to write a whole app. The launch is a consequence of that event. A typical wrong answer puts the launch in line 3, because it is the first event in the timeline of the company. But a story that starts at the launch has no "because" for the launch.</p>
+        </div>
+      </details>
+    </li>
+    <li>Rewrite this sentence with the but-therefore rule: "Wix bought Base44, and then Base44 reached US$150 million of revenue a year."
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>One correct version: "Wix had millions of website customers and no app builder. Therefore it bought Base44, and Base44's revenue rose from about US$3.5 million to US$150 million a year." The link is a cause: the sales channel of Wix explains the growth. A version with "but" is also possible: "Base44 was profitable, but it had no sales channel. Therefore Shlomo sold it to Wix." A wrong answer keeps "and then" and only adds adjectives.</p>
+        </div>
+      </details>
+    </li>
+    <li>A company grows for three years, loses its largest customer, recovers, and then fails. Which emotional arc of Figure 3 is this, and was it among the three most downloaded shapes?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>Rise, fall, rise, fall. If the story starts at the loss of the customer, the nearest shape in Figure 3 is "Oedipus" (fall, rise, fall). If it starts at the growth, the nearest shape is "Icarus" (rise, fall) with an extra dip. Oedipus and Icarus were both among the three shapes with the highest median downloads (94 and 97). A typical wrong answer is "Cinderella", but Cinderella ends with a rise.</p>
+        </div>
+      </details>
+    </li>
+    <li>Readers of an essay recall 30 of 50 facts on average, with a standard deviation of 8 facts. Use the overall g of 0.55 to estimate the recall of the story version.
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p>30 + 0.55 × 8 = 34.4 facts. The g value is a difference in standard deviations, so you multiply it by the standard deviation of the test, not by the mean. A typical wrong answer multiplies 30 by 1.55 and gets 46.5, which treats g as a percentage.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">9. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>A story is a chain of causes with one protagonist who changes. A timeline is exposition.</li>
+    <li>Plan the story on the eight lines of the story spine: routine, one complication, three consequences, one turning point, a new routine.</li>
+    <li>Test every link between two events: "therefore" or "but" is a story, "and then" is a list.</li>
+    <li>Let the reader see the falls. In 1,327 novels, the three most downloaded shapes all contained a fall, with medians of 94 to 105.5 against 76 to 89.</li>
+    <li>The structure pays: readers recalled and understood stories 0.55 standard deviations better than essays. Persuasion effects are small, r = 0.17 to 0.23.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>But-therefore rule</dt>
+  <dd>Every two consecutive events in a story are joined by a cause ("therefore") or by a contrast ("but"), never only by time ("and then").</dd>
+  <dt>Complication</dt>
+  <dd>The one event that breaks the routine and creates the problem of the story. Line 3 of the story spine.</dd>
+  <dt>Correlation coefficient r</dt>
+  <dd>A number between 0 and 1 that measures how strongly two things move together. 0.10 is small, 0.30 medium, 0.50 large.</dd>
+  <dt>Emotional arc</dt>
+  <dd>The curve of the fortune of the protagonist from the start of the story to the end.</dd>
+  <dt>Exposition</dt>
+  <dd>A text that states facts and explains them, without a protagonist and without causal links between events. Also called expository text.</dd>
+  <dt>Hedges g</dt>
+  <dd>The difference between two groups divided by the standard deviation of the scores. A g of 0.55 is just over half a standard deviation.</dd>
+  <dt>Median</dt>
+  <dd>The middle value of a list: half of the values are above it and half are below it.</dd>
+  <dt>Meta-analysis</dt>
+  <dd>A study that combines the results of many earlier studies into one estimate.</dd>
+  <dt>Protagonist</dt>
+  <dd>The one person whose fortune the story follows from the first line to the last line.</dd>
+  <dt>Story</dt>
+  <dd>A text in which one event causes the next event, and a person changes because of the events. Also called a narrative.</dd>
+  <dt>Story spine</dt>
+  <dd>A template of eight sentence starts by Kenn Adams (1991). The starts are: Once upon a time, Every day, But one day, Because of that (three times), Until finally, And ever since then.</dd>
+  <dt>Turning point</dt>
+  <dd>The event after which the protagonist cannot return to the old routine. Line 7 of the story spine. Also called the climax.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or a source with limits. <span class="conf low">Low</span> = not verified, or sources disagree. <span class="conf given">Given</span> = a value from your notes or an example value.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> Kenn Adams, <span class="quoted">Back to the Story Spine</span>, guest post at Aerogramme Writers' Studio, 5 June 2013. Read in full. Source for the eight lines, the year 1991, and the two film examples. <a href="https://www.aerogrammestudio.com/2013/06/05/back-to-the-story-spine/">aerogrammestudio.com</a></li>
+  <li><span class="conf high">High</span> Emma Coats, <span class="quoted">Pixar's 22 Rules of Storytelling</span>, as published by Aerogramme Writers' Studio, 7 March 2013. Read in full. Source for the six-line version. <a href="https://www.aerogrammestudio.com/2013/03/07/pixars-22-rules-of-storytelling/">aerogrammestudio.com</a></li>
+  <li><span class="conf medium">Medium</span> Keith Cronin, <span class="quoted">Story Lessons from South Park</span>, Writer Unboxed, 10 February 2015, and David Perell, <span class="quoted">The But &amp; Therefore Rule</span>. Both describe the video of the NYU class of 2011. This page did not watch the video. <a href="https://writerunboxed.com/?p=35610">writerunboxed.com</a>, <a href="https://perell.com/?p=2244">perell.com</a></li>
+  <li><span class="conf high">High</span> Reagan, Mitchell, Kiley, Danforth and Dodds, <span class="quoted">The emotional arcs of stories are dominated by six basic shapes</span>, EPJ Data Science 5:31 (2016). Read in the source text of the final arXiv version (1606.07772v3, 26 September 2016), which defines the 1,327 novels and the download table. The table values were read from the rendered table figure. An earlier version of the paper (v2, July 2016) used 1,737 novels and had different table values. This page uses the final version. Also the source for the description of Vonnegut's idea. <a href="https://arxiv.org/abs/1606.07772">arxiv.org/abs/1606.07772</a></li>
+  <li><span class="conf high">High</span> Mar, Li, Nguyen and Ta, <span class="quoted">Memory and comprehension of narrative versus expository texts: A meta-analysis</span>, Psychonomic Bulletin and Review 28, 732 to 749 (2021). Full text read at PubMed Central, PMC8219577. Source for g = 0.55, 0.48 and 0.72 with their intervals. Also for the 37 articles, 150 comparisons, 78 samples and 33,078 participants, and for the statements on heterogeneity and publication bias. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8219577/">pmc.ncbi.nlm.nih.gov</a></li>
+  <li><span class="conf medium">Medium</span> Braddock and Dillard, <span class="quoted">Meta-analytic evidence for the persuasive effect of narratives on beliefs, attitudes, intentions, and behaviors</span>, Communication Monographs 83(4), 446 to 467 (2016). Only the abstract was read, through the OpenAlex and CrossRef records. The r values and the study counts are from the abstract. <a href="https://doi.org/10.1080/03637751.2015.1128555">doi.org/10.1080/03637751.2015.1128555</a></li>
+  <li><span class="conf medium">Medium</span> Jacob Cohen, <span class="quoted">A power primer</span>, Psychological Bulletin 112(1), 155 to 159 (1992). The paper was located through CrossRef. The conventions 0.10, 0.30 and 0.50 for r are widely cited from it; this page did not open the text.</li>
+  <li><span class="conf medium">Medium</span> Chip Heath and Dan Heath, <span class="quoted">Made to Stick</span>, Random House (2007). The sentences about the Stanford exercise (63%, 5%, 2.5 statistics, one student in ten) were verified with the full-text search of the Internet Archive copy. The exercise is a class activity, not a controlled study.</li>
+  <li><span class="conf medium">Medium</span> Gustav Freytag, <span class="quoted">Freytag's Technique of the Drama</span>, English translation by Elias MacEwan (1894) of the German book of 1863. The five parts were verified with the full-text search of the Internet Archive copy. <a href="https://archive.org/details/freytagstechniqu00freyuoft">archive.org</a></li>
+  <li><span class="conf medium">Medium</span> Barbara Minto, <span class="quoted">The Minto Pyramid Principle</span> (1996 edition). The sentence that calls Situation, Complication, Question, Answer "the classic pattern of story-telling" was verified with the full-text search of the Internet Archive copy.</li>
+  <li><span class="conf medium">Medium</span> Wikipedia entries, read on 11 October 2026. They give the dates and definitions in section 7. Entries: <span class="quoted">The Hero with a Thousand Faces</span> (1949); <span class="quoted">The Writer's Journey</span> (1992); <span class="quoted">Three-act structure</span> (Syd Field, 1979). Also: <span class="quoted">In medias res</span>; <span class="quoted">Show, don't tell</span>; <span class="quoted">Nut graph</span>; <span class="quoted">Inverted pyramid</span>.</li>
+  <li><span class="conf medium">Medium</span> Green and Brock, <span class="quoted">The role of transportation in the persuasiveness of public narratives</span>, Journal of Personality and Social Psychology 79(5), 701 to 721 (2000). Also: Tom van Laer, Ko de Ruyter, Luca Visconti and Martin Wetzels, <span class="quoted">The Extended Transportation-Imagery Model</span>, Journal of Consumer Research 40(5), 797 to 817 (2014). Only the records and the abstract were read. Source for the definition in section 7 and the count of 132 effect sizes from 76 articles.</li>
+  <li><span class="conf given">Given</span> The Base44 and Builder.ai facts come from your own notes about Base44. Those notes name their sources: the Wix press release of 18 June 2025, TechCrunch, Calcalist, and the Loot Drop database for Builder.ai. The user and profit numbers are founder claims in those notes. This page did not verify them again.</li>
+  <li><span class="conf high">High</span> Calculated on this page. The shares of the 1,327 novels, for example 407 ÷ 1,327 = 30.7%. The ratio 105.5 ÷ 76 = 1.39, and the mean-to-median ratios. The r² values. The recall examples 40 + 0.55 × 15 = 48.25 and 30 + 0.55 × 8 = 34.4.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
