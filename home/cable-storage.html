@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cable Storage Guide</title>
+<style>
+/* ---------- Typefaces. One text typeface, a system serif, so the page needs no external font.
+   One typeface for everything is the rule of the Romanelli site (Suisse Int'l there). ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Type scale. One fluid scale, five steps, so every size on the page is one of these.
+   The scale follows the Romanelli site: small print 14 px, text 16 to 22 px, display large. ---------- */
+:root {
+  --step--1: clamp(0.9rem, 0.86rem + 0.2vw, 0.98rem);   /* small print: meta line, sources, captions */
+  --step-0: clamp(1.06rem, 1rem + 0.3vw, 1.2rem);        /* running text */
+  --step-1: clamp(1.16rem, 1.1rem + 0.35vw, 1.3rem);     /* the short answer */
+  --step-2: clamp(1.4rem, 1.22rem + 0.9vw, 1.8rem);      /* section heading */
+  --step-3: clamp(2.1rem, 1.3rem + 3.6vw, 3.5rem);       /* page title */
+  /* Spacing scale: 16, 24, 40, 64 px, and one large step above the title. */
+  --space-1: 1rem;
+  --space-2: 1.5rem;
+  --space-3: 2.5rem;
+  --space-4: 4rem;
+  --space-top: clamp(3rem, 9vw, 6.5rem);
+  /* The measure of the text column, the side gutter, and the width of the wide stage (see below). */
+  --measure: 40rem;
+  --gutter: 1rem;
+  --wide: 56rem;
+}
+
+/* ---------- Colour tokens. Ink and paper from the Romanelli site (ink #292b34, paper #f9f6f0),
+   and three accents, each with one fixed role, so a colour always means the same kind of thing:
+     terracotta (--accent)   the reader's path: links, key terms, the short answer, the self-check
+     teal (--accent2)        the evidence: worked examples, figures, tables, section headings
+     ochre (--accent3)       the reader's own work: the guess box, the part labels
+   Chart series and confidence labels keep their own colours because there the colour is information. ---------- */
+:root {
+  --bg: #f9f6f0;
+  --surface: #efece7;
+  --text: #292b34;
+  --muted: #5f6168;
+  --border: rgb(41 43 52 / 22%);
+  --accent: #a6472a;
+  --accent-soft: #f3e6df;
+  --accent2: #1a6460;
+  --accent2-soft: #e3efed;
+  --accent3: #7d5a0c;
+  --accent3-soft: #f5ecd6;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e0ded9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1c22;
+    --surface: #28292e;
+    --text: #f9f6f0;
+    --muted: #aeb0b6;
+    --border: rgb(249 246 240 / 32%);
+    --accent: #f0a58f;
+    --accent-soft: #2e2320;
+    --accent2: #7fd0c9;
+    --accent2-soft: #1e2b2a;
+    --accent3: #eac066;
+    --accent3-soft: #2c2719;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #3a3b3f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1c22;
+  --surface: #28292e;
+  --text: #f9f6f0;
+  --muted: #aeb0b6;
+  --border: rgb(249 246 240 / 32%);
+  --accent: #f0a58f;
+  --accent-soft: #2e2320;
+  --accent2: #7fd0c9;
+  --accent2-soft: #1e2b2a;
+  --accent3: #eac066;
+  --accent3-soft: #2c2719;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #3a3b3f;
+  color-scheme: dark;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space-top) var(--gutter) var(--space-4);
+}
+
+/* Headings carry the structure through size and space. The title is large and set tight, as on
+   the Romanelli site. No rule across the page, except one short mark above each section
+   heading, in the colour of the heading. */
+h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: var(--step-3);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-1);
+}
+h2 {
+  font-size: var(--step-2);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--accent2);
+  margin-top: var(--space-4);
+  margin-bottom: 0.8rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 2px solid var(--accent2);
+  margin-bottom: var(--space-2);
+}
+h3 { font-size: 1.15em; margin-top: var(--space-3); margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+/* A link is set in the accent, with a thin underline. */
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: var(--step--1);
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line of small print under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  margin: 0 0 var(--space-3);
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 var(--space-2); }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  background: var(--accent-soft);
+  border-top: 2px solid var(--accent);
+  padding: 1.05rem 1.3rem 1.15rem;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  margin-bottom: var(--space-3);
+}
+.bottom-line .label { color: var(--accent); }
+.example { border-left: 2px solid var(--accent2); padding-left: 1.4rem; }
+.example .label { color: var(--accent2); }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; }
+.assume { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.assume .label { color: var(--accent); }
+.predict { background: var(--accent3-soft); border-left: 2px solid var(--accent3); padding: 0.9rem 1.3rem 1rem 1.4rem; }
+.predict .label { color: var(--accent3); }
+.recap { background: var(--accent2-soft); border-top: 2px solid var(--accent2); padding: 1rem 1.3rem 1.1rem; }
+.recap .label { color: var(--accent2); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 2px solid var(--accent2);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 var(--space-3);
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent2);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; color: var(--accent2); margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--accent2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.95em;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: var(--step--1);
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 0.95em; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--accent2);
+  color: var(--accent2);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 0.95em; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--accent2-soft); font-weight: 600; }
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+  margin-bottom: var(--space-2);
+}
+figure .fig-title { font-weight: 600; color: var(--accent2); margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: var(--step--1); margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 0.95em; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-size: var(--step--1); margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: var(--step--1);
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--accent2); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 var(--space-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1em; font-weight: 600; color: var(--accent2); }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--accent);
+  padding-top: 1rem;
+  margin: 0 0 var(--space-3);
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 var(--space-2);
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 400;
+}
+/* An optional block directly after a comparison or a figure shares their closing rule,
+   so the page does not show two rules with an empty row between them. */
+.compare + details.optional, figure + details.optional {
+  border-top: 0;
+  margin-top: calc(-1 * var(--space-2));
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: var(--space-4) 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--accent3);
+  font-size: var(--step--1);
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--accent3);
+}
+.part + h2 { margin-top: var(--space-2); }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92em;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1em;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 0.95em; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- The wide stage. On a wide screen the title, the figures, and the tables are wider than
+   the text column and centred on it. The text keeps its measure; the work of the page gets the room.
+   On the Romanelli site the images are wider than the text grid, and the change of width gives the
+   page its rhythm. ---------- */
+@media (min-width: 64rem) {
+  h1, .meta, figure, .table-wrap {
+    width: var(--wide);
+    margin-left: calc((var(--measure) - 2 * var(--gutter) - var(--wide)) / 2);
+  }
+  /* The drawing of a figure is wide; its title and its text stay in the text column, so that
+     no line of running text is longer than the measure. */
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source {
+    width: calc(var(--measure) - 2 * var(--gutter));
+    margin-left: calc((var(--wide) - var(--measure) + 2 * var(--gutter)) / 2);
+  }
+}
+
+/* ---------- Narrow screens. The fluid scale already lowers every size; the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  main { padding-bottom: var(--space-3); }
+  h2 { margin-top: var(--space-3); }
+  .bottom-line { margin-bottom: var(--space-2); }
+}
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  h1, .meta, figure, .table-wrap,
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source { width: auto; margin-left: 0; }
+  nav.contents { display: none; }
+  .bottom-line, .recap, .predict { background: none; padding-left: 0; padding-right: 0; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: USB, USB-C, HDMI, AWG, SJTW, NEC, CPSC, NEMA, GFCI, TIA, EIA, PVC, UTP, PRO, XT, PRO-XT, ANR, UC, StarTech, Masterplug, Southwire, Helukabel, Lex, DOE, XLR, BNC, RS, H05VV-F, Cheqroom, Elliott, Gexpro, Zoro -->
+<h1>What is the best way to organize and store cables, from a short USB-C cable to a 100-foot outdoor extension cord?</h1>
+<p class="meta">Written 2026-10-12 · Reading time: about 25 minutes for the main path, about 35 minutes for the whole page · You need to know: how to multiply, and what an ampere and a watt are</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>Sort cables by thickness and length, not by room. Three classes cover everything: thin data cables up to 2 m (6.6 ft), medium data cables up to 5 m (16 ft), and extension cords. Each class gets one loop size, one tie, and one home.</p>
+  <p>Coil every cable in loops with a radius of at least 10 times the cable thickness. That is a loop 10 cm (4 in) across for a USB-C cable. For a 12 AWG cord it is at least 22 cm (9 in) across. AWG is the American Wire Gauge, the US scale for wire thickness. Coil every cable longer than about 3 m (10 ft) with the over-under method, so that it stores no twist. Bind each coil with a reusable hook-and-loop tie, and label both ends.</p>
+  <p>Store thin cables in a drawer with dividers, medium cables in one bin, and extension cords on wide wall hooks. Never use a cord while it is coiled. A 25 m reel cable produces 116 W of heat at its 13 A rating. While the cable is wound, its maker allows only 3 A, which produces 6 W.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>Your outlets supply 120 V, and your cords have the standard US plug. The reel example is a UK product at 240 V, because UK makers print a wound rating.</li>
+    <li>The example inventory of 20 cables is invented.</li>
+    <li>You have a wall where you can fix hooks. All cables are in good condition.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li class="core"><a href="#example">One example: 20 cables, three classes, three homes</a></li>
+    <li class="core"><a href="#rule">The rule: a loop radius of at least 10 times the cable diameter, and no stored twist</a></li>
+    <li class="core"><a href="#system">The storage system: one home for each class, and the same label on both ends</a></li>
+    <li class="core"><a href="#mistake">Wrong idea corrected: the hand-and-elbow wrap stores a twist in every loop and bends the cord too tightly</a></li>
+    <li class="core"><a href="#limits">Limits: the rules come from installation standards and one reel, not from storage research</a></li>
+    <li><a href="#howto">More detail: how to make an over-under coil, step by step</a></li>
+    <li><a href="#data">More detail: a wound reel cable may carry 3 A, the same cable unwound 13 A</a></li>
+    <li><a href="#words">Words that you will hear</a></li>
+    <li class="core"><a href="#check">Check your understanding</a></li>
+    <li class="core"><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="example">1. One example: 20 cables, three classes, three homes</h2>
+<p>The example household owns 20 cables: 8 USB-C, 3 HDMI, 4 Ethernet, 2 audio, and 3 extension cords. The cords are 25 ft (7.6 m), 50 ft (15.2 m), and 100 ft (30.5 m) long, the last one for outdoor use. Their wire sizes are 16, 14, and 12 <dfn>AWG</dfn> (American Wire Gauge, the US scale for wire thickness). A smaller AWG number is a thicker wire.</p>
+
+<div class="box example">
+  <span class="label">Worked example</span>
+  <ol class="steps">
+    <li>Collect every cable from every drawer, bag, and box, and put them on one table. Count them: 20.
+      <span class="why">You cannot plan homes before you know the counts.</span></li>
+    <li>Measure the length of each cable. Measure also its <dfn>cable diameter</dfn> (the thickness of the cable, measured across its outer insulation). Typical values: USB-C cable 4.7 mm, Ethernet cable 6.35 mm, HDMI cable 7.3 mm, 12 AWG cord 11.2 mm.
+      <span class="why">The cable diameter sets the smallest loop that does not damage the cable, see section 2.</span></li>
+    <li>Sort the cables into three classes. Class A, thin and short: diameter under 5 mm, length up to 2 m. That is 8 USB-C and 2 audio cables: 10. Class B, medium: diameter 5 to 8 mm, or length 2 to 5 m. That is 3 HDMI and 4 Ethernet cables: 7. Class C: the 3 cords.
+      <span class="why">All cables of one class take the same loop size, tie, and home.</span></li>
+    <li>Coil each cable. Class A gets a loose <dfn>straight coil</dfn> (a coil in which every loop goes in the same direction, like a cable on a spool). Its <dfn>loop diameter</dfn> (the width of one loop, measured across its centre) is 10 cm. Classes B and C get an <dfn>over-under coil</dfn>. In this coil, each loop is made with a half turn of the cable, and the direction of the half turn alternates. Class B: loops of 15 cm. Class C: 25 cm loops for the 25 ft cord, 30 cm for the 50 ft cord, 35 cm for the 100 ft cord. The 100 ft cord: 30.48 m ÷ (3.1416 × 0.35 m) = 27.7, about 28 loops.
+      <span class="why">A loop of 10 cm is more than 20 times the 4.7 mm diameter of the USB-C cable. A loop of 35 cm is more than 20 times the 11.2 mm diameter of the cord. Section 2 explains the factor, and section 6 shows the hand movements.</span></li>
+    <li>Bind each coil with one <dfn>hook-and-loop tie</dfn> (a strap of two textile faces, one with small hooks and one with small loops). The strap holds when the faces are pressed together. Do not use a <dfn>cable tie</dfn> (a nylon strap with teeth that can only be pulled tighter and must be cut to open).
+      <span class="why">A hook-and-loop tie opens and closes many times. A cable tie is cut after one use.</span></li>
+    <li>Put the same label on both ends of each cable, about 10 cm from the plug. The label states the length, the type, and one property that you cannot see. Examples: <span class="quoted">USB-C 2 m, charge and data</span> and <span class="quoted">100 ft, 12 AWG, outdoor, 15 A</span>.
+      <span class="why">When a cable is in use, you see only its ends. Two cables of the same type and colour can differ inside.</span></li>
+    <li>Give each class one home. Class A: one drawer or box with dividers, one compartment per type. Class B: one bin with the coils on edge. Class C: one wall hook per cord, at least 9 cm wide, with the plug end on the outside of the coil.
+      <span class="why">One home per class means one place to search. A cord that stays in one position may bend to 4 times its diameter. So the hook is 2 × 4 × 11.2 mm = 9 cm wide.</span></li>
+  </ol>
+  <p><strong>Result:</strong> 10 cables in a divided drawer, 7 coils in one bin, 3 cords on 3 hooks (Table 1).</p>
+</div>
+
+<div class="table-wrap">
+<table>
+  <caption>Table 1. The storage plan for the 20 example cables: one loop size, one tie, and one home per class</caption>
+  <thead>
+    <tr><th>Class</th><th>Cables</th><th class="num">Count</th><th>Coil method</th><th class="num">Loop diameter (cm)</th><th>Tie</th><th>Home</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">A: thin, up to 2 m</th><td>8 USB-C, 2 audio</td><td class="num">10</td><td>straight coil, loose</td><td class="num">10</td><td>hook-and-loop, 20 cm</td><td>drawer with dividers</td></tr>
+    <tr><th scope="row">B: medium, up to 5 m</th><td>3 HDMI, 4 Ethernet</td><td class="num">7</td><td>over-under coil</td><td class="num">15</td><td>hook-and-loop, 20 cm</td><td>one bin, coils on edge</td></tr>
+    <tr class="highlight"><th scope="row">C: extension cords</th><td>25 ft, 50 ft, 100 ft</td><td class="num">3</td><td>over-under coil</td><td class="num">25 to 35</td><td>hook-and-loop, 50 cm</td><td>wall hooks, 9 cm wide</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one class, and the columns give its decisions.</p>
+
+<h2 id="rule">2. The rule: a loop radius of at least 10 times the cable diameter, and no stored twist</h2>
+<p>Two things damage a cable in storage. The first is a bend that is too tight. The second is a <dfn>twist</dfn> (one full rotation of the cable around its own axis) that stays in the cable. The loop size controls the first. The coil method controls the second.</p>
+
+<h3>Rule 1: the loop radius is at least 10 times the cable diameter</h3>
+<p>Every cable has a <dfn>minimum bend radius</dfn> (the smallest radius of a curve that the cable can follow without damage). Standards and makers state this radius as a multiple of the cable diameter. The standard for Ethernet cables in buildings, TIA-568, requires 4 times the cable diameter for an installed cable. The cable maker Helukabel gives 10 times the cable diameter as the general rule. For its own cables it gives 4 times in a fixed position and 7.5 times with movement.</p>
+<p>A stored cable is not fixed. You coil it and unroll it many times, so the rule for movement applies. This page uses 10 times the cable diameter as the smallest radius for a coil. The loop diameter is 2 times the radius, so the smallest loop diameter is 20 times the cable diameter.</p>
+<p>For the USB-C cable: 20 × 4.7 mm = 94 mm, about 9 cm. For the 12 AWG cord: 20 × 11.2 mm = 224 mm, about 22 cm. A larger loop is always allowed.</p>
+
+<figure class="diagram">
+  <p class="fig-title">The smallest storage loop is 20 times the cable diameter across: 9 cm for a USB-C cable, 22 cm for the 12 AWG cord.</p>
+  <p class="fig-sub">Loop diameter = 20 × cable diameter. Cable diameters: StarTech USB-C cable 4.7 mm, Ethernet cable 6.35 mm, Vertical Cable HDMI cable 7.3 mm, Southwire 12 AWG cord 11.2 mm.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 700 360" role="img" aria-label="Four circles drawn to scale, one for each cable. Each circle is the smallest storage loop, 10 times the cable diameter. USB-C cable, 4.7 mm thick: loop 9.4 cm. Ethernet cable, 6.35 mm: 12.7 cm. HDMI cable, 7.3 mm: 14.6 cm. 12 AWG extension cord, 11.2 mm: 22.4 cm.">
+<circle cx="67.0" cy="160" r="47.0" fill="none" stroke="var(--s2)" stroke-width="4.7"/>
+<text x="67.0" y="233.0" font-size="13" text-anchor="middle" font-weight="650">USB-C cable</text>
+<text x="67.0" y="251.0" font-size="13" text-anchor="middle">4.7 mm thick</text>
+<text x="67.0" y="269.0" font-size="13" text-anchor="middle">loop 9.4 cm</text>
+<circle cx="201.5" cy="160" r="63.5" fill="none" stroke="var(--s2)" stroke-width="6.3"/>
+<text x="201.5" y="249.5" font-size="13" text-anchor="middle" font-weight="650">Ethernet cable</text>
+<text x="201.5" y="267.5" font-size="13" text-anchor="middle">6.35 mm thick</text>
+<text x="201.5" y="285.5" font-size="13" text-anchor="middle">loop 12.7 cm</text>
+<circle cx="362.0" cy="160" r="73.0" fill="none" stroke="var(--s2)" stroke-width="7.3"/>
+<text x="362.0" y="259.0" font-size="13" text-anchor="middle" font-weight="650">HDMI cable</text>
+<text x="362.0" y="277.0" font-size="13" text-anchor="middle">7.3 mm thick</text>
+<text x="362.0" y="295.0" font-size="13" text-anchor="middle">loop 14.6 cm</text>
+<circle cx="570.8" cy="160" r="111.8" fill="none" stroke="var(--s2)" stroke-width="11.2"/>
+<text x="570.8" y="297.8" font-size="13" text-anchor="middle" font-weight="650">12 AWG cord</text>
+<text x="570.8" y="315.8" font-size="13" text-anchor="middle">11.2 mm thick</text>
+<text x="570.8" y="333.8" font-size="13" text-anchor="middle">loop 22.4 cm</text>
+<text x="20" y="24" font-size="13" fill="var(--muted)">Scale: 1 px = 1 mm. The line of each circle is as thick as the cable.</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each circle is one loop at its smallest allowed size, drawn to scale. The line of each circle is as thick as the cable.</p>
+  <p class="fig-source">Source: cable diameters from the data sheets in the sources list. Factor 10 from the Helukabel guide (Medium).</p>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <caption>Table 2. Minimum bend radius and smallest loop for the four cable types, at 4 times and at 10 times the cable diameter</caption>
+  <thead>
+    <tr><th>Cable</th><th class="num">Cable diameter (mm)</th><th class="num">Radius at 4 × (mm)</th><th class="num">Radius at 10 × (mm)</th><th class="num">Smallest loop at 10 × (cm)</th><th class="num">Loop used on this page (cm)</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">USB-C cable</th><td class="num">4.70</td><td class="num">18.8</td><td class="num">47.0</td><td class="num">9.4</td><td class="num">10</td></tr>
+    <tr><th scope="row">Ethernet cable</th><td class="num">6.35</td><td class="num">25.4</td><td class="num">63.5</td><td class="num">12.7</td><td class="num">15</td></tr>
+    <tr><th scope="row">HDMI cable</th><td class="num">7.30</td><td class="num">29.2</td><td class="num">73.0</td><td class="num">14.6</td><td class="num">15</td></tr>
+    <tr class="highlight"><th scope="row">12 AWG cord</th><td class="num">11.18</td><td class="num">44.7</td><td class="num">111.8</td><td class="num">22.4</td><td class="num">35</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one cable. The radius at 4 times is the limit for a cable that never moves, for example on a hook. The radius at 10 times is the limit for a coil.</p>
+
+<h3>Rule 2: the over-under coil stores no twist</h3>
+<p>Here is why a straight coil stores twist. Draw a line along a cable with a marker, and make a straight coil. Each loop turns the line one full time around the cable, because your hand holds the cable in the same orientation all the way around. When you unroll the coil in the reverse motion, each loop gives its twist back.</p>
+<p>But when you pull the free end from the coil, each loop leaves one full twist in the cable. The 100 ft cord with 28 loops then holds 28 twists. A cable with stored twist does not lie flat. It forms loops on the floor, and a loop that is pulled tight becomes a kink.</p>
+<p>In an over-under coil, the half turn of each loop is cancelled by the opposite half turn of the next loop. After an even number of loops the cable holds no twist, after an odd number at most one. You can throw the coil across the floor, and the cable unrolls straight.</p>
+
+<figure>
+  <p class="fig-title">A straight coil leaves one twist per loop when you pull the end: 28 twists in the 100 ft cord. An over-under coil leaves 0 or 1 twist.</p>
+  <p class="fig-sub">Twists left in the cable against the number of loops. Solid line: straight coil. Dashed line: over-under coil. The 100 ft cord has 28 loops of 35 cm, the 2 m USB-C cable 6 loops of 10 cm.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 700 330" role="img" aria-label="Step chart. Straight coil: the number of twists left in the cable rises by one for each loop, to 28 twists after 28 loops, the 100 ft cord. Over-under coil: the number alternates between 1 and 0 and never exceeds 1. The 2 m USB-C cable has 6 loops and 6 twists with a straight coil.">
+<line class="axis" x1="70" y1="270.0" x2="560" y2="270.0"/>
+<text class="axis-label" x="62" y="274.0" text-anchor="end">0</text>
+<line class="grid" x1="70" y1="212.5" x2="560" y2="212.5"/>
+<text class="axis-label" x="62" y="216.5" text-anchor="end">7</text>
+<line class="grid" x1="70" y1="155.0" x2="560" y2="155.0"/>
+<text class="axis-label" x="62" y="159.0" text-anchor="end">14</text>
+<line class="grid" x1="70" y1="97.5" x2="560" y2="97.5"/>
+<text class="axis-label" x="62" y="101.5" text-anchor="end">21</text>
+<line class="grid" x1="70" y1="40.0" x2="560" y2="40.0"/>
+<text class="axis-label" x="62" y="44.0" text-anchor="end">28</text>
+<text class="axis-label" x="70.0" y="292" text-anchor="middle">0</text>
+<text class="axis-label" x="192.5" y="292" text-anchor="middle">7</text>
+<text class="axis-label" x="315.0" y="292" text-anchor="middle">14</text>
+<text class="axis-label" x="437.5" y="292" text-anchor="middle">21</text>
+<text class="axis-label" x="560.0" y="292" text-anchor="middle">28</text>
+<line class="axis" x1="70" y1="40" x2="70" y2="270"/>
+<text class="axis-label" x="315.0" y="314" text-anchor="middle">Loops in the coil</text>
+<text class="axis-label" x="18" y="155.0" text-anchor="middle" transform="rotate(-90 18 155.0)">Twists left in the cable</text>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="70.0,270.0 87.5,270.0 87.5,261.8 105.0,261.8 105.0,253.6 122.5,253.6 122.5,245.4 140.0,245.4 140.0,237.1 157.5,237.1 157.5,228.9 175.0,228.9 175.0,220.7 192.5,220.7 192.5,212.5 210.0,212.5 210.0,204.3 227.5,204.3 227.5,196.1 245.0,196.1 245.0,187.9 262.5,187.9 262.5,179.6 280.0,179.6 280.0,171.4 297.5,171.4 297.5,163.2 315.0,163.2 315.0,155.0 332.5,155.0 332.5,146.8 350.0,146.8 350.0,138.6 367.5,138.6 367.5,130.4 385.0,130.4 385.0,122.1 402.5,122.1 402.5,113.9 420.0,113.9 420.0,105.7 437.5,105.7 437.5,97.5 455.0,97.5 455.0,89.3 472.5,89.3 472.5,81.1 490.0,81.1 490.0,72.9 507.5,72.9 507.5,64.6 525.0,64.6 525.0,56.4 542.5,56.4 542.5,48.2 560.0,48.2 560.0,40.0"/>
+<polyline fill="none" stroke="var(--s2)" stroke-width="3" stroke-dasharray="7 5" points="70.0,270.0 87.5,270.0 87.5,261.8 105.0,261.8 105.0,270.0 122.5,270.0 122.5,261.8 140.0,261.8 140.0,270.0 157.5,270.0 157.5,261.8 175.0,261.8 175.0,270.0 192.5,270.0 192.5,261.8 210.0,261.8 210.0,270.0 227.5,270.0 227.5,261.8 245.0,261.8 245.0,270.0 262.5,270.0 262.5,261.8 280.0,261.8 280.0,270.0 297.5,270.0 297.5,261.8 315.0,261.8 315.0,270.0 332.5,270.0 332.5,261.8 350.0,261.8 350.0,270.0 367.5,270.0 367.5,261.8 385.0,261.8 385.0,270.0 402.5,270.0 402.5,261.8 420.0,261.8 420.0,270.0 437.5,270.0 437.5,261.8 455.0,261.8 455.0,270.0 472.5,270.0 472.5,261.8 490.0,261.8 490.0,270.0 507.5,270.0 507.5,261.8 525.0,261.8 525.0,270.0 542.5,270.0 542.5,261.8 560.0,261.8 560.0,270.0"/>
+<circle cx="560.0" cy="40.0" r="5" fill="var(--s1)"/>
+<text x="570.0" y="45.0" font-size="13" font-weight="650">Straight coil: 28</text>
+<text x="570.0" y="62.0" font-size="13">twists after 28 loops</text>
+<rect x="556.0" y="266.0" width="8" height="8" fill="var(--s2)"/>
+<text x="570.0" y="255.8" font-size="13" font-weight="650">Over-under: 0 or 1</text>
+<text x="570.0" y="272.8" font-size="13">twist, any length</text>
+<circle cx="175.0" cy="220.7" r="5" fill="none" stroke="var(--s1)" stroke-width="2"/>
+<text x="187.0" y="206.7" font-size="13">2 m USB-C cable: 6 loops, 6 twists</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> the horizontal direction is the number of loops in the coil. The vertical direction is the number of twists that stay in the cable when you pull the end from the coil. Follow the solid line: one more loop, one more twist.</p>
+  <p class="fig-source">Source: one twist per loop from the Wikipedia article on coiling (Medium) and the reasoning in the text.</p>
+</figure>
+
+<h3>The same method, two lengths</h3>
+<div class="compare">
+  <div>
+    <h4>2 m USB-C cable, straight coil</h4>
+    <p>6 loops of 10 cm. When you pull the end, 6 twists stay in 2 m of cable.</p>
+    <p>The cable weighs a few grams, and its free end rotates easily, so the 6 twists leave at once. A straight coil is good enough.</p>
+  </div>
+  <div>
+    <h4>100 ft cord, straight coil</h4>
+    <p>28 loops of 35 cm. When you pull the end, 28 twists stay in 30 m of cord.</p>
+    <p>The cord weighs about 5.7 kg and lies on the ground. Friction stops the rotation, so the twists stay, and the cord forms loops and kinks. Use the over-under coil.</p>
+  </div>
+</div>
+<p><strong>The principle:</strong> the stored twist matters more for a longer and heavier cable, because the twist cannot leave through the free end. So a loose straight coil is enough for class A. Every cable longer than about 3 m gets an over-under coil.</p>
+
+<h2 id="system">3. The storage system: one home for each class, and the same label on both ends</h2>
+<p>Table 3 is the complete decision rule, with three cases that the example did not contain.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Table 3. Which coil, which tie, and which home: one row per kind of cable</caption>
+  <thead>
+    <tr><th>Cable</th><th>Coil method</th><th class="num">Loop diameter (cm)</th><th>Tie</th><th>Home</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">Thin data cable, under 5 mm, up to 2 m</th><td>straight coil, loose</td><td class="num">10</td><td>hook-and-loop, 20 cm</td><td>drawer or box with dividers, one compartment per type</td></tr>
+    <tr><th scope="row">Data cable 5 to 8 mm, or 2 to 5 m</th><td>over-under coil</td><td class="num">15</td><td>hook-and-loop, 20 cm</td><td>one bin, coils on edge, one bag per type</td></tr>
+    <tr><th scope="row">Data cable over 5 m</th><td>over-under coil</td><td class="num">20</td><td>hook-and-loop, 30 cm</td><td>wall hook, or the bin if it fits</td></tr>
+    <tr><th scope="row">Extension cord up to 50 ft</th><td>over-under coil</td><td class="num">25 to 30</td><td>hook-and-loop, 50 cm</td><td>wall hook at least 9 cm wide</td></tr>
+    <tr class="highlight"><th scope="row">Extension cord 100 ft</th><td>over-under coil</td><td class="num">35</td><td>hook-and-loop, 50 cm, or two ties</td><td>wall hook at least 9 cm wide; a reel only if you unroll it fully before every use (section 7)</td></tr>
+    <tr><th scope="row">Cable in daily use, for example the charger at the desk</th><td>no coil</td><td class="num">not relevant</td><td>none</td><td>stays at its place of use, with a label</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> find the row that matches the cable. Read the four decisions in that row. When a cable matches two rows, take the row with the larger loop.</p>
+
+<h3>Labels</h3>
+<p>Each cable gets the same label at both ends, about 10 cm from the plug. Use a label maker with flag labels, or a strip of tape folded around the cable. The label has three parts: the length, the type, and one hidden property.</p>
+<p>For a USB-C cable the hidden property is its data speed and its power limit. Cables that look the same differ in both, so copy the values from the package. For a cord it is the wire size and the rating: <span class="quoted">100 ft, 12 AWG, outdoor, 15 A</span>.</p>
+
+<h3>Homes</h3>
+<ul>
+  <li><strong>Drawer with dividers for class A.</strong> One compartment per type, coils flat, near the place where you use the cables most.</li>
+  <li><strong>One bin for class B.</strong> Coils stand on edge, so you see every label from above.</li>
+  <li><strong>Wall hooks for class C.</strong> One hook per cord, at least 9 cm wide, so the cord bends with a radius of at least 4 times its diameter. The 100 ft cord weighs about 5.7 kg, so fix the hook into a wall stud.</li>
+</ul>
+
+<h3>Conditions</h3>
+<p>Store cords dry: wipe an outdoor cord and let it dry before you coil it. Keep cables away from direct sun and heat, and put nothing heavy on a coil. These are the common practices of the field, not measured results.</p>
+
+<h2 id="mistake">4. Wrong idea corrected: the hand-and-elbow wrap stores a twist in every loop and bends the cord too tightly</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "The fastest way to store an extension cord is to wrap it around the hand and the elbow. The loops are tidy."</p>
+  <p><strong>Correct:</strong> the hand-and-elbow wrap is a straight coil with small, tight loops. The 100 ft cord then holds about 28 twists when you pull it from the coil, and its bends are too tight.</p>
+  <p><strong>Why the wrong idea fails:</strong> two separate faults. The twist: each loop stores one full twist, as section 2 shows. The heavy cord cannot release 28 twists through its free end.</p>
+<p>The bend: a loop around a forearm is an oval about 10 cm wide, so the radius at each end is about 5 cm. That is below the 11.2 cm limit for a coil and near the 4.5 cm limit for a fixed cord. The cord next to the plug breaks first, because the plug does not bend.</p>
+</div>
+
+<h2 id="limits">5. Limits: the rules come from installation standards and one reel, not from storage research</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>The bend radius factors are installation rules.</strong> The factor 10 for a coil is a judgment of this page; no standard gives one.</li>
+    <li><strong>One twist per loop is a stated principle, not a measurement.</strong> Wikipedia states it, and the marker-line argument in section 2 supports it.</li>
+    <li><strong>The reel ratings are from one product at 240 V.</strong> This page found no US reel with a printed rating for the wound state.</li>
+    <li><strong>Resistances are for 20 °C.</strong> At 60 °C the resistance is 16% higher, so Table 4 gives lower limits for a warm cord.</li>
+    <li><strong>Two values carry the label Low.</strong> The cable diameter of the Southwire cord, 0.44 in, was read through a search tool only. Its weight of 12.558 lb comes from a listing whose unit is unclear.</li>
+    <li><strong>The CPSC numbers are old.</strong> The fact sheet is reproduced in a 2009 safety note, so the numbers describe the years before 2009.</li>
+    <li><strong>No study measures the benefit of a storage system.</strong> The claim that one home per class saves time rests on reasoning, not on data.</li>
+  </ul>
+</div>
+
+<h2 id="howto">6. More detail: how to make an over-under coil, step by step</h2>
+<p>The steps are for a right-handed person. A left-handed person swaps the hands.</p>
+<ol>
+  <li>Hold one end of the cable in the left hand. This end stays outside the coil.</li>
+  <li>First loop, "over": the right hand takes the cable about one loop circumference away, 1.1 m for the 100 ft cord. Bring it to the left hand in the natural direction. Let the cable roll a half turn between the right thumb and fingers, so that the loop lies flat.</li>
+  <li>Second loop, "under": take the next loop circumference. Turn the right hand so that the thumb points down and the palm faces away from you. Bring the cable to the left hand so that it passes under the first loop. The cable now rolls a half turn in the other direction.</li>
+  <li>Repeat: over, under, over, under, until the cable ends. Each loop has the same size.</li>
+  <li>Keep both ends on the outside of the coil, and bind the coil at one point with the tie. If one end passes through the loops, a knot appears at every second loop when you unroll the cable.</li>
+</ol>
+<p>Test the result: put the coil on the floor, hold one end, and throw the rest across the floor. An over-under coil unrolls straight. A straight coil unrolls with loops in it.</p>
+
+
+<h2 id="data">7. More detail: a wound reel cable may carry 3 A, the same cable unwound 13 A</h2>
+<p>This section explains why a cord must be unrolled completely before use, with the numbers of one product. The Masterplug PRO-XT reel holds 25 m of cable with 1.25 mm² copper conductors. Its data sheet gives two ratings. With the cable fully unwound: 13 A, or 3,120 W at 240 V. With the cable wound on the drum: 3 A, or 720 W.</p>
+
+<div class="box predict">
+  <span class="label">Guess first</span>
+  <p>The allowed current drops from 13 A to 3 A, a factor of 4.3. By what factor does the heat produced in the cable drop? Choose before you continue: 4, 10, or 19.</p>
+</div>
+
+<p>Current in a conductor produces <dfn>resistive heating</dfn> (heat produced by a current in a conductor). The power in watts is the current in amperes squared, times the resistance in ohms: P = I² × R. The resistance of the cable follows from its length and its conductor area. The current flows out through one conductor and back through the other, so the length is 2 × 25 m = 50 m.</p>
+
+<div class="box example">
+  <span class="label">Worked example: heat in the reel cable</span>
+  <ol class="steps">
+    <li>Resistance: R = ρ × L ÷ A = 0.0000000172 Ω·m × 50 m ÷ 0.00000125 m² = <strong>0.688 Ω</strong>.
+      <span class="why">ρ (rho) is the resistivity of copper at 20 °C, 1.72 × 10⁻⁸ Ω·m. The area 1.25 mm² is 1.25 × 10⁻⁶ m². The formula gives 13.8 mΩ per metre. The Wikipedia table lists 13.2 mΩ per metre for the slightly thicker 16 AWG wire, so the value is consistent.</span></li>
+    <li>Heat at 13 A, unwound: P = 13² × 0.688 Ω = 169 × 0.688 = <strong>116.3 W</strong>.
+      <span class="why">P = I² × R. The 116 W spread over 25 m of cable in the open air: 4.65 W per metre. The cable becomes warm, not hot.</span></li>
+    <li>Heat at 3 A, wound: P = 3² × 0.688 Ω = 9 × 0.688 = <strong>6.2 W</strong>.
+      <span class="why">On the drum, the turns lie on each other. The inner turns cannot give their heat to the air, so the maker allows only 6 W in total.</span></li>
+    <li>Ratio: 116.3 W ÷ 6.2 W = <strong>18.8</strong>.
+      <span class="why">The current drops by a factor of 4.3, and the heat drops by the square of that: 4.3² = 18.8. Heat grows with the square of the current.</span></li>
+  </ol>
+</div>
+
+<p><strong>Answer to the guess:</strong> the heat drops by a factor of 19, not 4. Heat grows with the square of the current. The chart below shows the whole curve.</p>
+
+<figure>
+  <p class="fig-title">Heat in the 25 m reel cable grows with the square of the current: 6 W at 3 A, 116 W at 13 A.</p>
+  <p class="fig-sub">Heat in watts against current in amperes, for 50 m of 1.25 mm² copper at 20 °C (0.688 Ω). The two dots are the two ratings of the Masterplug reel.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 700 330" role="img" aria-label="Line chart. Heat produced in the 25 m reel cable rises with the square of the current: 6.2 W at 3 A, the rating when the cable is wound, and 116 W at 13 A, the rating when the cable is fully unwound.">
+<line class="axis" x1="80" y1="270.0" x2="540" y2="270.0"/>
+<text class="axis-label" x="72" y="274.0" text-anchor="end">0 W</text>
+<line class="grid" x1="80" y1="210.0" x2="540" y2="210.0"/>
+<text class="axis-label" x="72" y="214.0" text-anchor="end">30 W</text>
+<line class="grid" x1="80" y1="150.0" x2="540" y2="150.0"/>
+<text class="axis-label" x="72" y="154.0" text-anchor="end">60 W</text>
+<line class="grid" x1="80" y1="90.0" x2="540" y2="90.0"/>
+<text class="axis-label" x="72" y="94.0" text-anchor="end">90 W</text>
+<line class="grid" x1="80" y1="30.0" x2="540" y2="30.0"/>
+<text class="axis-label" x="72" y="34.0" text-anchor="end">120 W</text>
+<text class="axis-label" x="80.0" y="292" text-anchor="middle">0 A</text>
+<text class="axis-label" x="150.8" y="292" text-anchor="middle">2 A</text>
+<text class="axis-label" x="221.5" y="292" text-anchor="middle">4 A</text>
+<text class="axis-label" x="292.3" y="292" text-anchor="middle">6 A</text>
+<text class="axis-label" x="363.1" y="292" text-anchor="middle">8 A</text>
+<text class="axis-label" x="433.8" y="292" text-anchor="middle">10 A</text>
+<text class="axis-label" x="504.6" y="292" text-anchor="middle">12 A</text>
+<text class="axis-label" x="540.0" y="292" text-anchor="middle">13 A</text>
+<line class="axis" x1="80" y1="30" x2="80" y2="270"/>
+<text class="axis-label" x="310.0" y="314" text-anchor="middle">Current through the cable, in amperes</text>
+<text class="axis-label" x="22" y="150.0" text-anchor="middle" transform="rotate(-90 22 150.0)">Heat in the 25 m cable, in watts</text>
+<polyline fill="none" stroke="var(--s1)" stroke-width="3" points="80.0,270.0 115.4,268.6 150.8,264.5 186.2,257.6 221.5,248.0 256.9,235.6 292.3,220.5 327.7,202.6 363.1,181.9 398.5,158.5 433.8,132.4 469.2,103.5 504.6,71.9 540.0,37.5"/>
+<circle cx="186.2" cy="257.6" r="6" fill="var(--s1)"/>
+<text x="174.2" y="233.6" font-size="13" font-weight="650" text-anchor="end">Wound: 3 A allowed,</text>
+<text x="174.2" y="250.6" font-size="13" font-weight="650" text-anchor="end">6.2 W</text>
+<circle cx="540.0" cy="37.4" r="6" fill="var(--s1)"/>
+<text x="552.0" y="42.4" font-size="13" font-weight="650">Unwound: 13 A,</text>
+<text x="552.0" y="59.4" font-size="13" font-weight="650">116 W</text>
+</svg>
+  </div>
+  <p class="fig-read"><strong>How to read this chart:</strong> the horizontal direction is the current through the cable. The vertical direction is the heat that the cable produces. The curve bends upward, because the heat grows with the square of the current. The left dot is the wound rating, the right dot the unwound rating.</p>
+  <p class="fig-source">Source: ratings from the Masterplug product page and data sheet (High). Heat calculated with P = I² × R (High).</p>
+</figure>
+
+<p>The same physics applies to US cords, which have no printed rating for the coiled state. Table 4 gives the heat and the voltage loss in a 100 ft cord at 15 A, the limit of the standard US plug. The National Electrical Code (NEC) allows 13 A for 16 AWG cord, 18 A for 14 AWG, and 25 A for 12 AWG. The plug and the cord label set the final limit: the Southwire 12 AWG 100 ft cord is labelled 15 A.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Table 4. Heat and voltage loss in a 100 ft (30.5 m) cord at 15 A, for three wire sizes, resistance out and back, conductors at 20 °C</caption>
+  <thead>
+    <tr><th>Wire size</th><th class="num">Area (mm²)</th><th class="num">Resistance (Ω)</th><th class="num">Heat (W)</th><th class="num">Heat per m (W)</th><th class="num">Loss (V)</th><th class="num">Loss (%)</th><th class="num">NEC limit (A)</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">12 AWG</th><td class="num">3.31</td><td class="num">0.318</td><td class="num">71.5</td><td class="num">2.34</td><td class="num">4.76</td><td class="num">4.0</td><td class="num">25</td></tr>
+    <tr><th scope="row">14 AWG</th><td class="num">2.08</td><td class="num">0.505</td><td class="num">113.7</td><td class="num">3.73</td><td class="num">7.58</td><td class="num">6.3</td><td class="num">18</td></tr>
+    <tr><th scope="row">16 AWG</th><td class="num">1.31</td><td class="num">0.803</td><td class="num">180.6</td><td class="num">5.93</td><td class="num">12.04</td><td class="num">10.0</td><td class="num">13</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one wire size. A smaller AWG number is a thicker wire. At 15 A, a 100 ft cord produces between 72 W and 181 W of heat. The 16 AWG cord may not carry 15 A at all, because its NEC limit is 13 A. A warm conductor has a higher resistance: at 60 °C the values are 16% higher.</p>
+
+<p>The Consumer Product Safety Commission (CPSC) of the US estimates about 3,300 house fires per year from extension cords. These fires cause about 50 deaths and 270 injuries per year. The CPSC fact sheet names overload and misuse among the most frequent causes. Its advice includes: never use an extension cord while it is coiled or looped. Wikipedia states the same for reels: a reel carries its full rated current only when it is completely extended.</p>
+<p><strong>What this means for storage.</strong> A <dfn>cord reel</dfn> (a drum on which a cord is wound, with or without a built-in outlet) is a storage device, not a power strip. If you store a cord on a reel, unroll the whole cord before you connect a load. A <dfn>hank</dfn> (a coil of cord or rope, bound and stored without a drum) on a hook has an advantage. You must remove the whole hank from the hook and unroll it, so the cord is never used while coiled. This page stores the three cords as hanks.</p>
+
+<h2 id="words">8. Words that you will hear</h2>
+<p>These terms appear on cord labels, in shop listings, and in advice from electricians. They are not needed for the method, but you will meet them.</p>
+<dl class="glossary">
+  <dt>SJTW</dt>
+  <dd>The jacket code printed on outdoor extension cords in the US. S means service cord, J means junior (the 300 V class), T means thermoplastic insulation, and W means weather-resistant. The code tells you where the cord may be used, not how to store it.</dd>
+  <dt>NEMA 5-15</dt>
+  <dd>The standard US plug and outlet for 120 V and 15 A, with two flat blades and a round ground pin. It is the reason why a 12 AWG cord is labelled 15 A, although its wire could carry 25 A.</dd>
+  <dt>GFCI</dt>
+  <dd>Ground-fault circuit interrupter: an outlet or a plug that cuts the power within a fraction of a second when current leaks to ground. US building rules require one for outdoor outlets at homes (Low, not verified on this page). It protects the person, not the cord.</dd>
+  <dt>Voltage drop</dt>
+  <dd>The voltage lost along the cord: the current times the resistance of the cord. At 15 A, the 100 ft cord with 12 AWG wire loses 4.76 V of 120 V. With 14 AWG it loses 7.58 V, and with 16 AWG 12.04 V (Table 4). This loss is the reason for the CPSC rule: one wire size heavier for every additional 100 ft of cord. Table 5 is the CPSC selection table.</dd>
+  <dt>Strain relief</dt>
+  <dd>The moulded, flexible part of the plug where the cord enters it. It spreads the bend over a few centimetres, so the conductors do not break at the plug. Start the first loop about 10 cm after the plug, so that the strain relief is not bent.</dd>
+  <dt>Chain sinnet</dt>
+  <dd>A chain of loops, each pulled through the one before it, also called a daisy chain. Stage crews use it for long cords and ropes. It shortens a cord without twist, and it opens with one pull. It is an alternative to the over-under coil for class C, but it needs practice.</dd>
+  <dt>Cable management</dt>
+  <dd>The arrangement of the cables that are in use, for example under a desk: trays, clips, and sleeves. It is a different task from storage, which is the subject of this page. The same hook-and-loop ties serve both.</dd>
+  <dt>TIA-568</dt>
+  <dd>The standard of the Telecommunications Industry Association for network cabling in buildings. It is the source of the rule of 4 times the cable diameter for Ethernet cables.</dd>
+</dl>
+
+<div class="table-wrap">
+<table>
+  <caption>Table 5. The CPSC selection table: the smallest wire size for a cord, by cord length and by the current of the load</caption>
+  <thead>
+    <tr><th>Cord length</th><th class="num">0 to 2 A</th><th class="num">2 to 5 A</th><th class="num">5 to 7 A</th><th class="num">7 to 10 A</th><th class="num">10 to 12 A</th><th class="num">12 to 15 A</th></tr>
+  </thead>
+  <tbody>
+    <tr><th scope="row">25 ft</th><td class="num">16 AWG</td><td class="num">16 AWG</td><td class="num">16 AWG</td><td class="num">16 AWG</td><td class="num">14 AWG</td><td class="num">14 AWG</td></tr>
+    <tr><th scope="row">50 ft</th><td class="num">16 AWG</td><td class="num">16 AWG</td><td class="num">16 AWG</td><td class="num">14 AWG</td><td class="num">14 AWG</td><td class="num">12 AWG</td></tr>
+    <tr class="highlight"><th scope="row">100 ft</th><td class="num">16 AWG</td><td class="num">16 AWG</td><td class="num">14 AWG</td><td class="num">12 AWG</td><td class="num">12 AWG</td><td class="num">not listed</td></tr>
+    <tr><th scope="row">150 ft</th><td class="num">16 AWG</td><td class="num">14 AWG</td><td class="num">12 AWG</td><td class="num">12 AWG</td><td class="num">not listed</td><td class="num">not listed</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> find the row with the cord length and the column with the current of the load. The cell gives the smallest wire size. "Not listed" means that the source gives no size for that case. Source: the CPSC fact sheet as reproduced in the UC ANR safety note (Medium).</p>
+
+<h2 id="check">9. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>Your 50 ft (15.24 m) cord has 14 AWG wire, 8.286 mΩ per metre. How much heat does it produce at 15 A, fully unrolled?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>About 57 W.</strong></p>
+          <p>Resistance out and back: 2 × 15.24 m × 0.008286 Ω/m = 0.2526 Ω. Heat: 15² × 0.2526 = 56.8 W. A common wrong answer is 28.4 W, which forgets the return conductor.</p>
+        </div>
+      </details>
+    </li>
+    <li>You buy a new HDMI cable with a cable diameter of 7.3 mm. What is the smallest loop diameter for its coil?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>14.6 cm, so use a 15 cm loop.</strong></p>
+          <p>The smallest radius is 10 × 7.3 mm = 73 mm. The loop diameter is 2 × 73 mm = 14.6 cm. A common wrong answer is 7.3 cm, which uses the radius as the diameter.</p>
+        </div>
+      </details>
+    </li>
+    <li>You make a straight coil of 12 loops from a 15 m Ethernet cable and later pull the end from the coil. How many twists stay in the cable? And with an over-under coil of 12 loops?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>12 twists with the straight coil. 0 twists with the over-under coil.</strong></p>
+          <p>A straight coil leaves one twist per loop: 12. In an over-under coil, the half turns of each pair of loops cancel. 12 is an even number, so 0 twists remain. With 13 loops, 1 twist would remain.</p>
+        </div>
+      </details>
+    </li>
+    <li>You want to run a 1,500 W heater from the Masterplug reel of section 7 while it is still wound, in a 240 V country. Is that allowed?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>No.</strong> The wound rating is 720 W (3 A). A 1,500 W heater at 240 V draws 1,500 ÷ 240 = 6.25 A, more than 3 A. The cable would produce 6.25² × 0.688 = 26.9 W inside the drum, more than 4 times the allowed 6.2 W.</p>
+<p>Unroll the whole cable first. Then the rating is 3,120 W (13 A), and the heater is allowed. A common wrong answer is yes, because 1,500 W is less than 3,120 W. But that rating applies only to the unwound cable.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">10. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>Sort cables into three classes by thickness and length: thin and short, medium, and extension cords. Each class gets one loop size, one tie, and one home.</li>
+    <li>The smallest loop has a radius of 10 times the cable diameter. That is a 9 cm loop for a USB-C cable and a 22 cm loop for a 12 AWG cord. A hook must be 9 cm wide for the cord.</li>
+    <li>A straight coil leaves one twist per loop when you pull the end. The over-under coil leaves none. Use it for every cable longer than about 3 m.</li>
+    <li>Heat in a cord grows with the square of the current. The 25 m reel cable produces 116 W at 13 A and 6 W at 3 A. Only 3 A is allowed while it is wound, so unroll a cord completely before use.</li>
+    <li>Bind with hook-and-loop ties. Label both ends with the length, the type, and one hidden property. Give each class one home.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>AWG (American Wire Gauge)</dt>
+  <dd>The US scale for the thickness of a wire. A smaller number is a thicker wire: 12 AWG has 3.31 mm² of copper, 16 AWG has 1.31 mm².</dd>
+  <dt>Cable diameter</dt>
+  <dd>The thickness of the cable, measured across its outer insulation. Data sheets call this value the outer diameter.</dd>
+  <dt>Cable tie</dt>
+  <dd>A nylon strap with teeth that can only be pulled tighter and must be cut to open. Not used on this page.</dd>
+  <dt>Cord reel</dt>
+  <dd>A drum on which a cord is wound, with or without a built-in outlet. A reel carries its full rated current only when it is completely unwound.</dd>
+  <dt>Hank</dt>
+  <dd>A coil of cord or rope, bound and stored without a drum.</dd>
+  <dt>Hook-and-loop tie</dt>
+  <dd>A strap of two textile faces, one with small hooks and one with small loops. It holds when pressed together and opens when pulled apart. It is reusable.</dd>
+  <dt>Loop diameter</dt>
+  <dd>The width of one loop of a coil, measured across its centre. The smallest loop diameter on this page is 20 times the cable diameter.</dd>
+  <dt>Minimum bend radius</dt>
+  <dd>The smallest radius of a curve that a cable can follow without damage to its conductors, its shield, or its insulation. Stated as a multiple of the cable diameter.</dd>
+  <dt>Over-under coil</dt>
+  <dd>A coil in which each loop is made with a half turn of the cable, in alternate directions. It stores no twist.</dd>
+  <dt>Resistive heating</dt>
+  <dd>Heat produced by a current in a conductor. The power in watts is the current in amperes squared, times the resistance in ohms: P = I² × R.</dd>
+  <dt>Straight coil</dt>
+  <dd>A coil in which every loop goes in the same direction, like a cable on a spool. It leaves one twist per loop when the end is pulled from it.</dd>
+  <dt>Twist</dt>
+  <dd>One full rotation of the cable around its own axis, stored in the cable.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or sources with limits. <span class="conf low">Low</span> = not verified, or sources disagree. <span class="conf given">Given</span> = a value from your message or an example value.</p>
+<ol class="sources">
+  <li><span class="conf given">Given</span> The inventory of 20 cables, the lengths, and the loop diameters of section 1 are example values.</li>
+  <li><span class="conf high">High</span> Calculated: loop counts, twists, resistances, heat, voltage loss, and bend radii use the formulas on the page. All values were computed with a script and rounded only for display.</li>
+  <li><span class="conf high">High</span> Wire data for 10 to 18 AWG, copper at 20 °C: Wikipedia, <span class="quoted">American wire gauge</span>, table of diameters, areas, and resistance per metre. Read in the page text. The resistivity of copper, 1.72 × 10⁻⁸ Ω·m, is the standard value for annealed copper. The Wikipedia 16 AWG row confirms it within 5%, which is the area difference.</li>
+  <li><span class="conf high">High</span> Masterplug PRO-XT 25 m cable reel: 3,120 W (13 A) fully unwound, 720 W (3 A) fully wound, cable 1.25 mm². Product page at diy.com and the RS Components data sheet, both read in the text.</li>
+  <li><span class="conf medium">Medium</span> NEC Table 400.5(A)(1), cord ampacity with two current-carrying conductors: 13 A for 16 AWG, 18 A for 14 AWG, 25 A for 12 AWG. Read in the reproduction on the Lex Products technical page, not in the code itself.</li>
+  <li><span class="conf high">High</span> Southwire 12/3 SJTW 100 ft cord, rating 15 A: Gexpro product listing, read in the text. <span class="conf low">Low</span> Its cable diameter, 0.44 in: Zoro listing, read only through a search summary. <span class="conf low">Low</span> Its weight, 12.558 lb: Elliott Electric listing, unit unclear.</li>
+  <li><span class="conf high">High</span> USB-C cable diameter 4.7 mm: StarTech USB2CC2M drawing (PDF), read in the text. HDMI cable diameter 7.30 mm: Vertical Cable 242 series data sheet (PDF), read in the text.</li>
+  <li><span class="conf medium">Medium</span> Ethernet cable bend radius of 4 times the cable diameter, about 1 inch, from a draft of EIA-568. Source: Elliott Electric reference page <span class="quoted">Minimum Cable Bending Radii</span>. The Ethernet diameter of 6.35 mm (0.25 in) follows from the 1 inch in that page.</li>
+  <li><span class="conf medium">Medium</span> General bend radius of 10 times the diameter, 4 times for fixed and 7.5 times for moved cables. Source: Helukabel, <span class="quoted">The meaning of bending radius for cables and drag chains</span>. A maker's guide, read in the text.</li>
+  <li><span class="conf medium">Medium</span> Over-under and straight coiling, one twist per removed coil, knots when an end passes through the loops: Wikipedia, <span class="quoted">Coiling</span>. The steps of the method: Cheqroom, <span class="quoted">Wrap Cables Correctly</span>, and the myINSiGHT user manual. All read in the text.</li>
+  <li><span class="conf medium">Medium</span> CPSC estimates: 4,000 injuries and 3,300 fires per year, 50 deaths, 270 injuries. Also the rule of one wire size per 100 ft, and the selection table. Source: UC ANR Safety Note 144 (July 2009), which reproduces the CPSC fact sheet. The advice never to use a cord while coiled: the fact sheet as quoted in the US Department of Energy Operating Experience Summary 2003-26. The CPSC pages refused the download.</li>
+  <li><span class="conf medium">Medium</span> A reel carries its full current only when completely extended: Wikipedia, <span class="quoted">Extension cord</span>. The physics of the trapped heat: Stage Supply, <span class="quoted">Cable Drums and Reels: Ratings and Safe Use</span>.</li>
+  <li><span class="conf medium">Medium</span> Cable tie and hook-and-loop fastener: Wikipedia, <span class="quoted">Cable tie</span> and <span class="quoted">Hook-and-loop fastener</span>.</li>
+  <li><span class="conf medium">Medium</span> Reasoning on this page: the marker-line explanation of the twist, the comparison of the two lengths, and the faults of the hand-and-elbow wrap. The steps are written in sections 2 and 4.</li>
+</ol>
+
+</main>
+<script>
+// Open every hidden answer before printing, so the printed page is complete.
+window.addEventListener("beforeprint", function () {
+  document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+});
+// Mark each table that is wider than its frame. The styles then show a hint and keep the title in view.
+function markWideTables() {
+  document.querySelectorAll(".table-wrap").forEach(function (w) {
+    w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+    w.style.setProperty("--wrap-width", w.clientWidth + "px");
+  });
+}
+window.addEventListener("load", markWideTables);
+window.addEventListener("resize", markWideTables);
+</script>
+</body>
+</html>
