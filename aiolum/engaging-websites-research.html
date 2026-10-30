@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engaging Websites Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* ---------- Typefaces. A system serif carries all running text, so the text needs no download.
+   The display face Fraunces marks the title and the headings; the build script loads it from
+   Google Fonts, and the serif stack is its fallback. A system sans marks the apparatus of the
+   data (table headers, axis labels) and the controls that the script adds. ---------- */
+:root {
+  --serif: "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, "Sitka Text", Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --display: "Fraunces", "Iowan Old Style", "Charter", "Palatino Linotype", Palatino, Georgia,
+    "Songti SC", "Hiragino Mincho ProN", "Noto Serif CJK SC", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "PingFang SC", "Hiragino Sans", "Noto Sans CJK SC", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+/* ---------- Type scale. One fluid scale, five steps, so every size on the page is one of these.
+   The scale follows the Romanelli site: small print 14 px, text 16 to 22 px, display large. ---------- */
+:root {
+  --step--1: clamp(0.9rem, 0.86rem + 0.2vw, 0.98rem);   /* small print: meta line, sources, captions */
+  --step-0: clamp(1.06rem, 1rem + 0.3vw, 1.2rem);        /* running text */
+  --step-1: clamp(1.16rem, 1.1rem + 0.35vw, 1.3rem);     /* the short answer */
+  --step-2: clamp(1.4rem, 1.22rem + 0.9vw, 1.8rem);      /* section heading */
+  --step-3: clamp(2.1rem, 1.3rem + 3.6vw, 3.5rem);       /* page title */
+  /* Spacing scale: 16, 24, 40, 64 px, and one large step above the title. */
+  --space-1: 1rem;
+  --space-2: 1.5rem;
+  --space-3: 2.5rem;
+  --space-4: 4rem;
+  --space-top: clamp(3rem, 9vw, 6.5rem);
+  /* The measure of the text column, the side gutter, and the width of the wide stage (see below). */
+  --measure: 40rem;
+  --gutter: 1rem;
+  --wide: 56rem;
+}
+
+/* ---------- Colour tokens. Ink and paper from the Romanelli site (ink #292b34, paper #f9f6f0),
+   and three accents, each with one fixed role, so a colour always means the same kind of thing:
+     terracotta (--accent)   the reader's path: links, key terms, the short answer, the self-check
+     teal (--accent2)        the evidence: worked examples, figures, tables, section headings
+     ochre (--accent3)       the reader's own work: the guess box, the part labels
+   Chart series and confidence labels keep their own colours because there the colour is information. ---------- */
+:root {
+  --bg: #f9f6f0;
+  --surface: #efece7;
+  --text: #292b34;
+  --muted: #5f6168;
+  --border: rgb(41 43 52 / 22%);
+  --accent: #a6472a;
+  --accent-soft: #f3e6df;
+  --accent2: #1a6460;
+  --accent2-soft: #e3efed;
+  --accent3: #7d5a0c;
+  --accent3-soft: #f5ecd6;
+  --good: #11632a;
+  --good-soft: #e9f1e7;
+  --warn: #7a4300;
+  --warn-soft: #f6eddc;
+  --bad: #a1260d;
+  --bad-soft: #f7e8e3;
+  /* Chart series colours: blue, amber, purple, green. Validated for colour-blind readers:
+     every pair stays distinct under protan, deutan, and tritan simulation, in both themes.
+     Use them in this order. Use at most 4 series in one chart. */
+  --s1: #1c5293;
+  --s2: #863709;
+  --s3: #9260da;
+  --s4: #25984d;
+  --grid: #e0ded9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1c22;
+    --surface: #28292e;
+    --text: #f9f6f0;
+    --muted: #aeb0b6;
+    --border: rgb(249 246 240 / 32%);
+    --accent: #f0a58f;
+    --accent-soft: #2e2320;
+    --accent2: #7fd0c9;
+    --accent2-soft: #1e2b2a;
+    --accent3: #eac066;
+    --accent3-soft: #2c2719;
+    --good: #7fd69a;
+    --good-soft: #17251a;
+    --warn: #f0b861;
+    --warn-soft: #2c2314;
+    --bad: #ff9d8a;
+    --bad-soft: #2f1c17;
+    --s1: #0774aa;
+    --s2: #9e590d;
+    --s3: #a473ee;
+    --s4: #09af51;
+    --grid: #3a3b3f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1c22;
+  --surface: #28292e;
+  --text: #f9f6f0;
+  --muted: #aeb0b6;
+  --border: rgb(249 246 240 / 32%);
+  --accent: #f0a58f;
+  --accent-soft: #2e2320;
+  --accent2: #7fd0c9;
+  --accent2-soft: #1e2b2a;
+  --accent3: #eac066;
+  --accent3-soft: #2c2719;
+  --good: #7fd69a;
+  --good-soft: #17251a;
+  --warn: #f0b861;
+  --warn-soft: #2c2314;
+  --bad: #ff9d8a;
+  --bad-soft: #2f1c17;
+  --s1: #0774aa;
+  --s2: #9e590d;
+  --s3: #a473ee;
+  --s4: #09af51;
+  --grid: #3a3b3f;
+  color-scheme: dark;
+}
+
+/* ---------- Base text. One measure, left-aligned, generous line spacing. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+[id] { scroll-margin-top: 1.4rem; }
+::selection { background: var(--accent-soft); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  text-align: left;
+  overflow-wrap: break-word;
+  font-kerning: normal;
+  font-synthesis: none;
+}
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--space-top) var(--gutter) var(--space-4);
+}
+
+/* Headings carry the structure through size and space. The title is large and set tight, as on
+   the Romanelli site. No rule across the page, except one short mark above each section
+   heading, in the colour of the heading. */
+h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 600; text-wrap: balance; }
+h1 {
+  font-size: var(--step-3);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-1);
+}
+h2 {
+  font-size: var(--step-2);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--accent2);
+  margin-top: var(--space-4);
+  margin-bottom: 0.8rem;
+}
+h2::before {
+  content: "";
+  display: block;
+  width: 2.5rem;
+  border-top: 2px solid var(--accent2);
+  margin-bottom: var(--space-2);
+}
+h3 { font-size: 1.15em; margin-top: var(--space-3); margin-bottom: 0.45rem; }
+p, ul, ol, dl, table, figure { margin: 0 0 1.15rem; }
+p { text-wrap: pretty; }
+ul, ol { padding-left: 1.3rem; }
+li { margin-bottom: 0.4rem; }
+/* A link is set in the accent, with a thin underline. */
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+a:hover { text-decoration-thickness: 2px; }
+strong { font-weight: 600; }
+.num, td.num, th.num { font-variant-numeric: tabular-nums; }
+
+/* Code keeps only its own typeface. No chip, no frame around a word. */
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+pre {
+  position: relative;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  font-size: var(--step--1);
+  margin: 0 0 1.3rem;
+}
+pre code { font-size: 1em; }
+
+/* ---------- Page header. One line of small print under the title closes the masthead. ---------- */
+.meta {
+  color: var(--muted);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  margin: 0 0 var(--space-3);
+}
+
+/* ---------- Boxes. No fill and no frame: a rule and space set each one apart.
+              Every box keeps its written label, so colour is never the only signal. ---------- */
+.box { margin: 0 0 var(--space-2); }
+.box > :last-child { margin-bottom: 0; }
+.box .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+/* The short answer is the opening statement of the page. Heaviest rule, largest text. */
+.bottom-line {
+  background: var(--accent-soft);
+  border-top: 2px solid var(--accent);
+  padding: 1.05rem 1.3rem 1.15rem;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  margin-bottom: var(--space-3);
+}
+.bottom-line .label { color: var(--accent); }
+.example { border-left: 2px solid var(--accent2); padding-left: 1.4rem; }
+.example .label { color: var(--accent2); }
+.mistake { border-left: 2px solid var(--bad); padding-left: 1.4rem; }
+.mistake .label { color: var(--bad); }
+.limits { border-top: 1px solid var(--border); padding-top: 1rem; }
+.assume { border-left: 1px solid var(--border); padding-left: 1.4rem; }
+.assume .label { color: var(--accent); }
+.predict { background: var(--accent3-soft); border-left: 2px solid var(--accent3); padding: 0.9rem 1.3rem 1rem 1.4rem; }
+.predict .label { color: var(--accent3); }
+.recap { background: var(--accent2-soft); border-top: 2px solid var(--accent2); padding: 1rem 1.3rem 1.1rem; }
+.recap .label { color: var(--accent2); }
+
+/* ---------- Contents list ---------- */
+nav.contents {
+  border-left: 2px solid var(--accent2);
+  padding: 0 0 0 1.4rem;
+  margin: 0 0 var(--space-3);
+}
+nav.contents ol { margin: 0; padding-left: 1.4rem; }
+nav.contents li { margin-bottom: 0.3rem; }
+nav.contents a { color: var(--text); text-decoration-color: var(--border); }
+nav.contents a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+nav.contents .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent2);
+  margin-bottom: 0.45rem;
+}
+
+/* ---------- Key terms. The definition is in the sentence, not in a tooltip. ---------- */
+dfn {
+  font-style: normal;
+  font-weight: 600;
+  border-bottom: 1px solid var(--accent);
+}
+dl.glossary dt { font-weight: 600; color: var(--accent2); margin-top: 0.85rem; }
+dl.glossary dd { margin: 0.1rem 0 0 0; }
+
+/* ---------- Numbered reasoning steps. The numeral sits in the margin, as in a book. ---------- */
+ol.steps { list-style: none; padding: 0; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 0.2rem 2.5rem;
+  margin-bottom: 1rem;
+}
+ol.steps > li::before {
+  content: counter(step) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.7rem;
+  text-align: right;
+  color: var(--accent2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.why {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.95em;
+  margin-top: 0.1rem;
+}
+.why::before { content: "Reason: "; font-weight: 400; }
+
+/* ---------- Tables. Print rules only: one above the header, one under each row. ---------- */
+.table-wrap { overflow-x: auto; margin: 0 0 1.15rem; }
+.table-wrap table { margin: 0; }
+/* When a table is wider than its frame, the script adds the class "scrolls". Then the title
+   stays in view and a hint appears. */
+.table-wrap.scrolls caption { position: sticky; left: 0; max-width: var(--wrap-width, 100%); }
+.table-wrap.scrolls::before {
+  content: "Move the table sideways to see all of it.";
+  display: block;
+  position: sticky;
+  left: 0;
+  color: var(--muted);
+  font-style: italic;
+  font-size: var(--step--1);
+  margin-bottom: 0.3rem;
+}
+table { border-collapse: collapse; width: 100%; font-size: 0.95em; line-height: 1.5; }
+caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+th, td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--accent2);
+  color: var(--accent2);
+  font-family: var(--sans);
+  font-size: 0.88em;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; }
+td.num { white-space: nowrap; }
+.table-read { font-size: 0.95em; margin: -0.4rem 0 1.15rem; }
+tbody th { font-weight: 400; }
+tr.highlight td, tr.highlight th { background: var(--accent2-soft); font-weight: 600; }
+@media (hover: hover) {
+  tbody tr:hover > td, tbody tr:hover > th { background: color-mix(in srgb, var(--surface) 60%, transparent); }
+  tbody tr.highlight:hover > td, tbody tr.highlight:hover > th { background: var(--accent2-soft); }
+}
+
+/* ---------- Figures. The title is a sentence that states the finding. ---------- */
+figure {
+  border-top: 2px solid var(--accent2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 0 1rem;
+  margin-bottom: var(--space-2);
+}
+figure .fig-title { font-weight: 600; color: var(--accent2); margin: 0 0 0.15rem; }
+figure .fig-sub { color: var(--muted); font-style: italic; font-size: var(--step--1); margin: 0 0 0.7rem; }
+figure .fig-read { font-size: 0.95em; margin: 0.7rem 0 0; }
+figure .fig-source { color: var(--muted); font-size: var(--step--1); margin: 0.35rem 0 0; }
+figure svg { display: block; width: 100%; height: auto; }
+/* On a narrow screen a figure keeps a readable size and scrolls inside its own frame. */
+.fig-scroll { overflow-x: auto; }
+.fig-scroll svg { min-width: 34rem; }
+@media (max-width: 40rem) {
+  .fig-scroll::before {
+    content: "Move the figure sideways to see all of it.";
+    display: block;
+    position: sticky;
+    left: 0;
+    color: var(--muted);
+    font-style: italic;
+    font-size: var(--step--1);
+    margin-bottom: 0.3rem;
+  }
+}
+svg text { font-family: var(--serif); fill: var(--text); }
+svg .axis-label { fill: var(--muted); font-size: 13px; font-family: var(--sans); }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+/* Diagram parts. A box is a thing. An arrow means "causes" or "then". */
+svg .node { fill: none; stroke: var(--accent2); stroke-width: 1.2; }
+svg .arrow { fill: none; stroke: var(--text); stroke-width: 1.5; }
+svg .arrow-head { fill: var(--text); }
+svg .node-name { font-size: 14px; font-weight: 600; }
+svg .node-value { font-size: 13px; fill: var(--muted); }
+svg .arrow-label { font-size: 13px; font-style: italic; }
+
+/* ---------- Text that is quoted from a source or from data. The language rules do not apply to it. ---------- */
+.quoted { font-style: italic; }
+
+/* ---------- Side-by-side comparison. One hairline divides the two cases. ---------- */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.7rem;
+  margin: 0 0 var(--space-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.95rem 0 1rem;
+}
+.compare > div > :last-child { margin-bottom: 0; }
+.compare > div + div { border-left: 1px solid var(--border); padding-left: 1.7rem; }
+.compare h4 { margin: 0 0 0.4rem; font-size: 1em; font-weight: 600; color: var(--accent2); }
+@media (max-width: 560px) {
+  .compare { grid-template-columns: 1fr; gap: 1.1rem 0; }
+  .compare > div + div {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid var(--border);
+    padding-top: 1.1rem;
+  }
+}
+
+/* ---------- Self-check questions. The answer is hidden until the reader tries. ---------- */
+.check {
+  border-top: 2px solid var(--accent);
+  padding-top: 1rem;
+  margin: 0 0 var(--space-3);
+}
+.check .label {
+  display: block;
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--step--1);
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+.check ol { margin-bottom: 0; }
+.check li { margin-bottom: 1rem; }
+details { margin-top: 0.4rem; }
+summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+details:not(.optional) > summary { list-style: none; }
+details:not(.optional) > summary::-webkit-details-marker { display: none; }
+details:not(.optional) > summary::before {
+  content: "";
+  display: inline-block;
+  width: 0.42em;
+  height: 0.42em;
+  margin-right: 0.5em;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(-45deg);
+  vertical-align: 0.1em;
+}
+details[open]:not(.optional) > summary::before { transform: rotate(45deg); vertical-align: 0.22em; }
+@media (prefers-reduced-motion: no-preference) {
+  details:not(.optional) > summary::before { transition: transform 0.15s ease; }
+}
+/* The script marks a question whose answer the reader opened, and counts them in the label. */
+.check li.answered summary::after {
+  content: " \2713";
+  display: inline-block;
+  margin-left: 0.3em;
+  color: var(--good);
+  font-style: normal;
+}
+.check .check-count { font-style: normal; font-family: var(--sans); font-size: 0.95em; color: var(--muted); }
+details > div {
+  margin-top: 0.5rem;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 1px solid var(--border);
+}
+details > div > :last-child { margin-bottom: 0; }
+
+/* ---------- Optional depth. Visible label, one level only. ---------- */
+details.optional {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  margin: 0 0 var(--space-2);
+}
+details.optional > summary::before {
+  content: "Optional detail: ";
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 400;
+}
+/* An optional block directly after a comparison or a figure shares their closing rule,
+   so the page does not show two rules with an empty row between them. */
+.compare + details.optional, figure + details.optional {
+  border-top: 0;
+  margin-top: calc(-1 * var(--space-2));
+}
+
+/* ---------- Part heading, for a page with several parts ---------- */
+.part {
+  margin: var(--space-4) 0 0;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid var(--accent3);
+  font-size: var(--step--1);
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.07em;
+  color: var(--accent3);
+}
+.part + h2 { margin-top: var(--space-2); }
+.part + h2::before { content: none; }
+nav.contents .core::after {
+  content: " (main path)";
+  color: var(--muted);
+  font-style: italic;
+  font-size: 0.92em;
+}
+
+/* ---------- Confidence labels. Small capitals plus the word, never colour alone. ---------- */
+.conf {
+  font-size: 1em;
+  font-weight: 400;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.conf.high { color: var(--good); }
+.conf.medium { color: var(--warn); }
+.conf.low { color: var(--bad); }
+.conf.given { color: var(--muted); }
+ol.sources { font-size: 0.95em; }
+ol.sources li { margin-bottom: 0.7rem; }
+
+/* ---------- The wide stage. On a wide screen the title, the figures, and the tables are wider than
+   the text column and centred on it. The text keeps its measure; the work of the page gets the room.
+   On the Romanelli site the images are wider than the text grid, and the change of width gives the
+   page its rhythm. ---------- */
+@media (min-width: 64rem) {
+  h1, .meta, figure, .table-wrap {
+    width: var(--wide);
+    margin-left: calc((var(--measure) - 2 * var(--gutter) - var(--wide)) / 2);
+  }
+  /* The drawing of a figure is wide; its title and its text stay in the text column, so that
+     no line of running text is longer than the measure. */
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source {
+    width: calc(var(--measure) - 2 * var(--gutter));
+    margin-left: calc((var(--wide) - var(--measure) + 2 * var(--gutter)) / 2);
+  }
+}
+
+/* ---------- Narrow screens. The fluid scale already lowers every size; the measure keeps its gutter. ---------- */
+@media (max-width: 30rem) {
+  main { padding-bottom: var(--space-3); }
+  h2 { margin-top: var(--space-3); }
+  .bottom-line { margin-bottom: var(--space-2); }
+}
+
+/* ---------- Controls that the script adds. They are user interface, not content, so they are the
+   one place with a rounded frame: a round shape always means "control" on this page. The page is
+   complete without them: with no JavaScript the theme follows the system and nothing is lost. ---------- */
+.theme-switch {
+  position: fixed;
+  top: 0.8rem;
+  right: 0.8rem;
+  z-index: 20;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  cursor: pointer;
+}
+.theme-switch:hover { color: var(--text); border-color: var(--muted); }
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 0;
+  background: var(--accent);
+  z-index: 30;
+}
+.copy-btn {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.14rem 0.6rem;
+  cursor: pointer;
+  opacity: 0;
+}
+pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+@media (hover: none) { .copy-btn { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) { .copy-btn { transition: opacity 0.15s ease; } }
+.copy-btn:hover { color: var(--text); border-color: var(--muted); }
+.copy-btn.done { color: var(--good); border-color: var(--good); }
+
+/* ---------- Print. All hidden answers are opened by the script at the end of the file. ---------- */
+@media print {
+  body { font-size: 11pt; background: #fff; color: #000; }
+  .theme-switch, .progress, .copy-btn { display: none; }
+  .check li.answered summary::after { content: none; }
+  main { max-width: none; padding: 0; }
+  h1, .meta, figure, .table-wrap,
+  figure > .fig-title, figure > .fig-sub, figure > .fig-read, figure > .fig-source { width: auto; margin-left: 0; }
+  nav.contents { display: none; }
+  .bottom-line, .recap, .predict { background: none; padding-left: 0; padding-right: 0; }
+  h2 { margin-top: 2rem; }
+  .box, figure, .check, table, .compare { break-inside: avoid; }
+  a { color: inherit; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- names: NN, WeChat, Wix, Base44, Wikimedia, Wikipedia, Baymard, CHI, KL, DOI, CI -->
+<h1>What makes a website engaging, so that a reader clicks and explores? The evidence, applied to aiolum.com</h1>
+<p class="meta">Written 2026-10-29 · Reading time: about 25 minutes · You need to know: what a page view and a visit are</p>
+
+<div class="box bottom-line">
+  <span class="label">The short answer</span>
+  <p>A reader clicks a link for two reasons. The link lets them predict what is behind it. And the click opens a question that they believe they can close. The two best supported mechanisms are <strong>information scent</strong> and the <strong>information gap</strong>. Scent means that the reader estimates the value of a link from its label and its context. A gap is a question that feels important, salient and surprising.</p>
+  <p>Readers explore in two different ways. <strong>Hunters</strong> follow one direct path to one answer. <strong>Busybodies</strong> jump between loosely connected novelties. A site that wants exploration must serve both: ranked answers and search for the hunter, unexpected neighbours on every page for the busybody.</p>
+  <p>Visual style and introductory stories have no measured effect on exploration. The measured effects come from link labels, previews, and the quality of list pages. For aiolum.com, the baseline is <strong>1.34 pages per visit</strong> (336 page views in 251 visits, 22 to 29 October 2026). Most readers read one page and leave.</p>
+</div>
+
+<div class="box assume">
+  <span class="label">Assumptions on this page</span>
+  <ul>
+    <li>"Engaging" means: the reader opens more than one page, and the pages that they open differ from each other. The page measures this with pages per visit and distinct pages per visit.</li>
+    <li>The findings come from studies of news sites, Wikipedia and online shops. aiolum.com is a catalogue of 252 verified stories, so the findings transfer. But no study was made on aiolum.com itself.</li>
+    <li>Confidence labels follow the rules in the sources section. A study on a large site counts as High. A theory with one large observational test counts as Medium.</li>
+  </ul>
+</div>
+
+<nav class="contents">
+  <span class="label">On this page</span>
+  <ol>
+    <li><a href="#baseline">The baseline: aiolum.com has 1.34 pages per visit</a></li>
+    <li><a href="#scent">A reader clicks when the label predicts the page: information scent</a></li>
+    <li><a href="#gap">Curiosity is a gap that feels important, salient, surprising and closeable</a></li>
+    <li><a href="#styles">Readers explore as hunters or as busybodies, and a site must serve both</a></li>
+    <li><a href="#wikimedia">Measured features at Wikimedia: previews widen reading, links add 1.4% traffic</a></li>
+    <li><a href="#lists">On a list page, the tools decide whether the reader finds anything</a></li>
+    <li><a href="#notwork">What did not work: a story introduction and a bigger search box</a></li>
+    <li><a href="#apply">What aiolum.com should do, with the evidence for each change</a></li>
+    <li><a href="#limits">Limits</a></li>
+    <li><a href="#check">Check your understanding</a></li>
+    <li><a href="#recap">Recap, glossary, and sources</a></li>
+  </ol>
+</nav>
+
+<h2 id="baseline">1. The baseline: aiolum.com has 1.34 pages per visit</h2>
+<p>A <dfn>visit</dfn> is one session of one browser on the site. A <dfn>page view</dfn> is one page that the browser loaded in that session. The ratio of page views to visits is <dfn>pages per visit</dfn>. A value of 1.00 means that every reader read exactly one page and left. The Cloudflare Web Analytics numbers for aiolum.com, read on 29 October 2026, give the following baseline.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>In the last 7 days, the average visit to aiolum.com opened 1.34 pages</caption>
+  <thead>
+    <tr><th>Window</th><th class="num">Visits</th><th class="num">Page views</th><th class="num">Pages per visit</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">22 to 29 October 2026 (7 days)</th><td class="num">251</td><td class="num">336</td><td class="num">1.34</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> pages per visit = page views ÷ visits = 336 ÷ 251 = 1.339, rounded to 1.34. Bots are excluded. Counting began on 21 October 2026, so no earlier week exists for comparison.</p>
+
+<p>The number says that the site wins the first page view but rarely the second. Every finding below is about the second click: why a reader takes it, and what stops them.</p>
+
+<h2 id="scent">2. A reader clicks when the label predicts the page: information scent</h2>
+<p>The Nielsen Norman Group (from here: NN/g) describes the behaviour of a reader with the model of <dfn>information foraging</dfn>. The model says that a reader behaves like an animal that searches for food. Before each move, the reader estimates the expected value of the move and its cost in time. The estimate comes from <dfn>information scent</dfn>: the clues that a link gives about the page behind it. There are three clues. The first is the label of the link. The second is the text and the images around the link. The third is the trust from earlier clicks on the same site.</p>
+
+<div class="box example">
+  <span class="label">Worked example: the same story, two labels</span>
+  <ol class="steps">
+    <li>A story tile on aiolum.com says "Base44" with a logo and the button "Read the story".
+      <span class="why">The label gives no clue about the outcome, the time, or the proof. The reader cannot estimate the value of the click, so the expected value is low.</span></li>
+    <li>The same tile says "Base44: sold to Wix for US$80M, 5 months after launch. Grade A: the price is in the buyer's own filing."
+      <span class="why">The label gives the outcome, the time and the proof. The reader can now estimate the value of the click. They also learn one fact without a click, which NN/g calls a label that adds information.</span></li>
+    <li>The reader clicks, and the page opens with the same fact in the first sentence.
+      <span class="why">The page confirms the promise quickly. Trust grows, and the next link on the same site gets a higher estimate.</span></li>
+  </ol>
+  <p><strong>Result:</strong> the second label is longer, but it carries scent. The first label asks the reader to pay the cost of a click before they know the value.</p>
+</div>
+
+<p>NN/g adds a warning about <dfn>clickbait</dfn>, that is, a label that promises more than the page delivers. Such a label wins one click. NN/g writes that the reader will then be less likely to click a later link from the same source, because they were deceived before. For a site that sells trust in verified numbers, this warning matters more than for a news site.</p>
+
+<div class="compare">
+  <div>
+    <h4>Weak scent</h4>
+    <p>"Read the story". "Learn more". A logo without text. A tile with a large image and three words.</p>
+    <p>The reader must click to find the value.</p>
+  </div>
+  <div>
+    <h4>Strong scent</h4>
+    <p>"Sold for US$80M after 5 months, grade A". "Tried the same idea and failed: 5 companies". "Runs on Supabase: 46 stories".</p>
+    <p>The reader knows the value before the click.</p>
+  </div>
+</div>
+
+<h2 id="gap">3. Curiosity is a gap that feels important, salient, surprising and closeable</h2>
+<p>Loewenstein proposed in 1994 the <dfn>information-gap theory</dfn> of curiosity. The theory says that curiosity is the discomfort that a person feels when they know a part of something and notice the missing part. The missing part is the gap.</p>
+<p>Golman and Loewenstein later made the theory precise. The strength of the curiosity depends on three properties of the question. The question is <strong>important</strong> when the answer matters to the person. The question is <dfn>salient</dfn> when it occupies the attention of the person right now. The question has <strong>surprise</strong> when the answer promises to differ from what the person expects. The gap must also look closeable. A gap that is too small produces no curiosity, and a gap that looks impossible to close makes the reader stop.</p>
+
+<p>Three studies test the theory with real behaviour.</p>
+<ul>
+  <li>Golman, Loewenstein, Molnar and Saccardo ran five experiments with 2,361 participants in total. People paid more to see information when the question felt more important, even when the information could not change any decision. They also paid more when the question was more salient, and when they expected good news.</li>
+  <li>Qiu and Golman analysed more than 100,000 news articles on WeChat, a Chinese messaging platform, and predicted clicks from the headline. Clicks rose in four cases. The headline raised a salient question. The content appeared more important. The topic was more surprising. Or the headline was more negative. The same study found a small negative correlation between the number of clicks and the ratio of likes to clicks. Curiosity drives the click, but it does not by itself make the reader like the page.</li>
+  <li>Molnar and Golman ran two experiments with 2,406 participants. A delay before the answer reduced the willingness to obtain information, even when the delay did not change the value of the information. Curiosity is impatient.</li>
+</ul>
+
+<div class="box example">
+  <span class="label">Worked example: the gap that aiolum.com already owns</span>
+  <ol class="steps">
+    <li>In July 2026 the founder of MagicSlides wrote that the product makes around US$19,000 a month. The public revenue profile shows US$9,623 for July 2026, and aiolum.com verified that number. The two numbers sit next to each other on the tile, each with its grade. The claim has grade C, and the verified number has grade A.
+      <span class="why">The reader knows a part (the claim) and sees a missing part (what was true). The gap is salient because both numbers are on the screen.</span></li>
+    <li>The tile states that the answer is on the page: "What the records show".
+      <span class="why">The gap looks closeable. The reader expects an answer, not a sales page.</span></li>
+    <li>The story page gives the answer in the first paragraph, and then the method.
+      <span class="why">The answer is immediate. A delay, for example a long introduction before the number, reduces the willingness to continue (Molnar and Golman).</span></li>
+  </ol>
+  <p><strong>Result:</strong> the gap is honest, because the page closes it with a verified number. This is the difference between a curiosity gap and clickbait: the page delivers the answer that the label promised.</p>
+</div>
+
+<h2 id="styles">4. Readers explore as hunters or as busybodies, and a site must serve both</h2>
+<p>Zhou and colleagues at the University of Pennsylvania studied the reading paths of more than 480,000 Wikipedia readers in 14 languages and 50 countries. They described each reader by the <dfn>knowledge network</dfn> of their session: the articles that the reader opened, connected by the links between those articles. Two styles appeared in every language.</p>
+<ul>
+  <li>A <dfn>hunter</dfn> follows a direct path from one article to the next in search of one specific answer. The knowledge network of a hunter is tight: the articles are close to each other.</li>
+  <li>A <dfn>busybody</dfn> collects loose pieces of novelty. The knowledge network of a busybody is wide: the articles are far from each other, and the reader jumps between them.</li>
+</ul>
+<p>The study also found a third style, the <dfn>dancer</dfn>, who jumps between areas of knowledge that are normally separate. This style was harder to measure and the evidence for it is weaker. The authors suggest a design change. Instead of a list of popular or similar pages, a site could show readers their own knowledge network. The readers would then see the path that they already walked. This suggestion was not tested.</p>
+
+<p>For aiolum.com, the two styles want two different kinds of next click. A diagram shows the structure that the story page needs.</p>
+
+<figure class="diagram">
+  <p class="fig-title">A story page needs two kinds of exits: a ranked answer for the hunter, and three kinds of neighbour for the busybody.</p>
+  <p class="fig-sub">The example values are from the story data of aiolum.com: Base44, the 46 stories that mention Supabase, and MagicSlides.</p>
+  <div class="fig-scroll">
+  <svg viewBox="0 0 680 350" role="img" aria-label="Diagram. In the centre, the story page of Base44. One arrow leads up to ranked lists and search, labelled for the hunter. Three arrows lead down to three neighbour boxes, labelled for the busybody: the same idea tried before, the same tools, and the opposite outcome.">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path class="arrow-head" d="M 0 0 L 10 5 L 0 10 z"/>
+      </marker>
+    </defs>
+    <rect class="node" x="190" y="20" width="300" height="56" rx="8"/>
+    <text class="node-name" x="340" y="44" text-anchor="middle">Ranked lists and search</text>
+    <text class="node-value" x="340" y="64" text-anchor="middle">Biggest sale · Fastest to US$100K · Grade A only</text>
+
+    <rect class="node" x="215" y="136" width="250" height="56" rx="8"/>
+    <text class="node-name" x="340" y="160" text-anchor="middle">Story page: Base44</text>
+    <text class="node-value" x="340" y="180" text-anchor="middle">Sold for US$80M · 5 months · grade A</text>
+
+    <rect class="node" x="20" y="256" width="195" height="56" rx="8"/>
+    <text class="node-name" x="117" y="280" text-anchor="middle">Tried the same idea</text>
+    <text class="node-value" x="117" y="300" text-anchor="middle">5 companies, all failed</text>
+
+    <rect class="node" x="243" y="256" width="195" height="56" rx="8"/>
+    <text class="node-name" x="340" y="280" text-anchor="middle">Runs on the same tools</text>
+    <text class="node-value" x="340" y="300" text-anchor="middle">46 stories use Supabase</text>
+
+    <rect class="node" x="466" y="256" width="195" height="56" rx="8"/>
+    <text class="node-name" x="563" y="280" text-anchor="middle">The opposite outcome</text>
+    <text class="node-value" x="563" y="300" text-anchor="middle">Said US$19K, verified US$9.6K</text>
+
+    <line class="arrow" x1="340" y1="134" x2="340" y2="80" marker-end="url(#ah)"/>
+    <text class="arrow-label" x="352" y="112" text-anchor="start">the hunter goes up: to a ranked answer</text>
+
+    <line class="arrow" x1="300" y1="194" x2="150" y2="252" marker-end="url(#ah)"/>
+    <line class="arrow" x1="340" y1="194" x2="340" y2="252" marker-end="url(#ah)"/>
+    <line class="arrow" x1="380" y1="194" x2="530" y2="252" marker-end="url(#ah)"/>
+    <text class="arrow-label" x="340" y="338" text-anchor="middle">the busybody goes sideways: to one of these three neighbours</text>
+  </svg>
+  </div>
+  <p class="fig-read"><strong>How to read this diagram:</strong> each box is a page or a list on aiolum.com. Each arrow means "the reader can click from here to there". Start at the box in the middle.</p>
+</figure>
+
+<h2 id="wikimedia">5. Measured features at Wikimedia: previews widen reading, links add 1.4% traffic</h2>
+<p>The Wikimedia Foundation tests features with <dfn>A/B tests</dfn>. In such a test, half of the readers get the feature and half do not, and the two groups are compared. The result comes with a <dfn>95% confidence interval</dfn>: the range in which the true effect lies with 95% probability, given the data. Two results are documented in public.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Two Wikimedia A/B tests: one feature widened reading, the other added traffic</caption>
+  <thead>
+    <tr><th>Feature</th><th>What it does</th><th>Measured effect</th><th>Confidence</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Page Previews</th><td>A card with the first lines of the linked article appears when the pointer rests on a link.</td><td>Fewer page views, but more distinct pages per reader. Less use of the back button. Very few readers switched the feature off.</td><td>High: two A/B tests, reported by Wikimedia</td></tr>
+    <tr><th scope="row">sameAs links</th><td>Structured data that connects an article to the same article in other languages.</td><td>Traffic rose by an estimated 1.4% on average (95% confidence interval 0.7% to 2.1%).</td><td>High: A/B test, analysis by Wikimedia</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one feature. The third column gives the effect that the test measured.</p>
+
+<p>The Page Previews result is the most useful one for aiolum.com. A preview lets a reader examine a neighbour without the cost of a page load. The reader then opens fewer pages, but a wider set of pages. So a site that wants exploration should measure distinct pages per visit, not only page views. A rise in exploration can appear as a fall in page views.</p>
+
+<h2 id="lists">6. On a list page, the tools decide whether the reader finds anything</h2>
+<p>Baymard Institute tested 19 large online shops with users between 21 and 56 years old. The study is about <dfn>product lists</dfn>: pages that show many items with tools to filter and sort them. Sites with a mediocre list saw abandonment of 67% to 90% of the users who searched for a given type of product. Sites with a slightly better set of tools saw abandonment of 17% to 33% for the same task. Baymard writes that this is as much as a 4-fold difference in the number of users who reach a product.</p>
+
+<p>aiolum.com has one product list: the Stories tab with 252 stories. The task of a hunter on that page is a question. Two examples: "Which solo founder reached US$100,000 fastest?" and "Which stories have grade A?" The Baymard result says that the sort and filter tools for these questions decide the outcome. The hunter finds an answer, or the hunter leaves. On the current site, the filters exist, but they sit below the first screen.</p>
+
+<p>A second old but often replicated finding supports short labels on list pages. In 1997 NN/g observed that 79% of their test users scanned every new page, and only 16% read word by word. A list page is scanned, so each row must give its fact in the first words.</p>
+
+<h2 id="notwork">7. What did not work: a story introduction and a bigger search box</h2>
+<div class="box mistake">
+  <span class="label">Common wrong idea</span>
+  <p><strong>Wrong:</strong> "A good introduction, or a story that leads into the data, makes readers explore the data."</p>
+  <p><strong>Correct:</strong> Boy, Detienne and Fekete ran three field experiments on a news site and on a visualization gallery. They added introductory stories to exploratory visualizations. Against their own hypothesis, the stories did not increase exploration.</p>
+  <p><strong>Why the wrong idea fails:</strong> the introduction tells the reader what to see, so the reader has no gap left to close. Exploration needs a question that the reader owns, and an object that answers on the first click.</p>
+</div>
+
+<p>Two more negative results come from Wikimedia. A more prominent search bar in the iOS app increased the number of searches but did not increase article reading. And the Page Previews feature reduced page views while it widened reading. Both results say the same thing: a feature changes where the reader goes, and the metric must match the goal.</p>
+
+<p>No controlled study of "related content" widgets was found. The only numbers come from vendors of such widgets. One vendor reports a rise from 1.4 to 1.9 pages per session on two sites, without a control group. This page treats that claim as unproven.</p>
+
+<h2 id="apply">8. What aiolum.com should do, with the evidence for each change</h2>
+<p>The table lists the changes in the order of the strength of their evidence. The visual style of the redesign is a separate decision: no finding above depends on it.</p>
+
+<div class="table-wrap">
+<table>
+  <caption>Six changes for aiolum.com, each tied to a finding and to a way to measure it</caption>
+  <thead>
+    <tr><th>Change</th><th>Where on the site</th><th>Finding</th><th>Confidence</th><th>How to measure</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><th scope="row">Every link states its own fact and grade</th><td>Story tiles, tool chips, related links, the Tools tab</td><td>Information scent (section 2)</td><td>High</td><td>Click rate on tiles, pages per visit</td></tr>
+    <tr><th scope="row">Every story page ends with three neighbours: same idea, same tools, opposite outcome</th><td>Bottom of each story page</td><td>Busybody style (section 4)</td><td>High for the style, Medium for the design</td><td>Distinct pages per visit</td></tr>
+    <tr><th scope="row">Question-shaped sorts and filters at the top of the Stories tab</th><td>Stories tab, first screen</td><td>Product lists (section 6), hunter style (section 4)</td><td>High</td><td>Share of visits that use a sort or filter, then open a story</td></tr>
+    <tr><th scope="row">Each story opens with the gap: claim against verified number</th><td>First screen of each story page, and its tile</td><td>Information gap (section 3)</td><td>Medium</td><td>Click rate on tiles that show both numbers against tiles that show one</td></tr>
+    <tr><th scope="row">Previews on links: the figure and the grade appear on hover or on a long press</th><td>All internal links</td><td>Page Previews (section 5)</td><td>High at Wikipedia, Medium for transfer</td><td>Distinct pages per visit, page views</td></tr>
+    <tr><th scope="row">Do not rely on an introduction to drive exploration</th><td>Home page, the wall of 252 stories</td><td>Boy and colleagues (section 7)</td><td>Medium</td><td>Not applicable</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="table-read"><strong>How to read this table:</strong> each row is one change. The fourth column gives the confidence in the finding behind it. The last column names the number that should move if the change works. The baseline for pages per visit is 1.34.</p>
+
+<p>The site-stats script can measure pages per visit every week. Distinct pages per visit needs one more query, because Web Analytics reports page views and visits but not distinct pages. Until that query exists, the number of visits with 2 or more page views is a usable substitute.</p>
+
+<h2 id="limits">9. Limits</h2>
+<div class="box limits">
+  <span class="label">Limits</span>
+  <ul>
+    <li><strong>No study was made on aiolum.com.</strong> All findings come from news sites, Wikipedia and online shops. The transfer to a catalogue of 252 stories is a judgment, not a measurement.</li>
+    <li><strong>The baseline is one week.</strong> 251 visits is a small number. The pages-per-visit value will move by several hundredths from week to week without any change to the site.</li>
+    <li><strong>The curiosity gap has a cost.</strong> Qiu and Golman found that articles with more clicks had a slightly lower ratio of likes to clicks. A gap that the page does not close honestly will reduce trust, and NN/g says that lost trust lowers later clicks.</li>
+    <li><strong>The design suggestion of Zhou and colleagues was not tested.</strong> The two reader styles are measured. The idea to show readers their own path is a proposal.</li>
+    <li><strong>The "related content" numbers from vendors have no control group.</strong> They are listed as unproven.</li>
+    <li><strong>The 1997 scanning study is old.</strong> Later eye-tracking studies by NN/g confirm the pattern, but the exact percentages come from one study with a small number of users.</li>
+  </ul>
+</div>
+
+<h2 id="check">10. Check your understanding</h2>
+<div class="check">
+  <span class="label">Try to answer before you open each answer.</span>
+  <ol>
+    <li>A story tile on aiolum.com says "Chatbase" with a logo and "Read the story". Which finding says that this tile loses clicks, and how would you rewrite it?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Information scent.</strong> The label gives no clue about the value behind the click. Rewrite it with the fact and the grade, for example "Chatbase: US$10M annual recurring revenue, March 2026, grade A". A typical wrong answer is "make the tile bigger": size adds no scent.</p>
+        </div>
+      </details>
+    </li>
+    <li>After the redesign, page views per visit fall from 1.34 to 1.25, but visits with 2 or more distinct pages rise. Did exploration fall or rise?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>Exploration rose.</strong> The Wikimedia Page Previews result shows the same pattern: fewer page views, more distinct pages. If previews let readers examine neighbours without a page load, page views fall while the set of pages that a reader touches grows. The typical wrong answer reads the fall in page views as a loss.</p>
+        </div>
+      </details>
+    </li>
+    <li>Which two numbers on a tile make an honest curiosity gap, and what must the page then do?
+      <details>
+        <summary>Show the answer</summary>
+        <div>
+          <p><strong>The claim and the verified number</strong>, each with its grade. The page must close the gap in its first paragraph with the verified number and its source. If the page delays the answer, Molnar and Golman say that willingness falls, and if the page does not deliver, NN/g says that trust falls.</p>
+        </div>
+      </details>
+    </li>
+  </ol>
+</div>
+
+<h2 id="recap">11. Recap, glossary, and sources</h2>
+<div class="box recap">
+  <span class="label">Recap</span>
+  <ol>
+    <li>A reader clicks a link when its label and context let them predict the value of the page. A label that carries a fact wins more clicks than a generic label.</li>
+    <li>Curiosity is a gap that feels important, salient and surprising, and that looks closeable. aiolum.com owns such a gap in every story. The gap is the claim against the verified number.</li>
+    <li>Hunters want a ranked answer and search. Busybodies want unexpected neighbours. Every story page needs both kinds of exit.</li>
+    <li>Previews widen reading and can lower page views, so measure distinct pages per visit. The baseline is 1.34 pages per visit.</li>
+    <li>Visual style and introductory stories have no measured effect on exploration.</li>
+  </ol>
+</div>
+
+<h3>Glossary</h3>
+<dl class="glossary">
+  <dt>95% confidence interval</dt>
+  <dd>The range in which the true effect lies with 95% probability, given the data of the test.</dd>
+  <dt>A/B test</dt>
+  <dd>An experiment in which half of the readers get a feature and half do not, and the two groups are compared.</dd>
+  <dt>Busybody</dt>
+  <dd>A reader who collects loose pieces of novelty and jumps between articles that are far from each other.</dd>
+  <dt>Clickbait</dt>
+  <dd>A link label that promises more than the page delivers.</dd>
+  <dt>Dancer</dt>
+  <dd>A reader who jumps between areas of knowledge that are normally separate. The evidence for this style is weaker.</dd>
+  <dt>Hunter</dt>
+  <dd>A reader who follows a direct path from one article to the next in search of one specific answer.</dd>
+  <dt>Information foraging</dt>
+  <dd>A model of reading in which the reader estimates the value and the cost of each move before they make it.</dd>
+  <dt>Information-gap theory</dt>
+  <dd>The theory that curiosity is the discomfort of a known part next to a missing part.</dd>
+  <dt>Information scent</dt>
+  <dd>The clues that a link gives about the page behind it: its label, its context, and the trust from earlier clicks.</dd>
+  <dt>Knowledge network</dt>
+  <dd>The set of articles that a reader opened in one session, connected by the links between them.</dd>
+  <dt>Page view</dt>
+  <dd>One page that a browser loaded in one visit.</dd>
+  <dt>Pages per visit</dt>
+  <dd>Page views divided by visits.</dd>
+  <dt>Product list</dt>
+  <dd>A page that shows many items with tools to filter and sort them.</dd>
+  <dt>Visit</dt>
+  <dd>One session of one browser on the site.</dd>
+</dl>
+
+<h3>Sources and confidence</h3>
+<p>Confidence labels on this page: <span class="conf high">High</span> = verified in a primary source or by calculation. <span class="conf medium">Medium</span> = one good source, or sources with limits. <span class="conf low">Low</span> = not verified, or sources disagree. <span class="conf given">Given</span> = a value from your message or an example value.</p>
+<ol class="sources">
+  <li><span class="conf high">High</span> Baseline traffic: Cloudflare Web Analytics for aiolum.com, read with the site-stats script on 29 October 2026 (hosts aiolum.com and www.aiolum.com, bots excluded). Pages per visit calculated as 336 ÷ 251.</li>
+  <li><span class="conf high">High</span> Story values for Base44, MagicSlides and Chatbase, the 5 predecessors, and the 46 stories that mention Supabase. Read from the story data of aiolum.com in <code>src/index.html</code> on 29 October 2026. The Supabase count is the number of story records whose text contains the word.</li>
+  <li><span class="conf high">High</span> Information scent: Nielsen Norman Group, <span class="quoted">Information Scent: How Users Decide Where to Go Next</span>, <a href="https://www.nngroup.com/articles/information-scent/">nngroup.com/articles/information-scent</a>. The warning about lost trust is in this article. The page was downloaded and searched in full text.</li>
+  <li><span class="conf high">High</span> Information foraging: Nielsen Norman Group, <span class="quoted">Information Foraging: A Theory of How People Navigate on the Web</span>, <a href="https://www.nngroup.com/articles/information-foraging/">nngroup.com/articles/information-foraging</a>.</li>
+  <li><span class="conf high">High</span> Scanning: Jakob Nielsen, <span class="quoted">How Users Read on the Web</span>, 30 September 1997, <a href="https://www.nngroup.com/articles/how-users-read-on-the-web/">nngroup.com/articles/how-users-read-on-the-web</a>. The figures 79% and 16% were verified in the full text.</li>
+  <li><span class="conf high">High</span> Information-gap experiments: Golman, Loewenstein, Molnar and Saccardo, <span class="quoted">The Demand for, and Avoidance of, Information</span>, Management Science; open copy at <a href="https://par.nsf.gov/servlets/purl/10403354">par.nsf.gov/servlets/purl/10403354</a>. Five experiments, 2,361 participants; verified in the abstract of the downloaded paper.</li>
+  <li><span class="conf high">High</span> News headlines: Qiu and Golman, <span class="quoted">Curiosity in news consumption</span>, Applied Cognitive Psychology, 2024, digital object identifier (DOI) 10.1002/acp.4195. Abstract verified through the CrossRef record. Working paper: <a href="https://papers.ssrn.com/abstract=4221372">Social Science Research Network, paper 4221372</a>.</li>
+  <li><span class="conf high">High</span> Impatience for information: Molnar and Golman, <span class="quoted">Impatience for information: Curiosity is here today, gone tomorrow</span>, Journal of Behavioral Decision Making, 2023, DOI 10.1002/bdm.2360. Two experiments, 2,406 participants; abstract verified through CrossRef.</li>
+  <li><span class="conf medium">Medium</span> Loewenstein's 1994 theory: cited as described by the two papers above and by the summary at <a href="https://concepts.dsebastien.net/concept/information-gap-theory/">concepts.dsebastien.net</a>. The 1994 paper itself was not opened.</li>
+  <li><span class="conf high">High</span> Curiosity styles: Zhou and colleagues, Science Advances, DOI 10.1126/sciadv.adn3268, as reported in <a href="https://theconversation.com/going-down-a-wikipedia-rabbit-hole-science-says-youre-one-of-these-three-types-242018">The Conversation</a>. The figures 480,000 readers, 14 languages and 50 countries, the three styles, and the design suggestion were verified in the full text of the report. The paper itself was not opened, so the exact number of readers is taken from the report.</li>
+  <li><span class="conf high">High</span> Page Previews: Wikimedia, <a href="https://www.mediawiki.org/wiki/Page_Previews">mediawiki.org/wiki/Page_Previews</a>. The sentence on fewer page views and more distinct pages was verified in the full text.</li>
+  <li><span class="conf high">High</span> sameAs A/B test: Wikimedia Phabricator task T209891, <a href="https://phabricator.wikimedia.org/T209891">phabricator.wikimedia.org/T209891</a>. The comment of 7 March 2019 states <span class="quoted">an estimated 1.4% increase in traffic on average (95% CI: 0.7-2.1)</span>, where CI is the confidence interval.</li>
+  <li><span class="conf medium">Medium</span> Search bar in the iOS app: Wikimedia Phabricator tickets on the app search A/B test, read through a summary tool, not in full text.</li>
+  <li><span class="conf high">High</span> Storytelling and exploration: Boy, Detienne and Fekete, <span class="quoted">Storytelling in information visualizations: Does it engage users to explore data?</span>, CHI 2015, DOI 10.1145/2702123.2702452. Abstract verified at <a href="https://researchportal.ip-paris.fr/en/publications/storytelling-in-information-visualizations-does-it-engage-users-t/">the Institut Polytechnique de Paris portal</a>.</li>
+  <li><span class="conf high">High</span> Product lists: Baymard Institute, <span class="quoted">Product Lists & Filtering UX</span>, <a href="https://baymard.com/research/ecommerce-product-lists">baymard.com/research/ecommerce-product-lists</a>. The abandonment ranges and the 4-fold statement were verified in the full text.</li>
+  <li><span class="conf low">Low</span> "Related content" widgets: vendor case study at <a href="https://themarketingagency.ca/blog/internal-linking-case-studies/">themarketingagency.ca</a>, 1.4 to 1.9 pages per session on two sites, no control group. Not verified beyond the vendor's own page.</li>
+</ol>
+
+</main>
+<script>
+// The page is complete without this script. Everything here is comfort, never content:
+// a theme switch, a reading-progress line, copy buttons on code, self-check progress,
+// print preparation, and the wide-table hint.
+(function () {
+  "use strict";
+
+  // ----- Theme switch: auto -> light -> dark, remembered in this browser. -----
+  function storedTheme() {
+    try { return localStorage.getItem("explainer-theme") || "auto"; } catch (e) { return "auto"; }
+  }
+  function applyTheme(mode) {
+    if (mode === "light" || mode === "dark") {
+      document.documentElement.setAttribute("data-theme", mode);
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  }
+  // On "auto", leave the document alone: a data-theme that the document itself carries
+  // (for example in a saved copy) must stay. Only an explicit choice sets the attribute.
+  if (storedTheme() !== "auto") applyTheme(storedTheme());
+  var modes = ["auto", "light", "dark"];
+  var names = { auto: "Theme: auto", light: "Theme: light", dark: "Theme: dark" };
+  var switchBtn = document.createElement("button");
+  switchBtn.type = "button";
+  switchBtn.className = "theme-switch";
+  switchBtn.setAttribute("aria-label", "Change the colour theme");
+  var mode = storedTheme();
+  switchBtn.textContent = names[mode] || names.auto;
+  switchBtn.addEventListener("click", function () {
+    mode = modes[(modes.indexOf(mode) + 1) % modes.length];
+    applyTheme(mode);
+    switchBtn.textContent = names[mode];
+    try { localStorage.setItem("explainer-theme", mode); } catch (e) { /* private window */ }
+  });
+  document.body.appendChild(switchBtn);
+
+  // ----- Reading-progress line at the top of the window. -----
+  var bar = document.createElement("div");
+  bar.className = "progress";
+  bar.setAttribute("aria-hidden", "true");
+  document.body.appendChild(bar);
+  function setProgress() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = max > 0 ? (100 * h.scrollTop / max).toFixed(2) + "%" : "0%";
+  }
+  window.addEventListener("scroll", setProgress, { passive: true });
+  window.addEventListener("resize", setProgress);
+  setProgress();
+
+  // ----- Copy button on each code block. -----
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    document.querySelectorAll("pre").forEach(function (pre) {
+      var text = (pre.querySelector("code") || pre).innerText;
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "copy-btn";
+      btn.textContent = "Copy";
+      btn.addEventListener("click", function () {
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = "Copied";
+          btn.classList.add("done");
+          setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("done"); }, 1600);
+        }, function () {
+          btn.textContent = "Copy by hand";
+        });
+      });
+      pre.appendChild(btn);
+    });
+  }
+
+  // ----- Self-check progress: mark an opened answer, count them in the label. -----
+  document.querySelectorAll(".check").forEach(function (check) {
+    var answers = Array.prototype.slice.call(check.querySelectorAll("li > details"));
+    if (!answers.length) return;
+    var label = check.querySelector(".label");
+    var count = document.createElement("span");
+    count.className = "check-count";
+    if (label) label.appendChild(count);
+    function update() {
+      var opened = check.querySelectorAll("li.answered").length;
+      count.textContent = opened ? " · " + opened + " of " + answers.length + " answered" : "";
+    }
+    answers.forEach(function (d) {
+      d.addEventListener("toggle", function () {
+        var li = d.closest("li");
+        if (d.open && li) li.classList.add("answered");
+        update();
+      });
+    });
+  });
+
+  // ----- Open every hidden answer before printing, so the printed page is complete. -----
+  window.addEventListener("beforeprint", function () {
+    document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+  });
+
+  // ----- Mark each table that is wider than its frame. The styles then show a hint
+  //       and keep the title in view. -----
+  function markWideTables() {
+    document.querySelectorAll(".table-wrap").forEach(function (w) {
+      w.classList.toggle("scrolls", w.scrollWidth > w.clientWidth + 1);
+      w.style.setProperty("--wrap-width", w.clientWidth + "px");
+    });
+  }
+  window.addEventListener("load", markWideTables);
+  window.addEventListener("resize", markWideTables);
+  markWideTables();
+})();
+</script>
+</body>
+</html>
