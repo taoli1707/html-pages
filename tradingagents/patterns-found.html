@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patterns Found</title>
+<meta name="description" content="What the equity pattern-mining engine selected on 59 US large caps and ETFs, 2005 to 2026, with a worked example and why the patterns faded out of sample.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fcfcfb; --surface: #ffffff; --surface-2: #f3f2ef; --border: #e2e0da;
+  --text: #0b0b0b; --text-2: #52514e; --muted: #7a7873;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --pos: #2a78d6; --neg: #e34948; --mid: #f0efec;
+  --grid: #e8e6e0; --code-bg: #f3f2ef; --accent: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #141413; --surface: #1a1a19; --surface-2: #232321; --border: #33322f;
+    --text: #f0efec; --text-2: #c3c2b7; --muted: #8f8d85;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --pos: #3987e5; --neg: #e66767; --mid: #383835;
+    --grid: #2b2b28; --code-bg: #232321; --accent: #3987e5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141413; --surface: #1a1a19; --surface-2: #232321; --border: #33322f;
+  --text: #f0efec; --text-2: #c3c2b7; --muted: #8f8d85;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --pos: #3987e5; --neg: #e66767; --mid: #383835;
+  --grid: #2b2b28; --code-bg: #232321; --accent: #3987e5;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+main { max-width: 960px; margin: 0 auto; padding: 32px 16px 80px; }
+h1 { font-size: 2rem; line-height: 1.15; margin: 0 0 8px; letter-spacing: -0.01em; }
+h2 { font-size: 1.4rem; margin: 56px 0 12px; letter-spacing: -0.01em; }
+h3 { font-size: 1.05rem; margin: 28px 0 8px; }
+p, li { color: var(--text); max-width: 72ch; }
+.lede { font-size: 1.1rem; color: var(--text-2); margin: 0 0 24px; }
+.meta { color: var(--muted); font-size: 0.9rem; }
+code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
+pre code { background: none; padding: 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin: 16px 0; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 20px 0; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.tile .v { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.tile .l { color: var(--text-2); font-size: 0.85rem; }
+.tablewrap { overflow-x: auto; margin: 12px 0; border: 1px solid var(--border); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { background: var(--surface-2); color: var(--text-2); font-weight: 600; position: sticky; top: 0; }
+td:first-child, th:first-child { text-align: left; }
+tr:last-child td { border-bottom: none; }
+td.desc { white-space: normal; min-width: 260px; }
+.neg { color: var(--neg); } .pos { color: var(--pos); }
+.sig { font-weight: 600; }
+.note { border-left: 3px solid var(--accent); padding: 8px 14px; background: var(--surface-2); border-radius: 0 8px 8px 0; margin: 16px 0; }
+.chart { position: relative; margin: 16px 0 8px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.85rem; color: var(--text-2); margin: 6px 0 0; }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 0.8rem; box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; white-space: nowrap; z-index: 2; color: var(--text); }
+.axis text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+.axis line, .axis path { stroke: var(--grid); }
+.caption { color: var(--muted); font-size: 0.85rem; margin: 4px 0 0; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+dt { font-weight: 600; } dd { margin: 0; color: var(--text); }
+@media (max-width: 600px) { dl { grid-template-columns: 1fr; } dd { margin-bottom: 8px; } h1 { font-size: 1.6rem; } }
+.step { counter-increment: s; }
+ol.steps { padding-left: 0; list-style: none; }
+ol.steps li { position: relative; padding-left: 36px; margin: 10px 0; }
+ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 1px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+ol.steps { counter-reset: s; }
+</style>
+</head>
+<body>
+<main>
+<h1>Patterns the engine found, and why they are not an edge</h1>
+<p class="lede">The pattern miner screened 5,295 (rule, holding period) combinations on 59 US large caps and ETFs from 2005 to October 2026. Eight rules passed every statistical gate. This page explains what those rules say, shows one firing on a real stock, and traces how the same rules behaved in each year.</p>
+<p class="meta">Data: Yahoo Finance adjusted daily bars via yfinance, 2005-01-03 to 2026-10-30. Engine: <code>tradingagents.patterns</code> on branch <code>feat/pattern-engine</code>. Run: <code>results/patterns-full-2026-11-01</code>. Costs 5 basis points per side.</p>
+
+<div class="tiles" id="tiles"></div>
+
+<h2>1. What a "pattern" means here</h2>
+<p>A pattern is a <strong>conjunction of threshold conditions</strong> on technical features computed from daily open, high, low, close and volume, plus a <strong>holding period</strong> in trading days and a side (long or short). For example:</p>
+<pre><code>[long] close_loc &lt;= 0.0943  AND  rsi_14 &lt;= 30  AND  streak &lt;= -3     hold 5 days</code></pre>
+<p>Each condition is evaluated on the closing bar. If all conditions are true at the close of day <em>t</em>, the engine buys at the <strong>open of day t+1</strong> and sells at the <strong>close of day t+1+h-1</strong>, where <em>h</em> is the holding period. Only one position per symbol is open at a time, so overlapping signals are skipped. This matters: it means the trade count is honest and consecutive-day signals do not get double-counted.</p>
+<p>The return the engine scores is not the raw trade return. It is the <strong>excess return</strong>:</p>
+<pre><code>excess = (trade return − 2 × 5 bps cost) − symbol's average h-day return in the training window</code></pre>
+<p>Subtracting the symbol's unconditional return removes the bias that any long rule on NVDA looks good because NVDA went up. A rule earns credit only for timing, not for picking a stock that rose anyway.</p>
+
+<h3>The gates a rule had to pass</h3>
+<ol class="steps">
+  <li class="step"><strong>Screen.</strong> On the training window (2005 to Feb 2018) the mean excess return must have a t-statistic of at least 2.5, with standard errors clustered by entry date.</li>
+  <li class="step"><strong>Benjamini-Hochberg false-discovery-rate control</strong> at q = 0.10 over all 5,295 trials. With thousands of rules tested, some will look significant by chance. FDR control caps the expected share of false positives among the survivors at 10%.</li>
+  <li class="step"><strong>Frequency.</strong> At least 6 non-overlapping trades per year across the universe.</li>
+  <li class="step"><strong>Validation window</strong> (Mar 2018 to Jun 2022, separated from training by an embargo of 20 days so no holding period straddles the boundary): at least 15 trades, win rate at least 50%, excess t-statistic at least 1.0.</li>
+  <li class="step"><strong>Redundancy.</strong> If two rules fire on nearly the same bars (Jaccard overlap above 0.7), only the stronger one is kept.</li>
+</ol>
+<p>The <strong>test window</strong> (Jul 2022 to Oct 2026) is never used for selection. It is the only honest answer to "would this have worked".</p>
+
+<h2>2. The eight selected rules</h2>
+<p>Seven of the eight are variations of one idea: <strong>buy a stock that closed near the bottom of its daily range after an oversold run, and hold it one to five days</strong>. The eighth is a rare short. Excess is in basis points per trade (100 bps = 1%).</p>
+<div class="tablewrap"><table id="seltable"></table></div>
+<p class="caption">DSR is the Deflated Sharpe Ratio: the probability that the training-window Sharpe is not a selection artefact, given 5,295 trials. The usual bar is 0.95. Six rules clear it; three of those lost in the test window and the other three gained less than 35 bps per trade with t below 1.</p>
+
+<div class="chart" id="c-windows"></div>
+<p class="caption">Mean excess return per trade for each selected rule in the three windows. Hover a bar for trade count and t-statistic. The table above is the accessible view of the same data.</p>
+
+<h3>Feature glossary</h3>
+<dl>
+  <dt><code>close_loc</code></dt><dd>Position of the close inside the day's range: <code>(Close − Low) / (High − Low)</code>. 0 means the stock closed at its low of the day, 1 at its high. A value below 0.094 means the close is in the bottom 9% of the range.</dd>
+  <dt><code>rsi_14</code>, <code>rsi_2</code></dt><dd>Wilder's Relative Strength Index over 14 and 2 days: <code>100 − 100 / (1 + avg gain / avg loss)</code>, where the averages are exponentially smoothed with alpha = 1/n. RSI below 30 is the classic "oversold" level. RSI-2 is a very fast version that reaches extremes after only two down days.</dd>
+  <dt><code>streak</code></dt><dd>Length of the current run of same-sign daily returns. −3 means three consecutive down closes.</dd>
+  <dt><code>bb_pct_b</code></dt><dd>Bollinger %B: where the close sits between the 20-day moving average ± 2 standard deviations. 0 is at the lower band, 1 at the upper. Below 0.1 means the close is at or under the lower band.</dd>
+  <dt><code>stoch_k</code></dt><dd>Stochastic %K over 14 days: <code>100 × (Close − 14-day Low) / (14-day High − 14-day Low)</code>. Below 20 is the oversold zone.</dd>
+  <dt><code>ret_5</code>, <code>ret_3</code></dt><dd>Simple return over the last 5 or 3 closes.</dd>
+</dl>
+
+<h2>3. A real firing: Starbucks, 9 October 2026</h2>
+<p>The rule <code>[long] close_loc &lt;= 0.0943 AND rsi_14 &lt;= 30 AND streak &lt;= −3, hold 5</code> last fired on SBUX. Here are the bars around it, with the three features computed exactly as the engine does. The signal bar is highlighted.</p>
+<div class="tablewrap"><table id="bars"></table></div>
+<ol class="steps">
+  <li class="step">On 2026-10-09 SBUX closed at 90.75 with a low of 90.69 and a high of 93.49. <code>close_loc = (90.75 − 90.69) / (93.49 − 90.69) = 0.021</code>, inside the bottom 9% of the range.</li>
+  <li class="step">The 14-day RSI was 28.9, under 30. The stock had closed down three days in a row (−2.6%, −0.4%, −2.6%), so <code>streak = −3</code>. All three conditions hold.</li>
+  <li class="step">Entry at the next open, 2026-10-12, at 91.21. Exit at the close of the fifth bar held, 2026-10-16, at 97.52.</li>
+  <li class="step">Gross return <code>97.52 / 91.21 − 1 = +6.92%</code>. After 10 bps of round-trip cost, <strong>+6.82%</strong>. SBUX's unconditional 5-day return in the training window was about 0.3%, so the excess is +6.5%.</li>
+</ol>
+<p>This is what a winning instance looks like. The same rule's seven previous firings in September 2026 (PEP, XLU, MCD, XLF, BAC, LOW, HD) returned −0.9%, −1.2%, +0.3%, +0.8%, −0.8%, −1.0% and +0.8%. One big winner and a cluster of small losers is the typical texture of a mean-reversion rule: the average is positive only if the occasional sharp rebound outweighs the drift.</p>
+
+<h2>4. How the best rule behaved year by year</h2>
+<p>The rule with the highest DSR that also had enough trades is <code>[long] close_loc &lt;= 0.0943 AND rsi_14 &lt;= 30, hold 1</code>: buy a stock that closed at the bottom of its range while 14-day RSI is under 30, sell at the next day's close. Here is its mean excess return per trade in every year, over the whole history, not just the training window.</p>
+<div class="chart" id="c-yearly"></div>
+<p class="caption">Mean excess per trade by signal year, non-overlapping trades, net of 10 bps round trip. Hover for the trade count and win rate.</p>
+<p>Two things stand out. First, the <strong>good years are the volatile years</strong>: 2008, 2011, 2015, 2018, 2020 and 2022 all have large positive excess and many trades. The rule is really a bet that a one-day panic reverses, and panics reverse more sharply when volatility is high. Second, <strong>2023 and 2024 were negative</strong>, which is the first half of the test window. The rule did not break for a mysterious reason. It simply met a calm, trending market where closing at the daily low was more often the start of a slide than the end of one.</p>
+
+<h2>5. Trading all eight together</h2>
+<p>The portfolio backtest holds up to 10 positions, equal weight, entering any selected rule's signal at the next open on the test window. The comparison is equal-weight buy and hold of the same 59 symbols.</p>
+<div class="chart" id="c-equity"></div>
+<div class="legend"><span style="--c: var(--s1)">Selected patterns</span><span style="--c: var(--s2)">Equal-weight buy and hold</span></div>
+<p class="caption">Portfolio value from 100,000, weekly, July 2022 to October 2026.</p>
+<div class="tablewrap"><table id="bt"></table></div>
+<p>The pattern portfolio sat in cash 72% of the time and made 1.6% a year. Buy and hold made 18.7% a year with a smaller drawdown. Even measured only on the days it was invested, the pattern book did not beat the market it was trading in.</p>
+
+<h2>6. Why rules that passed every gate still failed</h2>
+<p>This is not a bug in the engine. It is the expected outcome of searching a large rule space on a small amount of independent information, and the engine's gates are designed to show it rather than hide it.</p>
+<ul>
+  <li><strong>The eight rules are one bet.</strong> They share <code>close_loc</code> and an oversold filter, so they fire on the same bars. Statistically there is roughly one discovery here, not eight. The redundancy gate removes near-duplicates, but rules with Jaccard overlap under 0.7 can still be highly correlated.</li>
+  <li><strong>The validation window was a volatile window.</strong> 2018 to mid-2022 contained the Q4 2018 selloff, the March 2020 crash and the 2022 bear market. A rule that profits from panic reversals passed validation because validation happened to contain panics. That is regime luck, and the test window (a steady bull market) revealed it.</li>
+  <li><strong>The edge was always thin.</strong> Even in training the best rule made 37 bps per trade after costs with a 58% win rate. At that size, one bad year erases several good ones, and 5 bps per side is optimistic for a retail account buying at the open.</li>
+  <li><strong>Everyone can compute RSI.</strong> Oversold-bounce rules on liquid large caps are the most studied signals in retail technical analysis. Whatever edge existed in 2005 has been arbitraged toward zero, which is exactly what the yearly chart shows outside crisis years.</li>
+</ul>
+<div class="note"><p style="margin:0"><strong>What would be different enough to matter.</strong> Three further runs on the same bars (trend-following at 10 to 60 day holds, an ETF-only universe, and 10 bps costs with two-condition rules) found nothing either, and a cross-sectional momentum ranking lost money long-short. The next real step is new information, not new thresholds: a broad survivorship-free universe, fundamental or event data, or intraday bars.</p></div>
+
+<h2>Sources</h2>
+<ul>
+  <li>Prices: Yahoo Finance via <code>yfinance</code> 1.7.0, adjusted OHLCV, cached as Parquet by the engine.</li>
+  <li>Engine: <code>tradingagents/patterns/</code> on <code>taoli1707/TradingAgents</code>, branch <code>feat/pattern-engine</code>, commit <code>ab1b3d0</code>.</li>
+  <li>Run outputs: <code>results/patterns-full-2026-11-01/{report.md, report.json, patterns.json, equity_test.csv, trades_test.csv}</code>.</li>
+  <li>Benjamini, Y. and Hochberg, Y. (1995), "Controlling the false discovery rate". Bailey, D. and López de Prado, M. (2014), "The Deflated Sharpe Ratio".</li>
+</ul>
+</main>
+
+<script id="data" type="application/json">{"splits": {"train": ["2005-01-03", "2018-02-02"], "valid": ["2018-03-06", "2022-06-14"], "test": ["2022-07-15", "2026-10-30"]}, "n_trials": 5295, "selected": [{"description": "[long] close_loc <= 0.2 AND ret_5 >= 0.02436 AND streak <= -2", "horizon": 3, "dsr": 0.7126289048579572, "pattern": {"side": "long", "conditions": [{"feature": "close_loc", "op": "<=", "value": 0.199996}, {"feature": "ret_5", "op": ">=", "value": 0.024359}, {"feature": "streak", "op": "<=", "value": -2.0}]}, "train": {"n": 526, "win_rate": 0.5703422053231939, "mean": 0.007786908485016875, "mean_excess": 0.0062554982776055045, "t_stat": 2.2989482975778084, "trades_per_year": 40.20960652992884, "worst": -0.23531714169937135, "best": 0.19168002274737106, "profit_factor": 1.764962017491919}, "valid": {"n": 180, "win_rate": 0.6055555555555555, "mean": 0.007688511108161501, "mean_excess": 0.006119491424576757, "t_stat": 2.3298590887082056, "trades_per_year": 42.11723254324151, "worst": -0.10459230177580181, "best": 0.17246370419976442, "profit_factor": 1.8777682384528616}, "test": {"n": 217, "win_rate": 0.5161290322580645, "mean": -1.115318757125837e-05, "mean_excess": -0.0014872368665673093, "t_stat": -0.3827556005197067, "trades_per_year": 50.54799107142857, "worst": -0.27433764570207586, "best": 0.2881757306486793, "profit_factor": 0.9992458684872295}}, {"description": "[long] close_loc <= 0.09434 AND rsi_14 <= 30", "horizon": 1, "dsr": 0.9541055450899734, "pattern": {"side": "long", "conditions": [{"feature": "close_loc", "op": "<=", "value": 0.094338}, {"feature": "rsi_14", "op": "<=", "value": 30.0}]}, "train": {"n": 1201, "win_rate": 0.5828476269775187, "mean": 0.0038094241037972946, "mean_excess": 0.0036712453358342468, "t_stat": 2.245291450996255, "trades_per_year": 91.80938677270825, "worst": -0.21396297999675484, "best": 0.10485366225824133, "profit_factor": 1.627915816815433}, "valid": {"n": 440, "win_rate": 0.5568181818181818, "mean": 0.006090907042238864, "mean_excess": 0.005908585891588538, "t_stat": 2.029045787181413, "trades_per_year": 102.95323510570147, "worst": -0.06416500991746477, "best": 0.12684919598494016, "profit_factor": 1.9560164546953758}, "test": {"n": 394, "win_rate": 0.5152284263959391, "mean": 0.0013696243893371349, "mean_excess": 0.0011768508013495563, "t_stat": 0.6726693848126393, "trades_per_year": 91.77838010204081, "worst": -0.054431945792728365, "best": 0.07472338757724739, "profit_factor": 1.240206691876364}}, {"description": "[short] rsi_2 >= 75 AND stoch_k <= 20", "horizon": 3, "dsr": 0.12963404801829753, "pattern": {"side": "short", "conditions": [{"feature": "rsi_2", "op": ">=", "value": 75.0}, {"feature": "stoch_k", "op": "<=", "value": 20.0}]}, "train": {"n": 92, "win_rate": 0.6304347826086957, "mean": 0.007644466574494938, "mean_excess": 0.00881238952458462, "t_stat": 3.0332144036678415, "trades_per_year": 7.032858936793637, "worst": -0.055285730634416885, "best": 0.13426569102402397, "profit_factor": 2.29543760134095}, "valid": {"n": 27, "win_rate": 0.6296296296296297, "mean": 0.006751099266171206, "mean_excess": 0.007930025436574797, "t_stat": 1.6642000151601777, "trades_per_year": 6.317584881486226, "worst": -0.05006028147011221, "best": 0.06580758014245847, "profit_factor": 2.2253557829248085}, "test": {"n": 42, "win_rate": 0.35714285714285715, "mean": -0.0072045815717802246, "mean_excess": -0.005854355211847053, "t_stat": -0.9827507116413061, "trades_per_year": 9.783482142857142, "worst": -0.16728446999143942, "best": 0.0692068460398707, "profit_factor": 0.5471665720005751}}, {"description": "[long] bb_pct_b <= 0.1053 AND close_loc <= 0.09434 AND rsi_14 <= 37.46", "horizon": 1, "dsr": 0.9975196543591005, "pattern": {"side": "long", "conditions": [{"feature": "bb_pct_b", "op": "<=", "value": 0.105282}, {"feature": "close_loc", "op": "<=", "value": 0.094338}, {"feature": "rsi_14", "op": "<=", "value": 37.462106}]}, "train": {"n": 2895, "win_rate": 0.5398963730569948, "mean": 0.0026400698538872223, "mean_excess": 0.0024696822965026535, "t_stat": 2.024546936661861, "trades_per_year": 221.305724152365, "worst": -0.21396297999675484, "best": 0.14873269452668658, "profit_factor": 1.4536345028056512}, "valid": {"n": 1021, "win_rate": 0.5171400587659157, "mean": 0.003621512523868, "mean_excess": 0.003440716804236097, "t_stat": 1.6071341469020735, "trades_per_year": 238.89830237027545, "worst": -0.08875274007632894, "best": 0.14232017908462036, "profit_factor": 1.5531791061141296}, "test": {"n": 917, "win_rate": 0.48964013086150493, "mean": -0.0005198671926168207, "mean_excess": -0.0007270186434644426, "t_stat": -0.6657663778135352, "trades_per_year": 213.60602678571428, "worst": -0.0806019818014918, "best": 0.07472338757724739, "profit_factor": 0.9155478556210035}}, {"description": "[long] bb_pct_b <= 0.2 AND close_loc <= 0.09434 AND ret_3 <= -0.01506", "horizon": 1, "dsr": 0.9813380982232386, "pattern": {"side": "long", "conditions": [{"feature": "bb_pct_b", "op": "<=", "value": 0.2}, {"feature": "close_loc", "op": "<=", "value": 0.094338}, {"feature": "ret_3", "op": "<=", "value": -0.015063}]}, "train": {"n": 4649, "win_rate": 0.5289309528930953, "mean": 0.0018155096662342287, "mean_excess": 0.0016409849177011007, "t_stat": 1.599059177158037, "trades_per_year": 355.38870866471325, "worst": -0.21396297999675484, "best": 0.18769542793869987, "profit_factor": 1.2974685886156883}, "valid": {"n": 1640, "win_rate": 0.5115853658536585, "mean": 0.0020854966842446623, "mean_excess": 0.0019123407509639048, "t_stat": 1.2091623542733152, "trades_per_year": 383.7347853939782, "worst": -0.06416500991746477, "best": 0.14232017908462036, "profit_factor": 1.3194316100456287}, "test": {"n": 1524, "win_rate": 0.468503937007874, "mean": -0.0009455149579155448, "mean_excess": -0.0011478943899842682, "t_stat": -1.2430811296884918, "trades_per_year": 355.00063775510205, "worst": -0.0806019818014918, "best": 0.07472338757724739, "profit_factor": 0.8494498242100463}}, {"description": "[long] close_loc <= 0.09434 AND rsi_14 <= 30 AND streak <= -3", "horizon": 5, "dsr": 0.9979937385467812, "pattern": {"side": "long", "conditions": [{"feature": "close_loc", "op": "<=", "value": 0.094338}, {"feature": "rsi_14", "op": "<=", "value": 30.0}, {"feature": "streak", "op": "<=", "value": -3.0}]}, "train": {"n": 560, "win_rate": 0.6107142857142858, "mean": 0.016012414022402287, "mean_excess": 0.013765981533498945, "t_stat": 2.685021407810031, "trades_per_year": 42.80870657178736, "worst": -0.1667358099884958, "best": 0.662239083815601, "profit_factor": 2.378258101467478}, "valid": {"n": 246, "win_rate": 0.6341463414634146, "mean": 0.01171073030240419, "mean_excess": 0.009426603839433934, "t_stat": 1.105136441689641, "trades_per_year": 57.56021780909673, "worst": -0.24261446984096158, "best": 0.6395063291139241, "profit_factor": 1.7829361338565297}, "test": {"n": 172, "win_rate": 0.5581395348837209, "mean": 0.006199968033425459, "mean_excess": 0.0035017107391036033, "t_stat": 0.8974864215548768, "trades_per_year": 40.0656887755102, "worst": -0.2896405901062531, "best": 0.11210588721104486, "profit_factor": 1.504435506699389}}, {"description": "[long] bb_pct_b <= 0.1053 AND close_loc <= 0.09434 AND stoch_k <= 20", "horizon": 1, "dsr": 0.989333513145428, "pattern": {"side": "long", "conditions": [{"feature": "bb_pct_b", "op": "<=", "value": 0.105282}, {"feature": "close_loc", "op": "<=", "value": 0.094338}, {"feature": "stoch_k", "op": "<=", "value": 20.0}]}, "train": {"n": 4374, "win_rate": 0.526291723822588, "mean": 0.0018160642382540819, "mean_excess": 0.0016337749495216498, "t_stat": 1.7364614597341144, "trades_per_year": 334.36657597321056, "worst": -0.21396297999675484, "best": 0.17958323717212832, "profit_factor": 1.3261930061950014}, "valid": {"n": 1449, "win_rate": 0.5003450655624568, "mean": 0.0020184264646272427, "mean_excess": 0.001837314807452055, "t_stat": 1.0750261851021168, "trades_per_year": 339.04372197309414, "worst": -0.08875274007632894, "best": 0.14232017908462036, "profit_factor": 1.3044559631152082}, "test": {"n": 1385, "win_rate": 0.47942238267148013, "mean": -0.0007898976891307652, "mean_excess": -0.0009876741582944193, "t_stat": -1.1434940040450097, "trades_per_year": 322.6219706632653, "worst": -0.0806019818014918, "best": 0.07472338757724739, "profit_factor": 0.8679334516719103}}, {"description": "[long] close_loc <= 0.09434 AND rsi_14 <= 37.46 AND streak <= -3", "horizon": 5, "dsr": 0.9973052934894298, "pattern": {"side": "long", "conditions": [{"feature": "close_loc", "op": "<=", "value": 0.094338}, {"feature": "rsi_14", "op": "<=", "value": 37.462106}, {"feature": "streak", "op": "<=", "value": -3.0}]}, "train": {"n": 1364, "win_rate": 0.5835777126099707, "mean": 0.010040561134511827, "mean_excess": 0.007718472592975551, "t_stat": 2.280483556494711, "trades_per_year": 104.2697781498535, "worst": -0.5452359044155003, "best": 0.662239083815601, "profit_factor": 1.792745443825707}, "valid": {"n": 524, "win_rate": 0.5706106870229007, "mean": 0.008628292562952175, "mean_excess": 0.006262653095925307, "t_stat": 1.0236429079318132, "trades_per_year": 122.60794362588084, "worst": -0.2802314055335259, "best": 0.6395063291139241, "profit_factor": 1.5704957711966305}, "test": {"n": 454, "win_rate": 0.5066079295154186, "mean": 0.0026055989791317026, "mean_excess": 0.000147909627721049, "t_stat": 0.06168576510801012, "trades_per_year": 105.7547831632653, "worst": -0.2896405901062531, "best": 0.21875512806045683, "profit_factor": 1.2020335947255893}}], "yearly": {"[long] close_loc <= 0.2 AND ret_5 >= 0.02436 AND streak <= -2": [{"year": 2005, "n": 24, "excess_bps": 14.538, "win": 0.5}, {"year": 2006, "n": 38, "excess_bps": 63.997, "win": 0.526}, {"year": 2007, "n": 44, "excess_bps": 1.158, "win": 0.523}, {"year": 2008, "n": 72, "excess_bps": 178.048, "win": 0.722}, {"year": 2009, "n": 61, "excess_bps": 274.934, "win": 0.738}, {"year": 2010, "n": 31, "excess_bps": -10.375, "win": 0.484}, {"year": 2011, "n": 63, "excess_bps": 61.325, "win": 0.571}, {"year": 2012, "n": 40, "excess_bps": 41.368, "win": 0.6}, {"year": 2013, "n": 37, "excess_bps": 40.532, "win": 0.595}, {"year": 2014, "n": 17, "excess_bps": -87.736, "win": 0.529}, {"year": 2015, "n": 48, "excess_bps": -45.706, "win": 0.417}, {"year": 2016, "n": 24, "excess_bps": 35.457, "win": 0.542}, {"year": 2017, "n": 24, "excess_bps": -110.272, "win": 0.333}, {"year": 2018, "n": 46, "excess_bps": -0.587, "win": 0.478}, {"year": 2019, "n": 31, "excess_bps": 28.651, "win": 0.516}, {"year": 2020, "n": 67, "excess_bps": 142.632, "win": 0.731}, {"year": 2021, "n": 34, "excess_bps": 12.722, "win": 0.559}, {"year": 2022, "n": 68, "excess_bps": 47.04, "win": 0.618}, {"year": 2023, "n": 42, "excess_bps": 59.425, "win": 0.476}, {"year": 2024, "n": 40, "excess_bps": -18.294, "win": 0.575}, {"year": 2025, "n": 47, "excess_bps": -79.449, "win": 0.468}, {"year": 2026, "n": 49, "excess_bps": -35.62, "win": 0.51}], "[long] close_loc <= 0.09434 AND rsi_14 <= 30": [{"year": 2005, "n": 116, "excess_bps": 19.923, "win": 0.595}, {"year": 2006, "n": 60, "excess_bps": 6.777, "win": 0.633}, {"year": 2007, "n": 88, "excess_bps": 34.413, "win": 0.67}, {"year": 2008, "n": 215, "excess_bps": 56.44, "win": 0.605}, {"year": 2009, "n": 49, "excess_bps": 0.456, "win": 0.449}, {"year": 2010, "n": 63, "excess_bps": 48.331, "win": 0.698}, {"year": 2011, "n": 151, "excess_bps": 88.0, "win": 0.556}, {"year": 2012, "n": 91, "excess_bps": -38.551, "win": 0.363}, {"year": 2013, "n": 38, "excess_bps": 37.51, "win": 0.658}, {"year": 2014, "n": 78, "excess_bps": -6.512, "win": 0.526}, {"year": 2015, "n": 124, "excess_bps": 87.561, "win": 0.726}, {"year": 2016, "n": 79, "excess_bps": 23.788, "win": 0.57}, {"year": 2017, "n": 47, "excess_bps": 5.214, "win": 0.426}, {"year": 2018, "n": 176, "excess_bps": 36.871, "win": 0.517}, {"year": 2019, "n": 40, "excess_bps": -5.523, "win": 0.575}, {"year": 2020, "n": 132, "excess_bps": 104.347, "win": 0.576}, {"year": 2021, "n": 56, "excess_bps": 40.892, "win": 0.571}, {"year": 2022, "n": 163, "excess_bps": 51.357, "win": 0.601}, {"year": 2023, "n": 73, "excess_bps": -16.164, "win": 0.438}, {"year": 2024, "n": 75, "excess_bps": -30.379, "win": 0.4}, {"year": 2025, "n": 86, "excess_bps": 55.67, "win": 0.616}, {"year": 2026, "n": 70, "excess_bps": -3.521, "win": 0.471}], "[long] close_loc <= 0.09434 AND rsi_14 <= 30 AND streak <= -3": [{"year": 2005, "n": 58, "excess_bps": 81.934, "win": 0.759}, {"year": 2006, "n": 26, "excess_bps": 56.41, "win": 0.692}, {"year": 2007, "n": 40, "excess_bps": 44.865, "win": 0.6}, {"year": 2008, "n": 99, "excess_bps": 368.269, "win": 0.596}, {"year": 2009, "n": 25, "excess_bps": -106.569, "win": 0.28}, {"year": 2010, "n": 32, "excess_bps": 124.424, "win": 0.688}, {"year": 2011, "n": 52, "excess_bps": 29.452, "win": 0.5}, {"year": 2012, "n": 49, "excess_bps": 28.189, "win": 0.653}, {"year": 2013, "n": 17, "excess_bps": 41.977, "win": 0.647}, {"year": 2014, "n": 31, "excess_bps": 120.455, "win": 0.677}, {"year": 2015, "n": 74, "excess_bps": 373.457, "win": 0.73}, {"year": 2016, "n": 33, "excess_bps": -85.599, "win": 0.394}, {"year": 2017, "n": 23, "excess_bps": -15.716, "win": 0.478}, {"year": 2018, "n": 108, "excess_bps": 180.491, "win": 0.704}, {"year": 2019, "n": 17, "excess_bps": -55.538, "win": 0.412}, {"year": 2020, "n": 58, "excess_bps": -86.063, "win": 0.534}, {"year": 2021, "n": 30, "excess_bps": 122.247, "win": 0.633}, {"year": 2022, "n": 82, "excess_bps": 82.673, "win": 0.634}, {"year": 2023, "n": 29, "excess_bps": 38.714, "win": 0.517}, {"year": 2024, "n": 38, "excess_bps": 6.503, "win": 0.5}, {"year": 2025, "n": 36, "excess_bps": 62.771, "win": 0.694}, {"year": 2026, "n": 33, "excess_bps": 57.2, "win": 0.485}]}, "example": {"symbol": "SBUX", "signal_date": "2026-10-09", "trade": {"date": "2026-10-09 00:00:00", "symbol": "SBUX", "ret": 0.06818098478161205, "excess": 0.06515563583311176, "horizon": 5, "year": 2026}, "bars": [{"date": "2026-10-02", "Open": 95.08000183105469, "High": 95.29000091552734, "Low": 94.2699966430664, "Close": 94.70999908447266, "Volume": 6366300.0, "close_loc": 0.431373135668018, "rsi_14": 35.12666801268941, "streak": -1.0, "ret_1": -0.0017917176840894777}, {"date": "2026-10-05", "Open": 94.76000213623047, "High": 95.0, "Low": 93.55000305175781, "Close": 94.43000030517578, "Volume": 8822700.0, "close_loc": 0.6068959348395719, "rsi_14": 34.30699170846884, "streak": -2.0, "ret_1": -0.0029563803400224353}, {"date": "2026-10-06", "Open": 94.05000305175781, "High": 96.7300033569336, "Low": 93.80999755859375, "Close": 96.11000061035156, "Volume": 6261400.0, "close_loc": 0.7876707138956603, "rsi_14": 42.91435687767056, "streak": 1.0, "ret_1": 0.017790959438170217}, {"date": "2026-10-07", "Open": 96.22000122070312, "High": 96.27999877929688, "Low": 93.19000244140625, "Close": 93.58000183105469, "Volume": 9423700.0, "close_loc": 0.12621354429004572, "rsi_14": 35.393458580884115, "streak": -1.0, "ret_1": -0.02632399087743198}, {"date": "2026-10-08", "Open": 93.0, "High": 94.16999816894531, "Low": 87.3499984741211, "Close": 93.20999908447266, "Volume": 30310600.0, "close_loc": 0.8592376645997196, "rsi_14": 34.442778049872416, "streak": -2.0, "ret_1": -0.0039538655625378505}, {"date": "2026-10-09", "Open": 93.0, "High": 93.48999786376953, "Low": 90.69000244140625, "Close": 90.75, "Volume": 12763400.0, "close_loc": 0.02142773452933371, "rsi_14": 28.887173469592625, "streak": -3.0, "ret_1": -0.026392008460843885}, {"date": "2026-10-12", "Open": 91.20999908447266, "High": 92.44000244140625, "Low": 90.70999908447266, "Close": 92.29000091552734, "Volume": 10975200.0, "close_loc": 0.913294083923177, "rsi_14": 35.86179538298177, "streak": 1.0, "ret_1": 0.016969707058152483}, {"date": "2026-10-13", "Open": 92.33000183105469, "High": 92.69999694824219, "Low": 90.5199966430664, "Close": 92.0, "Volume": 9750400.0, "close_loc": 0.678900527408071, "rsi_14": 35.16241334033967, "streak": -1.0, "ret_1": -0.003142278823821676}, {"date": "2026-10-14", "Open": 92.0, "High": 93.41999816894531, "Low": 91.30999755859375, "Close": 93.25, "Volume": 6784400.0, "close_loc": 0.9194321707248284, "rsi_14": 40.544717349311824, "streak": 1.0, "ret_1": 0.013586956521739024}, {"date": "2026-10-15", "Open": 94.81999969482422, "High": 97.01000213623047, "Low": 94.80999755859375, "Close": 96.87999725341797, "Volume": 15377700.0, "close_loc": 0.9409069944062782, "rsi_14": 52.79867868788042, "streak": 2.0, "ret_1": 0.03892758448705602}, {"date": "2026-10-16", "Open": 97.37000274658203, "High": 97.9800033569336, "Low": 96.4800033569336, "Close": 97.5199966430664, "Volume": 9373600.0, "close_loc": 0.693328857421875, "rsi_14": 54.5762498295988, "streak": 3.0, "ret_1": 0.0066061045395606754}, {"date": "2026-10-19", "Open": 97.52999877929688, "High": 98.4000015258789, "Low": 96.66000366210938, "Close": 97.87000274658203, "Volume": 7067800.0, "close_loc": 0.6954026264442155, "rsi_14": 55.56186948671739, "streak": 4.0, "ret_1": 0.00358907009396936}]}, "equity": [{"date": "2022-07-15", "patterns": 100000, "ew": 100000}, {"date": "2022-07-22", "patterns": 99363, "ew": 102520}, {"date": "2022-07-29", "patterns": 99363, "ew": 105906}, {"date": "2022-08-05", "patterns": 99266, "ew": 106067}, {"date": "2022-08-12", "patterns": 99956, "ew": 109473}, {"date": "2022-08-19", "patterns": 99998, "ew": 108545}, {"date": "2022-08-26", "patterns": 100080, "ew": 104552}, {"date": "2022-09-02", "patterns": 98916, "ew": 101071}, {"date": "2022-09-09", "patterns": 100954, "ew": 104175}, {"date": "2022-09-16", "patterns": 98741, "ew": 99450}, {"date": "2022-09-23", "patterns": 95115, "ew": 94681}, {"date": "2022-09-30", "patterns": 94270, "ew": 91765}, {"date": "2022-10-07", "patterns": 98030, "ew": 93073}, {"date": "2022-10-14", "patterns": 98063, "ew": 92560}, {"date": "2022-10-21", "patterns": 103339, "ew": 97078}, {"date": "2022-10-28", "patterns": 106398, "ew": 101204}, {"date": "2022-11-04", "patterns": 104434, "ew": 99503}, {"date": "2022-11-11", "patterns": 105182, "ew": 105064}, {"date": "2022-11-18", "patterns": 103471, "ew": 104857}, {"date": "2022-11-25", "patterns": 104787, "ew": 106665}, {"date": "2022-12-02", "patterns": 106558, "ew": 107806}, {"date": "2022-12-09", "patterns": 106460, "ew": 104109}, {"date": "2022-12-16", "patterns": 106694, "ew": 102203}, {"date": "2022-12-23", "patterns": 104330, "ew": 102123}, {"date": "2022-12-30", "patterns": 105321, "ew": 102033}, {"date": "2023-01-06", "patterns": 105545, "ew": 104648}, {"date": "2023-01-13", "patterns": 105939, "ew": 107661}, {"date": "2023-01-20", "patterns": 106164, "ew": 106051}, {"date": "2023-01-27", "patterns": 105900, "ew": 108979}, {"date": "2023-02-03", "patterns": 106221, "ew": 110629}, {"date": "2023-02-10", "patterns": 106136, "ew": 109303}, {"date": "2023-02-17", "patterns": 106888, "ew": 109469}, {"date": "2023-02-24", "patterns": 106226, "ew": 106605}, {"date": "2023-03-03", "patterns": 106846, "ew": 108341}, {"date": "2023-03-10", "patterns": 104004, "ew": 104221}, {"date": "2023-03-17", "patterns": 102512, "ew": 105520}, {"date": "2023-03-24", "patterns": 101668, "ew": 106659}, {"date": "2023-03-31", "patterns": 101751, "ew": 110489}, {"date": "2023-04-07", "patterns": 101769, "ew": 110461}, {"date": "2023-04-14", "patterns": 102776, "ew": 111561}, {"date": "2023-04-21", "patterns": 102890, "ew": 111044}, {"date": "2023-04-28", "patterns": 104639, "ew": 111843}, {"date": "2023-05-05", "patterns": 104673, "ew": 110516}, {"date": "2023-05-12", "patterns": 104043, "ew": 109687}, {"date": "2023-05-19", "patterns": 104558, "ew": 111290}, {"date": "2023-05-26", "patterns": 106413, "ew": 111552}, {"date": "2023-06-02", "patterns": 109423, "ew": 113637}, {"date": "2023-06-09", "patterns": 110313, "ew": 114661}, {"date": "2023-06-16", "patterns": 110358, "ew": 117520}, {"date": "2023-06-23", "patterns": 110201, "ew": 114847}, {"date": "2023-06-30", "patterns": 110808, "ew": 117509}, {"date": "2023-07-07", "patterns": 110777, "ew": 115751}, {"date": "2023-07-14", "patterns": 112064, "ew": 118302}, {"date": "2023-07-21", "patterns": 114103, "ew": 119909}, {"date": "2023-07-28", "patterns": 114652, "ew": 121438}, {"date": "2023-08-04", "patterns": 114348, "ew": 119231}, {"date": "2023-08-11", "patterns": 113646, "ew": 119173}, {"date": "2023-08-18", "patterns": 112356, "ew": 116588}, {"date": "2023-08-25", "patterns": 113593, "ew": 116676}, {"date": "2023-09-01", "patterns": 113840, "ew": 119358}, {"date": "2023-09-08", "patterns": 113608, "ew": 117907}, {"date": "2023-09-15", "patterns": 114404, "ew": 118358}, {"date": "2023-09-22", "patterns": 112873, "ew": 114891}, {"date": "2023-09-29", "patterns": 111523, "ew": 114078}, {"date": "2023-10-06", "patterns": 110584, "ew": 113430}, {"date": "2023-10-13", "patterns": 110658, "ew": 113756}, {"date": "2023-10-20", "patterns": 108931, "ew": 111729}, {"date": "2023-10-27", "patterns": 106280, "ew": 109243}, {"date": "2023-11-03", "patterns": 108358, "ew": 115713}, {"date": "2023-11-10", "patterns": 108236, "ew": 116245}, {"date": "2023-11-17", "patterns": 108614, "ew": 119278}, {"date": "2023-11-24", "patterns": 108658, "ew": 120259}, {"date": "2023-12-01", "patterns": 108658, "ew": 121757}, {"date": "2023-12-08", "patterns": 109175, "ew": 122087}, {"date": "2023-12-15", "patterns": 109619, "ew": 125593}, {"date": "2023-12-22", "patterns": 110833, "ew": 126208}, {"date": "2023-12-29", "patterns": 111123, "ew": 126968}, {"date": "2024-01-05", "patterns": 111192, "ew": 125667}, {"date": "2024-01-12", "patterns": 111607, "ew": 126360}, {"date": "2024-01-19", "patterns": 112162, "ew": 127464}, {"date": "2024-01-26", "patterns": 112379, "ew": 128396}, {"date": "2024-02-02", "patterns": 113311, "ew": 129593}, {"date": "2024-02-09", "patterns": 114490, "ew": 130442}, {"date": "2024-02-16", "patterns": 114879, "ew": 130931}, {"date": "2024-02-23", "patterns": 114730, "ew": 132724}, {"date": "2024-03-01", "patterns": 114474, "ew": 133963}, {"date": "2024-03-08", "patterns": 114327, "ew": 134246}, {"date": "2024-03-15", "patterns": 114037, "ew": 134370}, {"date": "2024-03-22", "patterns": 114297, "ew": 136645}, {"date": "2024-03-29", "patterns": 115022, "ew": 137869}, {"date": "2024-04-05", "patterns": 113003, "ew": 135705}, {"date": "2024-04-12", "patterns": 111007, "ew": 133254}, {"date": "2024-04-19", "patterns": 108644, "ew": 131593}, {"date": "2024-04-26", "patterns": 109223, "ew": 133806}, {"date": "2024-05-03", "patterns": 110172, "ew": 134495}, {"date": "2024-05-10", "patterns": 109739, "ew": 136821}, {"date": "2024-05-17", "patterns": 110844, "ew": 139292}, {"date": "2024-05-24", "patterns": 110489, "ew": 137975}, {"date": "2024-05-31", "patterns": 111564, "ew": 138096}, {"date": "2024-06-07", "patterns": 111234, "ew": 138772}, {"date": "2024-06-14", "patterns": 110608, "ew": 138669}, {"date": "2024-06-21", "patterns": 110783, "ew": 140347}, {"date": "2024-06-28", "patterns": 109728, "ew": 139974}, {"date": "2024-07-05", "patterns": 110431, "ew": 141917}, {"date": "2024-07-12", "patterns": 110557, "ew": 143588}, {"date": "2024-07-19", "patterns": 110540, "ew": 143091}, {"date": "2024-07-26", "patterns": 109546, "ew": 142614}, {"date": "2024-08-02", "patterns": 109389, "ew": 139108}, {"date": "2024-08-09", "patterns": 108640, "ew": 138487}, {"date": "2024-08-16", "patterns": 108697, "ew": 143732}, {"date": "2024-08-23", "patterns": 109305, "ew": 145888}, {"date": "2024-08-30", "patterns": 109294, "ew": 146835}, {"date": "2024-09-06", "patterns": 108756, "ew": 141684}, {"date": "2024-09-13", "patterns": 109244, "ew": 146610}, {"date": "2024-09-20", "patterns": 109203, "ew": 149331}, {"date": "2024-09-27", "patterns": 109265, "ew": 151141}, {"date": "2024-10-04", "patterns": 109306, "ew": 150995}, {"date": "2024-10-11", "patterns": 110170, "ew": 152333}, {"date": "2024-10-18", "patterns": 110120, "ew": 153399}, {"date": "2024-10-25", "patterns": 109552, "ew": 151402}, {"date": "2024-11-01", "patterns": 108105, "ew": 149932}, {"date": "2024-11-08", "patterns": 108300, "ew": 156227}, {"date": "2024-11-15", "patterns": 106750, "ew": 153718}, {"date": "2024-11-22", "patterns": 107401, "ew": 156965}, {"date": "2024-11-29", "patterns": 107190, "ew": 158758}, {"date": "2024-12-06", "patterns": 106067, "ew": 158183}, {"date": "2024-12-13", "patterns": 105072, "ew": 156009}, {"date": "2024-12-20", "patterns": 103761, "ew": 152264}, {"date": "2024-12-27", "patterns": 104259, "ew": 153437}, {"date": "2025-01-03", "patterns": 103761, "ew": 152807}, {"date": "2025-01-10", "patterns": 102216, "ew": 150442}, {"date": "2025-01-17", "patterns": 102414, "ew": 155407}, {"date": "2025-01-24", "patterns": 101832, "ew": 157974}, {"date": "2025-01-31", "patterns": 101087, "ew": 157738}, {"date": "2025-02-07", "patterns": 101315, "ew": 156867}, {"date": "2025-02-14", "patterns": 100553, "ew": 159587}, {"date": "2025-02-21", "patterns": 101759, "ew": 158287}, {"date": "2025-02-28", "patterns": 101429, "ew": 158087}, {"date": "2025-03-07", "patterns": 98858, "ew": 153896}, {"date": "2025-03-14", "patterns": 99529, "ew": 150330}, {"date": "2025-03-21", "patterns": 98966, "ew": 151840}, {"date": "2025-03-28", "patterns": 98689, "ew": 150218}, {"date": "2025-04-04", "patterns": 95193, "ew": 136838}, {"date": "2025-04-11", "patterns": 94922, "ew": 142267}, {"date": "2025-04-18", "patterns": 92631, "ew": 140934}, {"date": "2025-04-25", "patterns": 91555, "ew": 145881}, {"date": "2025-05-02", "patterns": 91423, "ew": 149308}, {"date": "2025-05-09", "patterns": 90941, "ew": 149415}, {"date": "2025-05-16", "patterns": 90223, "ew": 156101}, {"date": "2025-05-23", "patterns": 90200, "ew": 152534}, {"date": "2025-05-30", "patterns": 90641, "ew": 154812}, {"date": "2025-06-06", "patterns": 90641, "ew": 156827}, {"date": "2025-06-13", "patterns": 90641, "ew": 157567}, {"date": "2025-06-20", "patterns": 89574, "ew": 157466}, {"date": "2025-06-27", "patterns": 90318, "ew": 162763}, {"date": "2025-07-04", "patterns": 90368, "ew": 166059}, {"date": "2025-07-11", "patterns": 90336, "ew": 165561}, {"date": "2025-07-18", "patterns": 90104, "ew": 165506}, {"date": "2025-07-25", "patterns": 90575, "ew": 167273}, {"date": "2025-08-01", "patterns": 89836, "ew": 162479}, {"date": "2025-08-08", "patterns": 91983, "ew": 166188}, {"date": "2025-08-15", "patterns": 91579, "ew": 169105}, {"date": "2025-08-22", "patterns": 91995, "ew": 170988}, {"date": "2025-08-29", "patterns": 91968, "ew": 170567}, {"date": "2025-09-05", "patterns": 91543, "ew": 170484}, {"date": "2025-09-12", "patterns": 91421, "ew": 172730}, {"date": "2025-09-19", "patterns": 91301, "ew": 174810}, {"date": "2025-09-26", "patterns": 93062, "ew": 175029}, {"date": "2025-10-03", "patterns": 94866, "ew": 176576}, {"date": "2025-10-10", "patterns": 93192, "ew": 172811}, {"date": "2025-10-17", "patterns": 95555, "ew": 177033}, {"date": "2025-10-24", "patterns": 96195, "ew": 179767}, {"date": "2025-10-31", "patterns": 95523, "ew": 179456}, {"date": "2025-11-07", "patterns": 93044, "ew": 176887}, {"date": "2025-11-14", "patterns": 93720, "ew": 177640}, {"date": "2025-11-21", "patterns": 94790, "ew": 174604}, {"date": "2025-11-28", "patterns": 96052, "ew": 180396}, {"date": "2025-12-05", "patterns": 95906, "ew": 181534}, {"date": "2025-12-12", "patterns": 95809, "ew": 182001}, {"date": "2025-12-19", "patterns": 96836, "ew": 181349}, {"date": "2025-12-26", "patterns": 97811, "ew": 183152}, {"date": "2026-01-02", "patterns": 98263, "ew": 182687}, {"date": "2026-01-09", "patterns": 100012, "ew": 187177}, {"date": "2026-01-16", "patterns": 101068, "ew": 187975}, {"date": "2026-01-23", "patterns": 101596, "ew": 188740}, {"date": "2026-01-30", "patterns": 103030, "ew": 189934}, {"date": "2026-02-06", "patterns": 101878, "ew": 194092}, {"date": "2026-02-13", "patterns": 102122, "ew": 193314}, {"date": "2026-02-20", "patterns": 101965, "ew": 193326}, {"date": "2026-02-27", "patterns": 103677, "ew": 192794}, {"date": "2026-03-06", "patterns": 103307, "ew": 187786}, {"date": "2026-03-13", "patterns": 101067, "ew": 184700}, {"date": "2026-03-20", "patterns": 98742, "ew": 180522}, {"date": "2026-03-27", "patterns": 97183, "ew": 179296}, {"date": "2026-04-03", "patterns": 98773, "ew": 183815}, {"date": "2026-04-10", "patterns": 99685, "ew": 188866}, {"date": "2026-04-17", "patterns": 100478, "ew": 195809}, {"date": "2026-04-24", "patterns": 100179, "ew": 196909}, {"date": "2026-05-01", "patterns": 100935, "ew": 199461}, {"date": "2026-05-08", "patterns": 103926, "ew": 202676}, {"date": "2026-05-15", "patterns": 102473, "ew": 201399}, {"date": "2026-05-22", "patterns": 104449, "ew": 206130}, {"date": "2026-05-29", "patterns": 104260, "ew": 207789}, {"date": "2026-06-05", "patterns": 104426, "ew": 203826}, {"date": "2026-06-12", "patterns": 105851, "ew": 207129}, {"date": "2026-06-19", "patterns": 106252, "ew": 206842}, {"date": "2026-06-26", "patterns": 104823, "ew": 204874}, {"date": "2026-07-03", "patterns": 105031, "ew": 206656}, {"date": "2026-07-10", "patterns": 106133, "ew": 207523}, {"date": "2026-07-17", "patterns": 106838, "ew": 204498}, {"date": "2026-07-24", "patterns": 107099, "ew": 203678}, {"date": "2026-07-31", "patterns": 109018, "ew": 204860}, {"date": "2026-08-07", "patterns": 110780, "ew": 211408}, {"date": "2026-08-14", "patterns": 110250, "ew": 212687}, {"date": "2026-08-21", "patterns": 109735, "ew": 210522}, {"date": "2026-08-28", "patterns": 111623, "ew": 210231}, {"date": "2026-09-04", "patterns": 110768, "ew": 210723}, {"date": "2026-09-11", "patterns": 108493, "ew": 209615}, {"date": "2026-09-18", "patterns": 107500, "ew": 207080}, {"date": "2026-09-25", "patterns": 106993, "ew": 208464}, {"date": "2026-10-02", "patterns": 106545, "ew": 205628}, {"date": "2026-10-09", "patterns": 107101, "ew": 206779}, {"date": "2026-10-16", "patterns": 107604, "ew": 207655}, {"date": "2026-10-23", "patterns": 107800, "ew": 208227}, {"date": "2026-10-30", "patterns": 107085, "ew": 208537}], "backtest": {"total_return": 0.0708483773670403, "cagr": 0.016072828755375967, "annual_vol": 0.09537360222273913, "sharpe": 0.21534313241980835, "sortino": 0.28051162859912443, "max_drawdown": -0.22227976154198348, "calmar": 0.07230900664944336, "n_trades": 1396, "trades_per_year": 325.1843112244898, "win_rate": 0.49212034383954156, "avg_trade_ret": 0.0006226664303580336, "profit_factor": 1.0449975700819647, "avg_exposure": 0.28159791195999856, "years": 4.292950034223135}, "benchmark": {"total_return": 1.0853670358712453, "cagr": 0.1867258124985649, "annual_vol": 0.14515434299805519, "sharpe": 1.256311301216856, "sortino": 1.7915453444538723, "max_drawdown": -0.17130361726061816, "calmar": 1.090028427213441, "n_trades": 0, "trades_per_year": 0.0, "win_rate": 0.0, "avg_trade_ret": 0.0, "profit_factor": 0.0, "avg_exposure": 1.0, "years": 4.292950034223135}}</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const bps = x => (x * 1e4);
+const fmtBps = x => (x >= 0 ? '+' : '') + Math.round(bps(x)) + ' bps';
+const pct = (x, d = 0) => (x * 100).toFixed(d) + '%';
+const cls = x => x < 0 ? 'neg' : 'pos';
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+// ---- tiles
+const sel = D.selected;
+const nTestPos = sel.filter(s => s.test.mean_excess > 0).length;
+document.getElementById('tiles').innerHTML = [
+  [D.n_trials.toLocaleString(), 'rule × horizon trials screened'],
+  [sel.length, 'rules passed every gate'],
+  [nTestPos + ' of ' + sel.length, 'had positive excess in the test window'],
+  ['0 of ' + sel.length, 'had a test t-statistic above +1'],
+].map(([v, l]) => `<div class="tile"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+
+// ---- selected table
+{
+  const t = document.getElementById('seltable');
+  const w = ['train', 'valid', 'test'];
+  t.innerHTML = `<thead><tr><th>Rule</th><th>Hold</th>${w.map(x => `<th>${x} n</th><th>${x} win</th><th>${x} excess</th><th>${x} t</th>`).join('')}<th>DSR</th></tr></thead><tbody>` +
+    sel.map(s => `<tr><td class="desc mono">${s.description}</td><td>${s.horizon}d</td>` +
+      w.map(x => `<td>${s[x].n}</td><td>${pct(s[x].win_rate)}</td><td class="${cls(s[x].mean_excess)}">${fmtBps(s[x].mean_excess)}</td><td class="${Math.abs(s[x].t_stat) >= 2 ? 'sig' : ''}">${s[x].t_stat.toFixed(2)}</td>`).join('') +
+      `<td>${s.dsr.toFixed(2)}</td></tr>`).join('') + '</tbody>';
+}
+
+// ---- bars table
+{
+  const t = document.getElementById('bars');
+  const sig = D.example.signal_date;
+  t.innerHTML = `<thead><tr><th>Date</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Day return</th><th>close_loc</th><th>rsi_14</th><th>streak</th></tr></thead><tbody>` +
+    D.example.bars.map(b => `<tr style="${b.date === sig ? 'background: var(--surface-2); font-weight:600' : ''}"><td>${b.date}${b.date === sig ? ' ← signal' : ''}</td><td>${b.Open.toFixed(2)}</td><td>${b.High.toFixed(2)}</td><td>${b.Low.toFixed(2)}</td><td>${b.Close.toFixed(2)}</td><td class="${cls(b.ret_1)}">${pct(b.ret_1, 1)}</td><td>${b.close_loc.toFixed(3)}</td><td>${b.rsi_14.toFixed(1)}</td><td>${b.streak}</td></tr>`).join('') + '</tbody>';
+}
+
+// ---- backtest table
+{
+  const m = D.backtest, b = D.benchmark;
+  const rows = [['CAGR', pct(m.cagr, 1), pct(b.cagr, 1)], ['Sharpe', m.sharpe.toFixed(2), b.sharpe.toFixed(2)], ['Max drawdown', pct(m.max_drawdown, 1), pct(b.max_drawdown, 1)], ['Annual volatility', pct(m.annual_vol, 1), pct(b.annual_vol, 1)], ['Average gross exposure', pct(m.avg_exposure, 0), '100%'], ['Trades', m.n_trades + ' (' + m.trades_per_year.toFixed(0) + '/yr)', '–'], ['Win rate', pct(m.win_rate, 0), '–'], ['Profit factor', m.profit_factor.toFixed(2), '–']];
+  document.getElementById('bt').innerHTML = `<thead><tr><th>Metric</th><th>Selected patterns</th><th>Equal-weight buy and hold</th></tr></thead><tbody>` + rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('') + '</tbody>';
+}
+
+// ---- chart helpers
+const NS = 'http://www.w3.org/2000/svg';
+const el = (n, a = {}, parent) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; };
+function tipFor(container) {
+  const tip = document.createElement('div'); tip.className = 'tip'; container.appendChild(tip);
+  return { show(html, x, y) { tip.innerHTML = html; tip.style.display = 'block'; const r = container.getBoundingClientRect(); let lx = x - r.left + 12, ly = y - r.top - 10; if (lx + tip.offsetWidth > r.width) lx = x - r.left - tip.offsetWidth - 12; tip.style.left = lx + 'px'; tip.style.top = ly + 'px'; }, hide() { tip.style.display = 'none'; } };
+}
+function yAxis(g, scale, ticks, x0, x1, fmt) {
+  const ax = el('g', { class: 'axis' }, g);
+  ticks.forEach(v => { const y = scale(v); el('line', { x1: x0, x2: x1, y1: y, y2: y, stroke: v === 0 ? css('--muted') : undefined }, ax); const t = el('text', { x: x0 - 6, y: y + 4, 'text-anchor': 'end' }, ax); t.textContent = fmt(v); });
+}
+function niceTicks(lo, hi, n = 5) { const span = hi - lo, raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), s = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => span / s <= n) || p * 10; const out = []; for (let v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) out.push(+v.toFixed(10)); return out; }
+
+// ---- chart 1: grouped bars per rule × window
+function chartWindows() {
+  const c = document.getElementById('c-windows'); const tip = tipFor(c);
+  const W = 960, H = 360, mL = 56, mR = 12, mT = 16, mB = 48;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Mean excess per trade by rule and window' }, c);
+  const wins = [['train', '--s1'], ['valid', '--s2'], ['test', '--s3']];
+  const vals = sel.flatMap(s => wins.map(w => bps(s[w[0]].mean_excess)));
+  const lo = Math.min(0, ...vals), hi = Math.max(...vals);
+  const ticks = niceTicks(lo - 10, hi + 10);
+  const y = v => mT + (H - mT - mB) * (1 - (v - ticks[0]) / (ticks[ticks.length - 1] - ticks[0]));
+  yAxis(svg, y, ticks, mL, W - mR, v => v + ' bps');
+  const n = sel.length, gw = (W - mL - mR) / n, bw = (gw - 16) / 3;
+  sel.forEach((s, i) => {
+    wins.forEach((w, j) => {
+      const v = bps(s[w[0]].mean_excess), x = mL + i * gw + 8 + j * bw, y0 = y(0), y1 = y(v);
+      const r = el('rect', { x: x + 1, width: bw - 2, y: Math.min(y0, y1), height: Math.max(1, Math.abs(y1 - y0)), fill: `var(${w[1]})`, rx: 2 }, svg);
+      r.addEventListener('mousemove', e => tip.show(`<b>${w[0]}</b> · ${s.description}<br>hold ${s.horizon}d · n ${s[w[0]].n} · win ${pct(s[w[0]].win_rate)}<br>excess <b>${fmtBps(s[w[0]].mean_excess)}</b> · t ${s[w[0]].t_stat.toFixed(2)}`, e.clientX, e.clientY));
+      r.addEventListener('mouseleave', tip.hide);
+    });
+    const t = el('text', { x: mL + i * gw + gw / 2, y: H - mB + 18, 'text-anchor': 'middle', class: 'axis' }, svg); t.textContent = 'rule ' + (i + 1); t.style.fill = css('--muted'); t.style.fontSize = '11px';
+    const t2 = el('text', { x: mL + i * gw + gw / 2, y: H - mB + 33, 'text-anchor': 'middle' }, svg); t2.textContent = s.horizon + 'd hold'; t2.style.fill = css('--muted'); t2.style.fontSize = '10px';
+  });
+  const lg = document.createElement('div'); lg.className = 'legend'; lg.innerHTML = wins.map(w => `<span style="--c: var(${w[1]})">${w[0]}${w[0] === 'train' ? ' (2005 to Feb 2018)' : w[0] === 'valid' ? ' (Mar 2018 to Jun 2022)' : ' (Jul 2022 to Oct 2026)'}</span>`).join(''); c.appendChild(lg);
+}
+
+// ---- chart 2: yearly bars, diverging by sign
+function chartYearly() {
+  const key = Object.keys(D.yearly).find(k => k.includes('rsi_14 <= 30') && !k.includes('streak'));
+  const rows = D.yearly[key];
+  const c = document.getElementById('c-yearly'); const tip = tipFor(c);
+  const W = 960, H = 320, mL = 56, mR = 12, mT = 16, mB = 36;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Mean excess per trade by year' }, c);
+  const vals = rows.map(r => r.excess_bps);
+  const ticks = niceTicks(Math.min(0, ...vals) - 5, Math.max(...vals) + 5);
+  const y = v => mT + (H - mT - mB) * (1 - (v - ticks[0]) / (ticks[ticks.length - 1] - ticks[0]));
+  yAxis(svg, y, ticks, mL, W - mR, v => v + ' bps');
+  const gw = (W - mL - mR) / rows.length, bw = Math.max(6, gw - 6);
+  rows.forEach((r, i) => {
+    const x = mL + i * gw + (gw - bw) / 2, y0 = y(0), y1 = y(r.excess_bps);
+    const rect = el('rect', { x, width: bw, y: Math.min(y0, y1), height: Math.max(1, Math.abs(y1 - y0)), fill: r.excess_bps >= 0 ? 'var(--pos)' : 'var(--neg)', rx: 2 }, svg);
+    rect.addEventListener('mousemove', e => tip.show(`<b>${r.year}</b> · ${r.n} trades · win ${pct(r.win)}<br>mean excess <b>${(r.excess_bps >= 0 ? '+' : '') + r.excess_bps.toFixed(0)} bps</b>`, e.clientX, e.clientY));
+    rect.addEventListener('mouseleave', tip.hide);
+    if (i % 2 === 0 || gw > 36) { const t = el('text', { x: x + bw / 2, y: H - mB + 16, 'text-anchor': 'middle' }, svg); t.textContent = r.year; t.style.fill = css('--muted'); t.style.fontSize = '11px'; }
+  });
+  // window shading labels
+  const lg = document.createElement('div'); lg.className = 'legend'; lg.innerHTML = `<span style="--c: var(--pos)">positive excess</span><span style="--c: var(--neg)">negative excess</span>`; c.appendChild(lg);
+}
+
+// ---- chart 3: equity lines
+function chartEquity() {
+  const rows = D.equity;
+  const c = document.getElementById('c-equity'); const tip = tipFor(c);
+  const W = 960, H = 340, mL = 64, mR = 12, mT = 16, mB = 36;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Portfolio value, patterns versus buy and hold' }, c);
+  const vals = rows.flatMap(r => [r.patterns, r.ew]);
+  const ticks = niceTicks(Math.min(...vals) * 0.98, Math.max(...vals) * 1.02, 5);
+  const y = v => mT + (H - mT - mB) * (1 - (v - ticks[0]) / (ticks[ticks.length - 1] - ticks[0]));
+  const x = i => mL + (W - mL - mR) * i / (rows.length - 1);
+  yAxis(svg, y, ticks, mL, W - mR, v => (v / 1000).toFixed(0) + 'k');
+  const years = {}; rows.forEach((r, i) => { const yr = r.date.slice(0, 4); if (!(yr in years)) years[yr] = i; });
+  Object.entries(years).forEach(([yr, i]) => { if (i === 0) return; const t = el('text', { x: x(i), y: H - mB + 16, 'text-anchor': 'middle' }, svg); t.textContent = yr; t.style.fill = css('--muted'); t.style.fontSize = '11px'; });
+  [['patterns', '--s1'], ['ew', '--s2']].forEach(([k, col]) => {
+    const d = rows.map((r, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(r[k]).toFixed(1)).join(' ');
+    el('path', { d, fill: 'none', stroke: `var(${col})`, 'stroke-width': 2, 'stroke-linejoin': 'round' }, svg);
+  });
+  const cross = el('line', { y1: mT, y2: H - mB, stroke: css('--muted'), 'stroke-dasharray': '3 3', visibility: 'hidden' }, svg);
+  const dots = [el('circle', { r: 4, fill: 'var(--s1)', stroke: 'var(--surface)', 'stroke-width': 2, visibility: 'hidden' }, svg), el('circle', { r: 4, fill: 'var(--s2)', stroke: 'var(--surface)', 'stroke-width': 2, visibility: 'hidden' }, svg)];
+  const hit = el('rect', { x: mL, y: mT, width: W - mL - mR, height: H - mT - mB, fill: 'transparent' }, svg);
+  hit.addEventListener('mousemove', e => {
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const i = Math.max(0, Math.min(rows.length - 1, Math.round((p.x - mL) / (W - mL - mR) * (rows.length - 1)))); const r = rows[i];
+    cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
+    dots[0].setAttribute('cx', x(i)); dots[0].setAttribute('cy', y(r.patterns)); dots[1].setAttribute('cx', x(i)); dots[1].setAttribute('cy', y(r.ew)); dots.forEach(d => d.setAttribute('visibility', 'visible'));
+    tip.show(`<b>${r.date}</b><br>patterns ${r.patterns.toLocaleString()}<br>buy and hold ${r.ew.toLocaleString()}`, e.clientX, e.clientY);
+  });
+  hit.addEventListener('mouseleave', () => { tip.hide(); cross.setAttribute('visibility', 'hidden'); dots.forEach(d => d.setAttribute('visibility', 'hidden')); });
+}
+chartWindows(); chartYearly(); chartEquity();
+</script>
+</body>
+</html>
