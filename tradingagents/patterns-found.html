@@ -219,7 +219,7 @@ function yAxis(g, scale, ticks, x0, x1, fmt) {
   const ax = el('g', { class: 'axis' }, g);
   ticks.forEach(v => { const y = scale(v); el('line', { x1: x0, x2: x1, y1: y, y2: y, stroke: v === 0 ? css('--muted') : undefined }, ax); const t = el('text', { x: x0 - 6, y: y + 4, 'text-anchor': 'end' }, ax); t.textContent = fmt(v); });
 }
-function niceTicks(lo, hi, n = 5) { const span = hi - lo, raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), s = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => span / s <= n) || p * 10; const out = []; for (let v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) out.push(+v.toFixed(10)); return out; }
+function niceTicks(lo, hi, n = 5) { const span = hi - lo, raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))), s = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => span / s <= n) || p * 10; const out = []; for (let v = Math.floor(lo / s) * s; ; v += s) { out.push(+v.toFixed(10)); if (v >= hi - 1e-9) break; } return out; }
 
 // ---- chart 1: grouped bars per rule × window
 function chartWindows() {
