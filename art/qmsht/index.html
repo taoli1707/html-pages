@@ -55,6 +55,7 @@
   <div id="toolbar">
     <button id="btnTour">自动游览</button>
     <button id="btnLabels" class="on">标签</button>
+    <button id="btnInk">墨线</button>
     <button id="btnLang">EN</button>
     <button id="btnTop">俯瞰</button>
   </div>
@@ -70,6 +71,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
 const PAPER = 0xe9e1cc;
@@ -121,6 +123,7 @@ const tri = x => { x = x % 2; if (x<0) x+=2; return x<1 ? x : 2-x; };
 // ---------- load
 let manifest, paths = {}, actors = [], vignettes = [], ropeLines = [], swayMats = [], waterMat;
 const loader = new GLTFLoader();
+const draco = new DRACOLoader(); draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/'); loader.setDRACOLoader(draco);
 loader.load('qmsht.glb', gltf => {
   const root = gltf.scene; scene.add(root);
   manifest = JSON.parse(root.userData.manifest);
@@ -140,6 +143,7 @@ loader.load('qmsht.glb', gltf => {
     }
   });
   buildStrip(); buildLabels();
+  setTimeout(buildOutlines, 300);
   document.getElementById('loading').style.display = 'none';
   showVignette(vignettes.findIndex(v => v.id === 'v14'), false);
 }, xhr => { if (xhr.total) document.getElementById('bar').style.width = (100*xhr.loaded/xhr.total)+'%'; },
@@ -266,6 +270,19 @@ function updateRopes(){
     const pos = r.line.geometry.attributes.position; pos.setXYZ(0, RT1.x, RT1.y, RT1.z); pos.setXYZ(1, RT2.x, RT2.y, RT2.z); pos.needsUpdate = true; r.line.geometry.computeBoundingSphere();
   }
 }
+
+// ---------- ink outlines on the static geometry (墨线)
+let outlines = [], outlinesOn = innerWidth > 700;
+function buildOutlines(){
+  const mat = new THREE.LineBasicMaterial({color:0x3a2f26, transparent:true, opacity:0.45});
+  for (const name of ['static','roads']){
+    const m = scene.getObjectByName(name); if (!m) continue;
+    const eg = new THREE.EdgesGeometry(m.geometry, 38); const ls = new THREE.LineSegments(eg, mat); ls.frustumCulled = false; ls.visible = outlinesOn; m.add(ls); outlines.push(ls);
+  }
+  scene.traverse(o => { if (o.isMesh && o.parent && o.parent.userData.actor && /hull|body$/.test(o.name) && o.geometry.attributes.position.count < 6000){ const eg = new THREE.EdgesGeometry(o.geometry, 45); const ls = new THREE.LineSegments(eg, mat); ls.visible = outlinesOn; o.add(ls); outlines.push(ls); } });
+  $('btnInk').classList.toggle('on', outlinesOn);
+}
+document.getElementById('btnInk').onclick = () => { outlinesOn = !outlinesOn; outlines.forEach(l => l.visible = outlinesOn); document.getElementById('btnInk').classList.toggle('on', outlinesOn); };
 
 // ---------- camera flights, keyboard
 let flight = null;
