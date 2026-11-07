@@ -40,6 +40,13 @@
   #loading .bar i{display:block;height:100%;width:0;background:var(--accent)}
   .lbl{font-size:12px;color:#fff;background:rgba(43,37,32,.72);padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:.05em;pointer-events:none}
   #tip{position:absolute;display:none;background:var(--panel);border:1px solid var(--line);padding:4px 8px;font-size:12px;border-radius:5px;pointer-events:none}
+  #cmp{position:absolute;right:12px;top:52px;bottom:96px;width:min(34vw,430px);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;display:none;flex-direction:column;gap:4px}
+  #cmp.show{display:flex}
+  #cmpWrap{position:relative;flex:1;overflow:hidden;border:1px solid var(--line)}
+  #cmpImg{position:absolute;left:0;top:0;height:100%;}
+  #cmpLine{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed #ff5e3a}
+  #cmpCap{font-size:12px;color:var(--ink2)}
+  @media (max-width:640px){#cmp{width:46vw}}
   #help{position:absolute;right:12px;bottom:96px;font-size:11px;color:var(--ink2);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;line-height:1.5;max-width:260px}
   @media (max-width:640px){#title h1{font-size:17px}#title p{display:none}#help{display:none}#panel{bottom:90px;max-height:38vh}}
 </style>
@@ -58,6 +65,8 @@
     <button id="btnInk">墨线</button>
     <button id="btnLang">EN</button>
     <button id="btnTop">俯瞰</button>
+    <button id="btnCmp">对照原画</button>
+    <button id="btnView">画面视角</button>
   </div>
   <div id="panel">
     <h2 id="pZh"></h2><p class="en" id="pEn"></p><div class="meta" id="pMeta"></div><p id="pText"></p>
@@ -65,6 +74,7 @@
   </div>
   <div id="help">拖动旋转 · 滚轮缩放 · 右键/双指平移 · WASD 移动<br>下方长卷是原画缩略图，点击任意位置即飞到对应场景</div>
   <div id="tip"></div>
+  <div id="cmp"><div id="cmpCap"></div><div id="cmpWrap"><img id="cmpImg" alt="原卷局部"><div id="cmpLine"></div></div></div>
   <div id="strip"><div id="stripScroll"><div id="stripInner"><img id="stripImg" src="scroll_strip.jpg" alt="清明上河图 原卷缩略"><div id="cursor"></div></div></div><div id="stripHint">原卷（右为卷首）· 竖线为场景标记 · 虚线为当前视点</div></div>
 </div>
 <script type="module">
@@ -350,6 +360,23 @@ canvas.addEventListener('pointerup', e => {
 const KIND_ZH = {worker:'庶民/脚夫',boatman:'船工',porter:'挑夫',vendor:'小贩/店家',scholar:'士人',official:'官员',woman:'妇人',monk:'僧人',child:'孩童',elder:'老者',rich:'富户',donkey:'驴',mule:'骡',horse:'马',ox:'牛',camel:'骆驼',pig:'猪',dog:'狗',boat_cargo:'货船/漕船',boat_passenger:'客船',boat_small:'小船',boat_ferry:'渡船',sedan:'轿子',cart2:'串车/太平车',cart4:'太平车',wheelbarrow:'独轮车'};
 const ANIM_ZH = {walk:'行走',run:'奔跑',idle:'站立',talk:'交谈',watch:'观看',wave:'挥手呼喊',point:'指点',argue:'争执',throw:'抛绳',bend:'弯腰劳作',hammer:'敲打',draw:'汲水',steer:'掌舵',pour:'泼水',pole:'撑篙',pull:'拉绳',scull:'摇橹',reach:'伸手拉住',startle:'受惊',beg:'乞讨',push:'推车',write:'记账',sit:'坐',squat:'蹲',ride:'骑乘',moored:'泊岸',boat:'行船',bridgeboat:'过桥',none:'卧',walk_child:'抬轿',draw_water:'打水'};
 
+
+// ---------- compare with the painting (对照原画) and the painting's own viewpoint (画面视角)
+const TILES = [["tile01", 0.0, 15.8], ["tile02", 12.9, 28.7], ["tile03", 25.8, 41.6], ["tile04", 38.7, 54.5], ["tile05", 51.6, 67.4], ["tile06", 64.6, 80.3], ["tile07", 77.5, 93.3], ["tile08", 90.4, 106.2], ["tile09", 103.3, 119.1], ["tile10", 116.2, 132.0], ["tile11", 129.1, 144.9], ["tile12", 142.0, 157.8], ["tile13", 154.9, 170.7], ["tile14", 167.9, 183.6], ["tile15", 180.8, 196.5], ["tile16", 193.7, 209.5], ["tile17", 206.6, 222.4], ["tile18", 219.5, 235.3], ["tile19", 232.4, 248.2], ["tile20", 245.3, 261.1], ["tile21", 258.2, 274.0], ["tile22", 271.1, 286.9], ["tile23", 284.1, 299.8], ["tile24", 297.0, 312.7], ["tile25", 309.9, 325.7], ["tile26", 322.8, 338.6], ["tile27", 335.7, 351.5], ["tile28", 348.6, 364.4], ["tile29", 361.5, 377.3], ["tile30", 374.4, 390.2], ["tile31", 387.3, 403.1], ["tile32", 400.3, 416.0], ["tile33", 413.2, 429.0], ["tile34", 426.1, 441.9], ["tile35", 439.0, 454.8], ["tile36", 451.9, 467.7], ["tile37", 464.8, 480.6], ["tile38", 477.7, 493.5], ["tile39", 490.6, 506.4], ["tile40", 503.6, 519.3], ["tile41", 516.5, 528.0]];   // [name, cm at right edge, cm at left edge]
+let cmpOn = false, cmpTile = null;
+function tileFor(cm){ let best = TILES[0], bd = 1e9; for (const t of TILES){ const d = Math.abs((t[1]+t[2])/2 - cm); if (d < bd){ bd = d; best = t; } } return best; }
+function updateCmp(){
+  if (!cmpOn) return; const cm = Math.max(0, Math.min(528, xToCm(controls.target.x))); const t = tileFor(cm);
+  const img = $('cmpImg'), wrap = $('cmpWrap');
+  if (cmpTile !== t[0]){ cmpTile = t[0]; img.src = '../catalogue/img/' + t[0] + '.jpg'; $('cmpCap').textContent = `原卷 ${t[0]} · ${t[1]}–${t[2]} cm（右为卷首）`; }
+  const H = wrap.clientHeight, Wimg = H * 1100 / 1800, frac = (t[2] - cm) / (t[2] - t[1]);
+  const off = Math.max(Math.min(0, wrap.clientWidth/2 - frac*Wimg), wrap.clientWidth - Wimg);
+  img.style.left = off + 'px'; $('cmpLine').style.left = (off + frac*Wimg) + 'px';
+}
+$('btnCmp').onclick = () => { cmpOn = !cmpOn; $('cmp').classList.toggle('show', cmpOn); $('btnCmp').classList.toggle('on', cmpOn); cmpTile = null; updateCmp(); };
+const THETA = 28.4 * Math.PI / 180;
+$('btnView').onclick = () => { stopTour(); const t = controls.target.clone(); t.y = 1; const D = 150; flyTo(t, new THREE.Vector3(0, D*Math.sin(THETA), D*Math.cos(THETA)), 1.8); camera.fov = 13; camera.updateProjectionMatrix(); };
+controls.addEventListener('start', () => { if (camera.fov !== 45){ camera.fov = 45; camera.updateProjectionMatrix(); } });
 // ---------- loop
 addEventListener('resize', () => { camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); labelRenderer.setSize(innerWidth, innerHeight); });
 const sunOff = new THREE.Vector3(-60, 110, 80);
@@ -360,6 +387,7 @@ function frame(){
   keyMove(dt); controls.update();
   for (const a of actors) animateActor(a, simT, dt);
   updateRopes();
+  updateCmp();
   sun.target.position.copy(controls.target); sun.position.copy(controls.target).add(sunOff);
   const camDist = controls.getDistance(); for (const l of labelObjs) l.visible = labelsOn && camDist < 160;
   if (manifest){ const cm = xToCm(controls.target.x); $('cursor').style.left = cmToPx(Math.max(0, Math.min(528, cm)))+'px'; }
