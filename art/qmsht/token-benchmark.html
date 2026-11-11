@@ -309,37 +309,18 @@ Show the review page for those 3 tiles and wait for approval before running all 
 <div class="tw"><table><thead><tr><th>Date</th><th>Active</th><th>Output</th><th>Input uncached</th><th>Cache write</th><th>Cache read</th><th>Total</th></tr></thead><tbody><tr><td>Nov 6</td><td>3.58 h</td><td>5,744,905</td><td>54,146</td><td>19,874,330</td><td>311,659,145</td><td>337,332,526</td></tr><tr><td>Nov 7</td><td>4.65 h</td><td>9,620,917</td><td>20,642</td><td>47,351,181</td><td>1,213,699,113</td><td>1,270,691,853</td></tr><tr><td>Nov 8</td><td>0.05 h</td><td>2,540</td><td>10</td><td>282,492</td><td>647,601</td><td>932,643</td></tr><tr><td>Nov 10</td><td>0.27 h</td><td>11,109</td><td>26</td><td>304,034</td><td>3,609,642</td><td>3,924,811</td></tr><tr><td>Nov 11</td><td>0.37 h</td><td>4,260</td><td>16</td><td>46,027</td><td>391,222</td><td>441,525</td></tr><tr class="t"><td>Total</td><td>8.92 h</td><td>15,383,731</td><td>74,840</td><td>67,858,064</td><td>1,530,006,723</td><td>1,613,323,358</td></tr></tbody></table></div>
 <p class="note">The by-model and by-where tables were measured a few minutes earlier than the by-day table, so they differ by a few thousand tokens.</p>
 
-<h2><em>05</em>Token-count script</h2>
-<p>For Claude Code. Save as <code>count_tokens.py</code>, run <code>python3 count_tokens.py ~/.claude/projects/&lt;folder&gt;</code>. Same method as the numbers above.</p>
-<div class="box"><div class="bar"><span>count_tokens.py</span><button onclick="cp('scr',this)">Copy script</button></div><pre id="scr">import json, glob, os, sys
-from collections import defaultdict
-from datetime import datetime
-# usage: python3 count_tokens.py ~/.claude/projects/&lt;your-project-folder&gt;
-root = os.path.expanduser(sys.argv[1])
-seen=set(); M=defaultdict(lambda:[0]*5); D=defaultdict(lambda:[0]*4); ts=[]
-for f in glob.glob(os.path.join(root,&#x27;**/*.jsonl&#x27;), recursive=True):
-    for l in open(f, errors=&#x27;ignore&#x27;):
-        try: d=json.loads(l)
-        except: continue
-        t=d.get(&#x27;timestamp&#x27;)
-        if t: ts.append(datetime.fromisoformat(t.replace(&#x27;Z&#x27;,&#x27;+00:00&#x27;)))
-        m=d.get(&#x27;message&#x27;)
-        if d.get(&#x27;type&#x27;)==&#x27;assistant&#x27; and isinstance(m,dict) and m.get(&#x27;usage&#x27;):
-            k=(m.get(&#x27;id&#x27;), d.get(&#x27;requestId&#x27;))
-            if k in seen: continue
-            seen.add(k); u=m[&#x27;usage&#x27;]
-            v=[u.get(&#x27;output_tokens&#x27;,0), u.get(&#x27;input_tokens&#x27;,0),
-               u.get(&#x27;cache_creation_input_tokens&#x27;,0), u.get(&#x27;cache_read_input_tokens&#x27;,0)]
-            r=M[m.get(&#x27;model&#x27;)]; r[0]+=1
-            for i in range(4): r[i+1]+=v[i]; D[t[:10]][i]+=v[i]
-ts.sort()
-active=sum((b-a).total_seconds() for a,b in zip(ts,ts[1:]) if (b-a).total_seconds()&lt;1800)
-print(&#x27;model  responses  output  input_uncached  cache_write  cache_read&#x27;)
-for k,r in M.items(): print(k, *r)
-print(&#x27;day  output  input_uncached  cache_write  cache_read&#x27;)
-for k in sorted(D): print(k, *D[k])
-print(&#x27;active hours (gaps &lt; 30 min):&#x27;, round(active/3600,2))
-print(&#x27;first/last:&#x27;, ts[0], ts[-1])</pre></div>
+<h2><em>05</em>Token-count prompt</h2>
+<p>When your run is finished, paste this into the same Claude Code session (or a new one in the same folder). It counts with the same method as the numbers above, so the tables compare line by line. Other tools: use their usage dashboard.</p>
+<div class="box"><div class="bar"><span>Count prompt</span><button onclick="cp('scr',this)">Copy prompt</button></div><pre id="scr">Count the real token usage and working time of this project from the Claude Code logs. Do not guess; compute everything from the files.
+
+1. Find the log folder for this project: ~/.claude/projects/&lt;folder named after this working directory&gt;/. It contains .jsonl files for the main sessions plus subfolders with one .jsonl per subagent. Include every .jsonl recursively.
+2. Parse every line as JSON. Use only entries where &quot;type&quot; is &quot;assistant&quot; and message.usage exists. Deduplicate by (message.id, requestId): the same response can be logged more than once.
+3. From message.usage sum, per model (message.model): number of responses, output_tokens, input_tokens (uncached), cache_creation_input_tokens (cache write), cache_read_input_tokens (cache read). Ignore the &quot;&lt;synthetic&gt;&quot; model; it is system messages with 0 tokens.
+4. Also sum the same four token types per calendar day (UTC) from each entry&#x27;s timestamp.
+5. Active working time: collect every timestamp from every log entry (all files merged), sort them, and sum the gaps between consecutive timestamps that are shorter than 30 minutes. Report it in hours. Also report the first and last timestamp.
+6. Split output tokens between the main session files and the subagent subfolder files.
+
+Show the results as tables: totals, by model, by day, main vs subagents. State the number of log files you read. Give exact integers, not rounded numbers.</pre></div>
 </main>
 <script>function cp(id,b){navigator.clipboard.writeText(document.getElementById(id).innerText).then(()=>{const t=b.textContent;b.textContent='Copied ✓';setTimeout(()=>b.textContent=t,1500)})}</script>
 </body></html>
