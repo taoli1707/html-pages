@@ -1,0 +1,345 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qingming Token Benchmark</title>
+<style>
+:root{--bg:#faf8f3;--fg:#222;--mut:#666;--card:#fff;--line:#ddd;--acc:#8a3b12}
+@media (prefers-color-scheme:dark){:root{--bg:#16150f;--fg:#eee;--mut:#aaa;--card:#22201a;--line:#3a372e;--acc:#e0965f}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,sans-serif}
+main{max-width:960px;margin:auto;padding:24px 16px}
+h1{font-size:1.7rem} h2{margin-top:2.2rem;border-bottom:1px solid var(--line);padding-bottom:4px}
+.tw{overflow-x:auto} table{border-collapse:collapse;width:100%;background:var(--card);font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:right;white-space:nowrap} th:first-child,td:first-child{text-align:left}
+th{background:var(--bg)} tr.t td{font-weight:700}
+.note{color:var(--mut);font-size:.93rem}
+.box{position:relative;background:var(--card);border:1px solid var(--line);border-radius:8px}
+.box pre{margin:0;padding:14px;max-height:420px;overflow:auto;white-space:pre-wrap;font-size:.83rem}
+button{position:sticky;float:right;margin:8px;background:var(--acc);color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:600}
+ol li{margin:.35rem 0} code{background:var(--card);padding:1px 4px;border-radius:4px}
+</style></head><body><main>
+<h1>清明上河图 3D rebuild — token usage benchmark</h1>
+<p>An AI coding agent rebuilt Zhang Zeduan's <i>Along the River During the Qingming Festival</i> as a walkable Three.js scene (headless Blender → GLB), then ran 8 rounds of per-tile visual checks with 41 parallel subagents. Below are the measured costs, and the exact prompt to rerun it on another setup so you can compare.</p>
+<p>Result: <a href="https://taoli1707.github.io/html-pages/art/qmsht/v2/index.html">3D scene</a> · <a href="https://taoli1707.github.io/html-pages/art/qmsht/catalogue/verify.html">verification catalogue</a> · final score 3.0 / 5 across 41 tiles.</p>
+
+<h2>1. How to compare (steps for you)</h2>
+<ol>
+<li>Create an empty folder, open your AI coding agent there (Claude Code or another tool).</li>
+<li>Click <b>Copy prompt</b> in section 4, paste it as the first message. Start with the 3-tile pilot it describes.</li>
+<li>When done, measure your usage. With Claude Code, run the script in section 5 on <code>~/.claude/projects/&lt;your-folder&gt;</code>. Other tools: use their usage dashboard.</li>
+<li>Compare against the tables below. Compare the pilot to the per-day numbers for early work, or the full run to the totals.</li>
+</ol>
+
+<h2>2. Original run — totals</h2>
+<p class="note">Source: Claude Code session logs (616 .jsonl files: 2 main sessions + subagents), <code>usage</code> field of every model response, duplicates removed by message id + request id. Measured 2026-11-10/11.</p>
+<div class="tw"><table>
+<tr><th>Measure</th><th>Value</th></tr>
+<tr><td>First / last logged message (UTC)</td><td>2026-11-06 04:48 → 2026-11-11 03:06</td></tr>
+<tr><td>Active working time</td><td>8.92 h</td></tr>
+<tr><td>Model responses</td><td>12,464 (+32 synthetic system entries, 0 tokens)</td></tr>
+<tr><td>Output tokens</td><td>15,383,731</td></tr>
+<tr><td>Input, uncached</td><td>74,840</td></tr>
+<tr><td>Cache write (context stored in prompt cache)</td><td>67,858,064</td></tr>
+<tr><td>Cache read (context re-read from cache)</td><td>1,530,006,723</td></tr>
+<tr class="t"><td>Total processed</td><td>1,613,323,358 (≈1.61 billion)</td></tr>
+</table></div>
+<p class="note">Active time = sum of gaps between consecutive log timestamps that are shorter than 30 min (all logs merged into one timeline). Parallel subagents overlap, so this is wall-clock time, not total agent time. The 30-min cutoff is a chosen threshold.</p>
+
+<h2>3. Breakdowns</h2>
+<h3>By model</h3>
+<div class="tw"><table>
+<tr><th>Model</th><th>Responses</th><th>Input uncached</th><th>Cache write</th><th>Cache read</th><th>Input total</th><th>Output</th></tr>
+<tr><td>Opus 5.5</td><td>10,572</td><td>22,418</td><td>51,264,475</td><td>1,322,083,756</td><td>1,373,370,649</td><td>10,646,022</td></tr>
+<tr><td>Fable 5.1</td><td>1,892</td><td>52,410</td><td>16,590,293</td><td>207,631,160</td><td>224,273,863</td><td>4,735,263</td></tr>
+</table></div>
+<h3>Output by who generated it</h3>
+<div class="tw"><table>
+<tr><th>Where</th><th>Model</th><th>Responses</th><th>Output</th></tr>
+<tr><td>Main conversation</td><td>Opus 5.5</td><td>800</td><td>646,827</td></tr>
+<tr><td>Main conversation</td><td>Fable 5.1</td><td>305</td><td>461,809</td></tr>
+<tr><td>Subagents</td><td>Opus 5.5</td><td>9,774</td><td>10,000,317</td></tr>
+<tr><td>Subagents</td><td>Fable 5.1</td><td>1,587</td><td>4,273,454</td></tr>
+</table></div>
+<p class="note">≈93% of output came from subagents (tile builders, verifiers, correctors).</p>
+<h3>By day (UTC)</h3>
+<div class="tw"><table>
+<tr><th>Date</th><th>Active</th><th>Output</th><th>Input uncached</th><th>Cache write</th><th>Cache read</th><th>Total</th></tr>
+<tr><td>Nov 6</td><td>3.58 h</td><td>5,744,905</td><td>54,146</td><td>19,874,330</td><td>311,659,145</td><td>337,332,526</td></tr>
+<tr><td>Nov 7</td><td>4.65 h</td><td>9,620,917</td><td>20,642</td><td>47,351,181</td><td>1,213,699,113</td><td>1,270,691,853</td></tr>
+<tr><td>Nov 8</td><td>0.05 h</td><td>2,540</td><td>10</td><td>282,492</td><td>647,601</td><td>932,643</td></tr>
+<tr><td>Nov 10</td><td>0.27 h</td><td>11,109</td><td>26</td><td>304,034</td><td>3,609,642</td><td>3,924,811</td></tr>
+<tr><td>Nov 11</td><td>0.37 h</td><td>4,260</td><td>16</td><td>46,027</td><td>391,222</td><td>441,525</td></tr>
+<tr class="t"><td>Total</td><td>8.92 h</td><td>15,383,731</td><td>74,840</td><td>67,858,064</td><td>1,530,006,723</td><td>1,613,323,358</td></tr>
+</table></div>
+<p class="note">Totals by model/where were measured a few minutes earlier than the by-day table, so they differ by a few thousand tokens.</p>
+
+<h2>4. The prompt</h2>
+<div class="box"><button onclick="cp('plan',this)">Copy prompt</button><pre id="plan"># Brief: rebuild 清明上河图 (Along the River During the Qingming Festival) as a verified 3D scene
+
+You are an AI agent with a shell, file tools, image reading (vision) and, ideally, the ability to run parallel sub-agents.
+This brief describes a project that has already been done once. Your job is to reproduce it with your own setup, so the
+result can be compared. Follow the phases in order. Each phase has a deliverable and a check. Do not skip the checks.
+
+---------------------------------------------------------------------------------------------------------------------------
+
+## 0. Goal and success criteria
+
+Goal: a walkable, browser-based 3D reconstruction of the Palace Museum version of 清明上河图 in which every object the scroll shows
+(about 814 people, 28 boats, 60 animals, 30+ buildings, 20 vehicles, 8 sedan chairs, 170 trees, plus signs, stalls and props)
+stands at its true scroll position, seen from the painting&#x27;s own viewpoint, with the right form, pose and activity.
+
+The approach is data first: build an inventory and a ground plan from the painting, then generate the 3D scene from that data,
+then verify it against the painting tile by tile and correct it in rounds.
+
+Measured result of the reference run (use these as the bar to beat):
+
+| Round | Mean tile score (1-5) | Objects judged ok | Wrong | Missing |
+|---|---|---|---|---|
+| 1 (first full build) | 2.2 | 393 | 572 | 314 |
+| 3 (first per-object corrections) | 2.8 | 611 | 542 | 128 |
+| 7 | 2.93 | 771 | 445 | 65 |
+| 8 | 3.0 (all 41 tiles at 3) | 871 | 369 | 44 |
+
+Report your own numbers in the same table form after every verification round.
+
+---------------------------------------------------------------------------------------------------------------------------
+
+## 1. Setup (adapt to your environment)
+
+Reference tools (versions used; newer is fine):
+- Blender 5.x run HEADLESS only: `blender -b --python script.py -- args`. Never drive a user&#x27;s open Blender session.
+- Python 3.9+ with Pillow and NumPy in a project venv. Run your own scripts with `python -I` (isolated mode).
+- Three.js 0.170 for the web viewer, loading one GLB file.
+- A static web host for review pages (the reference used GitHub Pages).
+
+Source image: the Wikimedia Commons scan
+`https://upload.wikimedia.org/wikipedia/commons/8/86/Alongtheriver_QingMing.jpg` (38,414 x 1,800 px, about 70 px per cm of silk).
+Save it as `research/scan/qm.jpg`.
+
+Project layout to create:
+```
+research/        data, guides, merge and review scripts
+  scan/qm.jpg
+  tiles/         tile images
+  annot/         per-tile inventory JSON (phase 1)
+  plan/tiles/    per-tile ground-plan JSON (phase 2)
+  assets/tiles/  per-tile asset specs (phase 3); assets/overrides/ per-tile corrections (phase 5)
+  verify/        renders, contexts, verdicts per round (phase 5)
+blender/         generators and the scene builder
+web/             viewer (index.html + scene .glb)
+PLAN.md          living status log: what was done, numbers, known issues, next step
+```
+
+Working rules that mattered in the reference run:
+1. One vision agent per tile, each with a written GUIDE file and a per-tile context JSON. Never rely on a long prompt alone.
+2. Every agent writes one JSON file into a fixed path and replies with a 5-line summary. A stitch script merges the files.
+3. Every agent must self-check by drawing its output on the tile image and looking at it before finishing.
+4. Keep a hard cap on concurrent agents (the reference used 20) and queue the rest.
+5. Archive every round&#x27;s verdicts (`verify/round1`, `round2`, ...) before the next round overwrites them.
+6. Record each round in PLAN.md: numbers, what changed, known systematic issues, next step.
+7. Python 3.9 tokenizer bug: very long source lines containing Chinese text raise a false &quot;Non-UTF-8 code&quot; SyntaxError.
+   Keep such lines under about 380 bytes.
+
+---------------------------------------------------------------------------------------------------------------------------
+
+## Phase 0. Tiles (deliverable: 41 tiles)
+
+- Cut the scan into tiles 1,100 px wide with 200 px overlap (stride 900 px). That gives 41 tiles; the last is 804 px wide.
+- Name tiles tile01..tile41. Store each tile&#x27;s x0 in global pixels and its cm range in `research/tiles/tiles.json`.
+- Draw a cm ruler on each tile copy used by agents, so every annotation can carry an absolute scroll position.
+- Global x of a tile pixel = tile x + x0. Neighbouring tiles share 200 px: tile N+1 x = tile N x - 900.
+
+Check: tiles stitched back side by side reproduce the scan; overlaps match pixel for pixel.
+
+## Phase 1. Inventory (deliverable: research/catalogue.json + review page)
+
+- Write `ANNOTATION_GUIDE.md`. For every person, animal, boat, vehicle, sedan, building, tree, stall, sign, structure and prop:
+  id, type, subtype, bbox in tile px, base point (where it touches the ground, deck or floor), band (near bank, water, far bank,
+  road, interior, upper floor, bridge deck), facing, pose (stand, walk, carry-pole, push, pull, squat, sit, kneel, ride,
+  lean-on-rail, point, bow, lie, scull, pole...), dress, props, activity, group, readable sign text, confidence.
+- Run one vision agent per tile. Merge with a script: recompute cm from pixel geometry, dedupe objects in the 200 px overlap
+  bands, union boats and buildings split across tiles, union sign fragments, drop collector seals.
+- Assign stable gids by type: P0001 people, A animals, B boats, V vehicles, S sedans, H buildings, T trees, K stalls, G signs,
+  X structures, O props, F furniture.
+- Keep a `catalogue_fixes.json` for cross-tile duplicates and misreadings (mark them exclude_3d, never delete silently).
+- Build a review page: each tile with boxes and per-object crops.
+
+Reference counts: 2,364 objects, 847 people. Expect over-counting of boats (fragments, occluded hulls) and duplicate signs.
+
+## Phase 2. Ground plan and depth model (deliverable: research/plan.json, depth model, overlay page)
+
+- One agent per tile traces polylines in tile px: water polygons, bank lines, roads, building footprints (front line at the
+  base), walls, fences, railings, bridges (footbridge, 虹桥 Rainbow Bridge, moat trestle bridge), terrain (hills, fields, mounds).
+- Stitch: each tile owns the x-range between the mid-lines of its overlaps; chain polylines across seams.
+- Depth model: the painting is an oblique bird&#x27;s-eye view. Calibrate per scroll position:
+  - painter&#x27;s scale k(cm) in px per metre (about 95 px per adult figure at the bridge, 140 in the city);
+  - camera elevation theta about 28.4 degrees, so cot(theta) is about 1.85;
+  - a function W(global_x, image_y) -&gt; world (X, Y) in metres, and its inverse.
+  Reference: the scroll is about 512 m of ground long and 46-70 m deep.
+- Rule for raised objects: anything above the ground (upper floors, decks, roofs, lanterns) is drawn higher on the silk by
+  z * cot(theta) * scale. When you convert a raised object&#x27;s painted pixel to the ground, shift it SOUTH (towards the viewer)
+  by z * cot(theta). Forgetting this puts every raised object several metres too far north.
+
+Check: draw the plan on every tile and look at it. Fix seam disagreements by sending both tile agents the evidence.
+
+## Phase 3. Asset specs and generators (deliverable: specs.json, generators, contact sheet)
+
+- One agent per tile writes a spec for every object it owns, following `ASSET_GUIDE.md`:
+  buildings (bays, storeys, roof type gable / hip / xieshan 歇山 / pyramid / lean-to / dome, cover tile / thatch / plank / mat,
+  eave height, ridge direction, front type open / doors / lattice, awnings, balconies, 彩楼欢门 gate scaffolds, signs, interior);
+  boats (length, beam, heading, cabin type, mast up / lowered / none, rudder, sweep, poles, cargo, crew slots);
+  vehicles and sedans; trees (trunk and limb polylines, crown box, species form willow / bare / pine / shrub / reed);
+  stalls, structures, props.
+- Convert pixels to metres through the depth model. Merge per gid, preferring the tile that sees most of the object.
+- Write procedural Blender generators, one module per family: buildings, boats, vehicles, trees, people (pose + dress + props),
+  props. Each takes a spec and returns one mesh object with vertex colours (one draw call per object).
+- Build every asset alone and render it at the 28 degree view; make a contact sheet: scan crop beside render.
+
+Check: every spec builds without error. The reference had 777 of 777 building.
+
+## Phase 4. Assembly and viewer (deliverable: layout.json, scene GLB, viewer page)
+
+- `make_layout.py`: catalogue + plan + depth + specs + per-tile overrides -&gt; `layout.json` with one placement per object
+  (location in metres, rotation, scale, height), terrain grid, walls, bridges. Buildings at their traced front line, boats
+  from bow and stern, figures on decks, boats, roofs and upper floors lifted to those heights.
+- `build_scene.py` (headless Blender): build everything, join static geometry into chunks, animate walkers, polers and
+  animals, export one GLB (reference: about 9 MB, about 1 M vertices).
+- Web viewer: Three.js, orbit controls, a &quot;compare with painting&quot; mode (scan tile beside the 3D view) and a &quot;painting
+  viewpoint&quot; camera.
+
+Check: the viewer loads on desktop and phone at a usable frame rate.
+
+## Phase 5. Verification and correction loop (the core of the project)
+
+### 5a. Matched renders
+- One orthographic camera per tile at theta = 28.4 degrees, framing exactly that tile&#x27;s ground.
+- Render all 41 tiles from the built .blend file (Workbench engine, no specular highlights).
+- Warp each render row by row AND column by column through the depth model so every object&#x27;s BASE lands on its painted
+  pixel. Use the local scale per column. The reference first used the tile-centre scale and got up to 300 px errors at
+  tile edges, which made every agent&#x27;s measured moves wrong.
+- Write two images per tile: `tileNN_pair.jpg` (scan left, render right, 10 px gap) and `tileNN_lab.jpg` (same, with each
+  gid drawn at its base point on both halves; green built, grey excluded, red not built).
+- Write `ctx/tileNN.json`: the entries this tile owns with gid, type, bbox, base, pose and build status.
+
+### 5b. Verifier agents (one per tile)
+`VERIFY_GUIDE.md` tells each agent to:
+- judge every non-person entry: ok / wrong (say exactly what: offset in tile px and direction, size, form, collision) /
+  missing / ignore (with reason);
+- judge people as crowds per area: rough counts painting vs 3D, plus clear errors by gid (floating, in water, inside a roof,
+  wrong gender, missing load);
+- list extras: things in the 3D that the painting does not have, with tile px;
+- give a score 1-5 and a list of systematic problems;
+- from round 2 on, read the previous round&#x27;s verdicts and add &quot;vs_previous&quot;: what improved, what got worse, what is still wrong;
+- zoom by cropping the SAME window from both halves (right half offset by tile width + 10 px), 6-8 windows per tile.
+
+### 5c. Corrector agents (one per tile)
+`FIX_GUIDE.md` tells each agent to turn its tile&#x27;s verdicts into ONE overrides file `assets/overrides/tileNN.json`:
+```
+{&quot;tile&quot;: &quot;tileNN&quot;,
+ &quot;objects&quot;:   {&quot;&lt;gid&gt;&quot;: {&quot;move_px&quot;: [dx, dy], &quot;rotate_deg&quot;: 0, &quot;scale&quot;: 1.0, &quot;z_m&quot;: 0,
+                         &quot;spec&quot;: {partial spec, deep-merged}, &quot;remove&quot;: false}},
+ &quot;people&quot;:    {...same keys, plus pose / dress / facing...},
+ &quot;furniture&quot;: {...},
+ &quot;add&quot;:       [{&quot;type&quot;: &quot;prop&quot;, &quot;anchor&quot;: [x, y], &quot;on&quot;: &quot;ground&quot;, &quot;z_m&quot;: 0, &quot;spec&quot;: {&quot;kind&quot;: &quot;...&quot;, ...}}],
+ &quot;notes&quot;:     &quot;what could not be expressed and why&quot;}
+```
+- Moves are in painting px (image right +, image down +). Make moves ADDITIVE across rounds (a separate key per round
+  convention, e.g. move2_px) so later rounds do not silently replace earlier corrections.
+- Anchor rule for added objects that float (lanterns, signs, banners): the anchor is the painted pixel of the object itself,
+  plus its z_m; the builder settles it south by z * cot(theta). Anchoring at street level put lanterns 14 m south in a crowd.
+- A corrector owns only its tile&#x27;s gids. If the blocker belongs to a neighbour tile, it reports it; the coordinator relays it
+  to that tile&#x27;s corrector, or applies it after that corrector has finished.
+- Correctors undo the previous round&#x27;s regressions FIRST, then fix the rest.
+- Make plan walls and plan bridges overridable by gid (remove, height, width, z) so correctors can fix them without code.
+
+### 5d. Coordinator duties (you, between agents)
+- Relay cross-tile findings immediately with the evidence (tile, px box, gid).
+- When an object hides another and nobody can tell which object it is, cast rays from the tile camera through the painted
+  pixel into the built .blend and name the first object hit. In the reference this found the true owner of several
+  long-standing blockers (an awning attached to a neighbour&#x27;s building, a back roof from the tile next door).
+- When two tiles&#x27; corrections conflict in their 200 px overlap, prefer the tile with stronger painted evidence
+  (figures or goods standing on the object beats an empty strip).
+- Fix generators for problems that repeat across tiles instead of patching each tile.
+- After all correctors finish: validate every overrides JSON, rebuild layout, rebuild scene, render, compose, regenerate
+  contexts, then run all 41 verifiers again.
+
+### 5e. Rounds
+Repeat 5a-5d. After each round: archive verdicts, compute mean score and ok / wrong / missing / ignore totals, compare with
+the previous round, list which tiles changed, update PLAN.md, publish the review page (all rounds side by side, score history
+per tile).
+
+Stopping rule: stop the loop when two consecutive rounds raise the mean by less than 0.1, and switch to Phase 6.
+
+## Phase 6. Performance and delivery
+- Instanced or merged static crowds, LOD meshes, per-zone loading, mesh compression (Draco or meshopt), a mobile profile.
+- Publish the viewer with the catalogue, plan and verification pages alongside, so every object cites its source.
+
+---------------------------------------------------------------------------------------------------------------------------
+
+## Known pitfalls from the reference run (check for each one early)
+
+1. Horizontal moves converted at the object&#x27;s own row scale come out about 30% short near the bottom of a tile; use one
+   consistent scale for move_px.
+2. Upper-floor objects use a fixed lift (about 3.1 m in the reference) and lose it when moved; recompute the lift after a move.
+3. Roof pitch should honour the measured ridge height, but stale ridge heights from early specs can flatten many roofs at once;
+   validate before switching it on globally.
+4. Mounds and banks built as faceted ellipsoids read as pale boulders. Build low, smooth-shaded domes with a sunk skirt, or
+   raise the terrain heightfield instead.
+5. A &quot;count&quot; field on repeated props (stones, jars) laid out in one straight row can run 7 m across a neighbour&#x27;s building.
+   Lay repeated props out as a heap.
+6. Signs and boards can be built twice: once inside a building spec and once as a separate prop. Keep one.
+7. Boats turned into the depth axis render foreshortened and too short; check heading against the painted length.
+8. Separate props on an animal&#x27;s back (sacks, loads) float when the animal moves. Parent loads to their animal.
+9. Willow and bare-tree crowns came out as wires and columns for many rounds; budget enough vertices for dense twig crowns.
+10. The Rainbow Bridge arch needs its painted rise. Shifting the bridge does not fix a too-flat arch.
+11. Water polygons near the moat can cover painted road; check the shoreline against the scan.
+12. Verifiers can blame the wrong object for a blocker. Before acting on &quot;X hides Y&quot;, confirm the owner (raycast).
+13. Duplicate objects across the 200 px overlap: removing one tile&#x27;s copy can look like a regression to the other tile&#x27;s
+    verifier. Record the decision in both tiles&#x27; notes so the next verifier marks it ignore, not missing.
+
+---------------------------------------------------------------------------------------------------------------------------
+
+## What to report back (so the two runs can be compared)
+
+After each phase, write a short status in PLAN.md with:
+- counts (objects, people, boats, buildings, assets built, vertices, GLB size);
+- for each verification round, the table: round, mean score, ok, wrong, missing, ignore, tiles at each score;
+- the three worst recurring problems and what you changed for them;
+- cost: number of agent runs, approximate tokens, wall-clock time;
+- links to the review pages and the viewer.
+
+Start with Phase 0 and Phase 1 on 3 tiles only (for example tiles 20, 21 and 26: the Rainbow Bridge and a dense street).
+Show the review page for those 3 tiles and wait for approval before running all 41.
+</pre></div>
+
+<h2>5. Token-count script (Claude Code)</h2>
+<p>Save as <code>count_tokens.py</code>, run <code>python3 count_tokens.py ~/.claude/projects/&lt;folder&gt;</code>. Same method as the numbers above.</p>
+<div class="box"><button onclick="cp('scr',this)">Copy script</button><pre id="scr">import json, glob, os, sys
+from collections import defaultdict
+from datetime import datetime
+# usage: python3 count_tokens.py ~/.claude/projects/&lt;your-project-folder&gt;
+root = os.path.expanduser(sys.argv[1])
+seen=set(); M=defaultdict(lambda:[0]*5); D=defaultdict(lambda:[0]*4); ts=[]
+for f in glob.glob(os.path.join(root,&#x27;**/*.jsonl&#x27;), recursive=True):
+    for l in open(f, errors=&#x27;ignore&#x27;):
+        try: d=json.loads(l)
+        except: continue
+        t=d.get(&#x27;timestamp&#x27;)
+        if t: ts.append(datetime.fromisoformat(t.replace(&#x27;Z&#x27;,&#x27;+00:00&#x27;)))
+        m=d.get(&#x27;message&#x27;)
+        if d.get(&#x27;type&#x27;)==&#x27;assistant&#x27; and isinstance(m,dict) and m.get(&#x27;usage&#x27;):
+            k=(m.get(&#x27;id&#x27;), d.get(&#x27;requestId&#x27;))
+            if k in seen: continue
+            seen.add(k); u=m[&#x27;usage&#x27;]
+            v=[u.get(&#x27;output_tokens&#x27;,0), u.get(&#x27;input_tokens&#x27;,0),
+               u.get(&#x27;cache_creation_input_tokens&#x27;,0), u.get(&#x27;cache_read_input_tokens&#x27;,0)]
+            r=M[m.get(&#x27;model&#x27;)]; r[0]+=1
+            for i in range(4): r[i+1]+=v[i]; D[t[:10]][i]+=v[i]
+ts.sort()
+active=sum((b-a).total_seconds() for a,b in zip(ts,ts[1:]) if (b-a).total_seconds()&lt;1800)
+print(&#x27;model  responses  output  input_uncached  cache_write  cache_read&#x27;)
+for k,r in M.items(): print(k, *r)
+print(&#x27;day  output  input_uncached  cache_write  cache_read&#x27;)
+for k in sorted(D): print(k, *D[k])
+print(&#x27;active hours (gaps &lt; 30 min):&#x27;, round(active/3600,2))
+print(&#x27;first/last:&#x27;, ts[0], ts[-1])</pre></div>
+</main>
+<script>function cp(id,b){navigator.clipboard.writeText(document.getElementById(id).innerText).then(()=>{b.textContent='Copied ✓';setTimeout(()=>b.textContent='Copy',1500)})}</script>
+</body></html>
