@@ -1,77 +1,49 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Qingming Token Benchmark</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#faf8f3;--fg:#222;--mut:#666;--card:#fff;--line:#ddd;--acc:#8a3b12}
-@media (prefers-color-scheme:dark){:root{--bg:#16150f;--fg:#eee;--mut:#aaa;--card:#22201a;--line:#3a372e;--acc:#e0965f}}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,sans-serif}
-main{max-width:960px;margin:auto;padding:24px 16px}
-h1{font-size:1.7rem} h2{margin-top:2.2rem;border-bottom:1px solid var(--line);padding-bottom:4px}
-.tw{overflow-x:auto} table{border-collapse:collapse;width:100%;background:var(--card);font-variant-numeric:tabular-nums}
-th,td{border:1px solid var(--line);padding:6px 9px;text-align:right;white-space:nowrap} th:first-child,td:first-child{text-align:left}
-th{background:var(--bg)} tr.t td{font-weight:700}
-.note{color:var(--mut);font-size:.93rem}
-.box{position:relative;background:var(--card);border:1px solid var(--line);border-radius:8px}
-.box pre{margin:0;padding:14px;max-height:420px;overflow:auto;white-space:pre-wrap;font-size:.83rem}
-button{position:sticky;float:right;margin:8px;background:var(--acc);color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:600}
-ol li{margin:.35rem 0} code{background:var(--card);padding:1px 4px;border-radius:4px}
+:root{--bg:#f6f1e7;--fg:#2a2520;--mut:#6f665b;--card:#fffdf8;--line:#e3dbcc;--acc:#9b4a1b;--acc2:#c98a4e;--ink:#1e2a3a}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#17150f;--fg:#efe9df;--mut:#a69d8f;--card:#211e17;--line:#3a3428;--acc:#e2a26b;--acc2:#b27a46;--ink:#dfe6f0}}
+:root[data-theme=dark]{--bg:#17150f;--fg:#efe9df;--mut:#a69d8f;--card:#211e17;--line:#3a3428;--acc:#e2a26b;--acc2:#b27a46;--ink:#dfe6f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 Inter,system-ui,sans-serif}
+main{max-width:980px;margin:auto;padding:40px 16px 80px}
+header{border-bottom:2px solid var(--acc);padding-bottom:20px;margin-bottom:36px}
+h1{font:700 2.4rem/1.15 Fraunces,serif;margin:0 0 10px}
+h1 span{display:block;font-size:1.1rem;font-weight:500;color:var(--mut);margin-top:6px}
+h2{font:700 1.5rem/1.2 Fraunces,serif;margin:52px 0 14px;display:flex;gap:12px;align-items:baseline}
+h2 em{font:600 .8rem Inter;color:var(--acc);letter-spacing:.08em;text-transform:uppercase;font-style:normal}
+h3{font:600 1rem Inter;margin:28px 0 8px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem}
+p{margin:.6rem 0} a{color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat b{display:block;font:700 1.5rem/1.1 Fraunces,serif;color:var(--acc);font-variant-numeric:tabular-nums}
+.stat small{color:var(--mut);font-size:.8rem}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.92rem}
+th,td{padding:9px 12px;text-align:right;white-space:nowrap;border-top:1px solid var(--line)}
+th{border:0;background:var(--bg);color:var(--mut);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+th:first-child,td:first-child{text-align:left} tr.t td{font-weight:600;background:var(--bg)}
+.note{color:var(--mut);font-size:.88rem}
+.box{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.box .bar{display:flex;justify-content:space-between;align-items:center;padding:8px 10px 8px 14px;background:var(--bg);border-bottom:1px solid var(--line);font-size:.85rem;color:var(--mut)}
+.box pre{margin:0;padding:16px;max-height:460px;overflow:auto;white-space:pre-wrap;font:.82rem/1.5 "JetBrains Mono",monospace}
+.box.big pre{max-height:70vh}
+button{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 16px;cursor:pointer;font:600 .85rem Inter}
+button:hover{background:var(--acc2)}
+ol{padding-left:22px} ol li{margin:.45rem 0} ol li::marker{color:var(--acc);font-weight:600}
+code{background:var(--card);border:1px solid var(--line);padding:1px 5px;border-radius:5px;font:.85em "JetBrains Mono",monospace}
+.steps{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 18px}
 </style></head><body><main>
-<h1>清明上河图 3D rebuild — token usage benchmark</h1>
-<p>An AI coding agent rebuilt Zhang Zeduan's <i>Along the River During the Qingming Festival</i> as a walkable Three.js scene (headless Blender → GLB), then ran 8 rounds of per-tile visual checks with 41 parallel subagents. Below are the measured costs, and the exact prompt to rerun it on another setup so you can compare.</p>
-<p>Result: <a href="https://taoli1707.github.io/html-pages/art/qmsht/v2/index.html">3D scene</a> · <a href="https://taoli1707.github.io/html-pages/art/qmsht/catalogue/verify.html">verification catalogue</a> · final score 3.0 / 5 across 41 tiles.</p>
+<header>
+<h1>清明上河图 → 3D<span>Token usage benchmark: rerun the same prompt, compare the bill</span></h1>
+<p>An AI coding agent rebuilt <i>Along the River During the Qingming Festival</i> as a walkable Three.js scene (headless Blender → GLB), then ran 8 rounds of per-tile visual checks with 41 parallel subagents. Below: the exact prompt to rerun it, then what the original run cost.</p>
+<p><a href="https://taoli1707.github.io/html-pages/art/qmsht/v2/index.html">View the 3D scene</a> · <a href="https://taoli1707.github.io/html-pages/art/qmsht/catalogue/verify.html">verification catalogue</a> · final score 3.0 / 5 across 41 tiles</p>
+</header>
 
-<h2>1. How to compare (steps for you)</h2>
-<ol>
-<li>Create an empty folder, open your AI coding agent there (Claude Code or another tool).</li>
-<li>Click <b>Copy prompt</b> in section 4, paste it as the first message. Start with the 3-tile pilot it describes.</li>
-<li>When done, measure your usage. With Claude Code, run the script in section 5 on <code>~/.claude/projects/&lt;your-folder&gt;</code>. Other tools: use their usage dashboard.</li>
-<li>Compare against the tables below. Compare the pilot to the per-day numbers for early work, or the full run to the totals.</li>
-</ol>
-
-<h2>2. Original run — totals</h2>
-<p class="note">Source: Claude Code session logs (616 .jsonl files: 2 main sessions + subagents), <code>usage</code> field of every model response, duplicates removed by message id + request id. Measured 2026-11-10/11.</p>
-<div class="tw"><table>
-<tr><th>Measure</th><th>Value</th></tr>
-<tr><td>First / last logged message (UTC)</td><td>2026-11-06 04:48 → 2026-11-11 03:06</td></tr>
-<tr><td>Active working time</td><td>8.92 h</td></tr>
-<tr><td>Model responses</td><td>12,464 (+32 synthetic system entries, 0 tokens)</td></tr>
-<tr><td>Output tokens</td><td>15,383,731</td></tr>
-<tr><td>Input, uncached</td><td>74,840</td></tr>
-<tr><td>Cache write (context stored in prompt cache)</td><td>67,858,064</td></tr>
-<tr><td>Cache read (context re-read from cache)</td><td>1,530,006,723</td></tr>
-<tr class="t"><td>Total processed</td><td>1,613,323,358 (≈1.61 billion)</td></tr>
-</table></div>
-<p class="note">Active time = sum of gaps between consecutive log timestamps that are shorter than 30 min (all logs merged into one timeline). Parallel subagents overlap, so this is wall-clock time, not total agent time. The 30-min cutoff is a chosen threshold.</p>
-
-<h2>3. Breakdowns</h2>
-<h3>By model</h3>
-<div class="tw"><table>
-<tr><th>Model</th><th>Responses</th><th>Input uncached</th><th>Cache write</th><th>Cache read</th><th>Input total</th><th>Output</th></tr>
-<tr><td>Opus 5.5</td><td>10,572</td><td>22,418</td><td>51,264,475</td><td>1,322,083,756</td><td>1,373,370,649</td><td>10,646,022</td></tr>
-<tr><td>Fable 5.1</td><td>1,892</td><td>52,410</td><td>16,590,293</td><td>207,631,160</td><td>224,273,863</td><td>4,735,263</td></tr>
-</table></div>
-<h3>Output by who generated it</h3>
-<div class="tw"><table>
-<tr><th>Where</th><th>Model</th><th>Responses</th><th>Output</th></tr>
-<tr><td>Main conversation</td><td>Opus 5.5</td><td>800</td><td>646,827</td></tr>
-<tr><td>Main conversation</td><td>Fable 5.1</td><td>305</td><td>461,809</td></tr>
-<tr><td>Subagents</td><td>Opus 5.5</td><td>9,774</td><td>10,000,317</td></tr>
-<tr><td>Subagents</td><td>Fable 5.1</td><td>1,587</td><td>4,273,454</td></tr>
-</table></div>
-<p class="note">≈93% of output came from subagents (tile builders, verifiers, correctors).</p>
-<h3>By day (UTC)</h3>
-<div class="tw"><table>
-<tr><th>Date</th><th>Active</th><th>Output</th><th>Input uncached</th><th>Cache write</th><th>Cache read</th><th>Total</th></tr>
-<tr><td>Nov 6</td><td>3.58 h</td><td>5,744,905</td><td>54,146</td><td>19,874,330</td><td>311,659,145</td><td>337,332,526</td></tr>
-<tr><td>Nov 7</td><td>4.65 h</td><td>9,620,917</td><td>20,642</td><td>47,351,181</td><td>1,213,699,113</td><td>1,270,691,853</td></tr>
-<tr><td>Nov 8</td><td>0.05 h</td><td>2,540</td><td>10</td><td>282,492</td><td>647,601</td><td>932,643</td></tr>
-<tr><td>Nov 10</td><td>0.27 h</td><td>11,109</td><td>26</td><td>304,034</td><td>3,609,642</td><td>3,924,811</td></tr>
-<tr><td>Nov 11</td><td>0.37 h</td><td>4,260</td><td>16</td><td>46,027</td><td>391,222</td><td>441,525</td></tr>
-<tr class="t"><td>Total</td><td>8.92 h</td><td>15,383,731</td><td>74,840</td><td>67,858,064</td><td>1,530,006,723</td><td>1,613,323,358</td></tr>
-</table></div>
-<p class="note">Totals by model/where were measured a few minutes earlier than the by-day table, so they differ by a few thousand tokens.</p>
-
-<h2>4. The prompt</h2>
-<div class="box"><button onclick="cp('plan',this)">Copy prompt</button><pre id="plan"># Brief: rebuild 清明上河图 (Along the River During the Qingming Festival) as a verified 3D scene
+<h2><em>01</em>The prompt</h2>
+<p>Paste this as the first message to your AI coding agent in an empty folder. Start with the 3-tile pilot it describes.</p>
+<div class="box big"><div class="bar"><span>REPRODUCE_PLAN.md · 237 lines</span><button onclick="cp('plan',this)">Copy prompt</button></div><pre id="plan"># Brief: rebuild 清明上河图 (Along the River During the Qingming Festival) as a verified 3D scene
 
 You are an AI agent with a shell, file tools, image reading (vision) and, ideally, the ability to run parallel sub-agents.
 This brief describes a project that has already been done once. Your job is to reproduce it with your own setup, so the
@@ -309,9 +281,37 @@ Start with Phase 0 and Phase 1 on 3 tiles only (for example tiles 20, 21 and 26:
 Show the review page for those 3 tiles and wait for approval before running all 41.
 </pre></div>
 
-<h2>5. Token-count script (Claude Code)</h2>
-<p>Save as <code>count_tokens.py</code>, run <code>python3 count_tokens.py ~/.claude/projects/&lt;folder&gt;</code>. Same method as the numbers above.</p>
-<div class="box"><button onclick="cp('scr',this)">Copy script</button><pre id="scr">import json, glob, os, sys
+<h2><em>02</em>How to compare</h2>
+<div class="steps"><ol>
+<li>Create an empty folder, open your AI coding agent there (Claude Code or another tool).</li>
+<li>Paste the prompt above as the first message. Do the pilot first.</li>
+<li>When done, measure your usage. Claude Code: run the script in section 05 on <code>~/.claude/projects/&lt;your-folder&gt;</code>. Other tools: use their usage dashboard.</li>
+<li>Compare the pilot to the Nov 6 row below (early work), or a full run to the totals.</li>
+</ol></div>
+
+<h2><em>03</em>Original run: totals</h2>
+<div class="stats">
+<div class="stat"><b>8.92 h</b><small>active working time</small></div>
+<div class="stat"><b>12,464</b><small>model responses</small></div>
+<div class="stat"><b>15.38 M</b><small>output tokens</small></div>
+<div class="stat"><b>1.61 B</b><small>total tokens processed</small></div>
+</div>
+<div class="tw"><table><thead><tr><th>Measure</th><th>Value</th></tr></thead><tbody><tr><td>First / last logged message (UTC)</td><td>2026-11-06 04:48 → 2026-11-11 03:06</td></tr><tr><td>Active working time</td><td>8.92 h</td></tr><tr><td>Model responses</td><td>12,464 (+32 synthetic system entries, 0 tokens)</td></tr><tr><td>Output tokens</td><td>15,383,731</td></tr><tr><td>Input, uncached</td><td>74,840</td></tr><tr><td>Cache write (context stored in prompt cache)</td><td>67,858,064</td></tr><tr><td>Cache read (context re-read from cache)</td><td>1,530,006,723</td></tr><tr class="t"><td>Total processed</td><td>1,613,323,358 (≈1.61 billion)</td></tr></tbody></table></div>
+<p class="note">Source: Claude Code session logs (616 .jsonl files: 2 main sessions + subagents), the <code>usage</code> field of every model response, duplicates removed by message id + request id. Active time = sum of gaps between consecutive log timestamps shorter than 30 min, all logs merged into one timeline. Parallel subagents overlap, so this is wall-clock time, not total agent time.</p>
+
+<h2><em>04</em>Breakdowns</h2>
+<h3>By model</h3>
+<div class="tw"><table><thead><tr><th>Model</th><th>Responses</th><th>Input uncached</th><th>Cache write</th><th>Cache read</th><th>Input total</th><th>Output</th></tr></thead><tbody><tr><td>Opus 5.5</td><td>10,572</td><td>22,418</td><td>51,264,475</td><td>1,322,083,756</td><td>1,373,370,649</td><td>10,646,022</td></tr><tr><td>Fable 5.1</td><td>1,892</td><td>52,410</td><td>16,590,293</td><td>207,631,160</td><td>224,273,863</td><td>4,735,263</td></tr></tbody></table></div>
+<h3>Output by who generated it</h3>
+<div class="tw"><table><thead><tr><th>Where</th><th>Model</th><th>Responses</th><th>Output</th></tr></thead><tbody><tr><td>Main conversation</td><td>Opus 5.5</td><td>800</td><td>646,827</td></tr><tr><td>Main conversation</td><td>Fable 5.1</td><td>305</td><td>461,809</td></tr><tr><td>Subagents</td><td>Opus 5.5</td><td>9,774</td><td>10,000,317</td></tr><tr><td>Subagents</td><td>Fable 5.1</td><td>1,587</td><td>4,273,454</td></tr></tbody></table></div>
+<p class="note">≈93% of output came from subagents (tile builders, verifiers, correctors).</p>
+<h3>By day (UTC)</h3>
+<div class="tw"><table><thead><tr><th>Date</th><th>Active</th><th>Output</th><th>Input uncached</th><th>Cache write</th><th>Cache read</th><th>Total</th></tr></thead><tbody><tr><td>Nov 6</td><td>3.58 h</td><td>5,744,905</td><td>54,146</td><td>19,874,330</td><td>311,659,145</td><td>337,332,526</td></tr><tr><td>Nov 7</td><td>4.65 h</td><td>9,620,917</td><td>20,642</td><td>47,351,181</td><td>1,213,699,113</td><td>1,270,691,853</td></tr><tr><td>Nov 8</td><td>0.05 h</td><td>2,540</td><td>10</td><td>282,492</td><td>647,601</td><td>932,643</td></tr><tr><td>Nov 10</td><td>0.27 h</td><td>11,109</td><td>26</td><td>304,034</td><td>3,609,642</td><td>3,924,811</td></tr><tr><td>Nov 11</td><td>0.37 h</td><td>4,260</td><td>16</td><td>46,027</td><td>391,222</td><td>441,525</td></tr><tr class="t"><td>Total</td><td>8.92 h</td><td>15,383,731</td><td>74,840</td><td>67,858,064</td><td>1,530,006,723</td><td>1,613,323,358</td></tr></tbody></table></div>
+<p class="note">The by-model and by-where tables were measured a few minutes earlier than the by-day table, so they differ by a few thousand tokens.</p>
+
+<h2><em>05</em>Token-count script</h2>
+<p>For Claude Code. Save as <code>count_tokens.py</code>, run <code>python3 count_tokens.py ~/.claude/projects/&lt;folder&gt;</code>. Same method as the numbers above.</p>
+<div class="box"><div class="bar"><span>count_tokens.py</span><button onclick="cp('scr',this)">Copy script</button></div><pre id="scr">import json, glob, os, sys
 from collections import defaultdict
 from datetime import datetime
 # usage: python3 count_tokens.py ~/.claude/projects/&lt;your-project-folder&gt;
@@ -341,5 +341,5 @@ for k in sorted(D): print(k, *D[k])
 print(&#x27;active hours (gaps &lt; 30 min):&#x27;, round(active/3600,2))
 print(&#x27;first/last:&#x27;, ts[0], ts[-1])</pre></div>
 </main>
-<script>function cp(id,b){navigator.clipboard.writeText(document.getElementById(id).innerText).then(()=>{b.textContent='Copied ✓';setTimeout(()=>b.textContent='Copy',1500)})}</script>
+<script>function cp(id,b){navigator.clipboard.writeText(document.getElementById(id).innerText).then(()=>{const t=b.textContent;b.textContent='Copied ✓';setTimeout(()=>b.textContent=t,1500)})}</script>
 </body></html>
