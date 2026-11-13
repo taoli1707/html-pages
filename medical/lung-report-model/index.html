@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lung Report Model</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{ /* one dark world, like a reading-room monitor: single column, viewer first, data in mono */
+  --bg:#0e1420; --panel:#151d2c; --line:#263247; --ink:#e6ebf2; --muted:#94a2b8; --route:#3fe07f; --lesion:#ff6b5e;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+main{max-width:860px;margin:0 auto;padding:24px 16px 48px;display:flex;flex-direction:column;gap:28px}
+h1{font-size:1.6rem;font-weight:600;margin:0;text-wrap:balance}
+h2{font-size:1.05rem;font-weight:600;margin:0 0 10px;text-wrap:balance}
+p{margin:0;max-width:65ch}
+.lede{color:var(--muted);margin-top:6px}
+.note{border-left:3px solid var(--lesion);background:var(--panel);padding:10px 14px;font-size:.92rem}
+#mv{width:100%;height:min(55vh,520px);background:#0a0f18;border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden;touch-action:none}
+#mv canvas{display:block;width:100%;height:100%}
+#status{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.9rem;pointer-events:none;padding:16px;text-align:center}
+.controls{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:10px;font-size:.9rem;color:var(--muted)}
+.controls label{display:flex;align-items:center;gap:8px}
+input[type=range]{accent-color:var(--route);width:140px}
+input:focus-visible,video:focus-visible{outline:2px solid var(--route);outline-offset:2px}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.9rem}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500;background:var(--panel)}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:baseline}
+img,video{max-width:100%;display:block;border:1px solid var(--line);border-radius:6px}
+pre{margin:0;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:.82rem;white-space:pre-wrap}
+ul{margin:0;padding-left:20px;max-width:65ch}
+.key{font-family:var(--mono);font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px}
+.key i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px}
+footer{color:var(--muted);font-size:.82rem;border-top:1px solid var(--line);padding-top:14px}
+a{color:var(--route)}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Lung Report Model</h1>
+  <p class="lede">Proof of concept. Sample chest scan report text becomes an editable 3D lung model with a bronchoscope route.</p>
+</header>
+
+<p class="note">Schematic only. Each lesion position comes from the lobe name in the report. This is a template body, not a patient.</p>
+
+<section>
+  <h2>3D model</h2>
+  <div id="mv" role="img" aria-label="Template lungs with four lesions and a bronchoscope route"><div id="status">Loading the 3D model (5 MB)</div></div>
+  <div class="controls">
+    <label for="lungA">Lung opacity <input id="lungA" type="range" min="0" max="0.6" step="0.02" value="0.16"></label>
+    <label for="airA">Airway opacity <input id="airA" type="range" min="0" max="1" step="0.05" value="0.35"></label>
+  </div>
+  <div class="key"><span><i style="background:var(--route)"></i>route in the airway, 224 mm</span><span><i style="background:#ffd91a"></i>last leg outside the airway, 15 mm</span></div>
+  <p class="lede" style="font-size:.85rem">One finger or left button rotates. Pinch or scroll zooms. Two fingers or right button move the view.</p>
+</section>
+
+<section>
+  <h2>Findings from the report text</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Finding</th><th>Lobe</th><th>Size</th><th>Density</th><th>Margin</th></tr></thead>
+    <tbody>
+      <tr><td class="n"><span class="dot" style="background:#d91f1a"></span>F1</td><td>Left lower</td><td class="n">21 x 13 mm</td><td>Solid</td><td>Spiculated</td></tr>
+      <tr><td class="n"><span class="dot" style="background:#d91f1a"></span>F2</td><td>Right lower</td><td class="n">5 x 3 mm</td><td>Solid</td><td>Not stated</td></tr>
+      <tr><td class="n"><span class="dot" style="background:#bfe6ff"></span>F3</td><td>Right upper</td><td class="n">5 mm</td><td>Ground glass</td><td>Not stated</td></tr>
+      <tr><td class="n"><span class="dot" style="background:#f7f7eb"></span>F4</td><td>Right lower</td><td class="n">4 mm *</td><td>Calcified</td><td>Not stated</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lede" style="font-size:.85rem">* The report gives no size for F4. The model uses 4 mm as a placeholder.</p>
+</section>
+
+<section>
+  <h2>Labelled front view</h2>
+  <img src="overview_front.png" width="1600" height="1200" style="height:auto" alt="Front view of the lungs with four labelled lesions and the green route to the 21 mm nodule">
+</section>
+
+<section>
+  <h2>Bronchoscope view</h2>
+  <video src="lung_poc_flythrough.mp4" controls playsinline muted loop preload="metadata" width="1280" height="720" style="height:auto"></video>
+  <p class="lede" style="font-size:.85rem">10.5 seconds. First an outside orbit, then the camera moves along the route from the upper trachea.</p>
+</section>
+
+<section>
+  <h2>Input text</h2>
+  <pre>FINDINGS:
+LUNGS / AIRWAYS / PLEURA: Left lower lobe solid spiculated pulmonary nodule measures 2.1 x 1.3 cm (series 2, image 40). Additional solid pulmonary nodule of the right lower lobe measures 0.5 x 0.3 cm (series 2, image 74). 5 mm ground glass, parenchymal nodule in the right upper lobe. Calcified granulomata are demonstrated in the right lower lobe. Patent central airways. No pneumothorax or pleural effusion.</pre>
+  <p class="lede" style="font-size:.85rem">Sample sentences from public report examples. Not a real patient.</p>
+</section>
+
+<section>
+  <h2>Limits</h2>
+  <ul>
+    <li>The text parser uses fixed rules. It is a stand-in for a language model.</li>
+    <li>The template has no mouth or larynx. The route starts in the upper trachea.</li>
+    <li>The route does not check the bronchoscope diameter.</li>
+    <li>The video is a pre-rendered film. It is not a real-time headset view.</li>
+  </ul>
+</section>
+
+<footer>Anatomy: BodyParts3D, &copy; The Database Center for Life Science, licensed under CC Attribution-Share Alike 2.1 Japan. The 3D model on this page is a derived work under the same license.</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+  const box = document.getElementById('mv'), status = document.getElementById('status');
+  const lung = document.getElementById('lungA'), air = document.getElementById('airA');
+  function fail(msg){ status.textContent = msg; }
+  if(!window.THREE){ fail('The 3D library did not load. The image and video on this page still work.'); return; }
+  let renderer;
+  try{ renderer = new THREE.WebGLRenderer({antialias:true}); }catch(e){ fail('This browser cannot show 3D graphics. The image and video on this page still work.'); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.setClearColor(0x0a0f18);
+  box.insertBefore(renderer.domElement, status);
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(35, 1, 0.01, 10);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x334055, 0.9));
+  const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(-0.4, 0.6, 1); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x9fb8ff, 0.4); rim.position.set(0.5, 0.2, -1); scene.add(rim);
+  const ctl = new THREE.OrbitControls(cam, renderer.domElement);
+  ctl.enableDamping = true; ctl.addEventListener('change', () => dirty = true);
+  let dirty = true; const lobes = [], airway = [];
+  function size(){ const w = box.clientWidth, h = box.clientHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); dirty = true; }
+  window.addEventListener('resize', size); size();
+  function apply(){
+    for(const m of lobes){ m.opacity = +lung.value; m.visible = m.opacity > 0.001; }
+    for(const m of airway){ m.opacity = +air.value; m.transparent = m.opacity < 1; m.depthWrite = m.opacity >= 1; m.visible = m.opacity > 0.001; m.needsUpdate = true; }
+    dirty = true;
+  }
+  lung.addEventListener('input', apply); air.addEventListener('input', apply);
+  (function loop(){ requestAnimationFrame(loop); ctl.update(); if(dirty){ dirty = false; renderer.render(scene, cam); } })();
+  fetch('lung_model.json').then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
+    const bin = atob(d.glb), buf = new Uint8Array(bin.length);
+    for(let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    new THREE.GLTFLoader().parse(buf.buffer, '', g => {
+      g.scene.traverse(o => {
+        if(!o.isMesh) return;
+        const m = o.material, n = m.name || '';
+        m.side = THREE.DoubleSide;
+        if(n.indexOf('M_Lobe_') === 0){ m.transparent = true; m.depthWrite = false; o.renderOrder = 3; lobes.push(m); }
+        else if(n === 'M_Bronchial_tree'){ o.renderOrder = 2; airway.push(m); }
+        else { o.renderOrder = 1; if(n.indexOf('M_route') === 0 || n.indexOf('M_lesion') === 0){ m.emissiveIntensity = 1; } }
+      });
+      scene.add(g.scene);
+      const bb = new THREE.Box3().setFromObject(g.scene), c = bb.getCenter(new THREE.Vector3()), r = bb.getSize(new THREE.Vector3()).length() / 2;
+      ctl.target.copy(c); cam.position.set(c.x, c.y, c.z + r / Math.tan(Math.PI * 35 / 360) * 1.02); cam.near = r / 100; cam.far = r * 20; cam.updateProjectionMatrix();
+      ctl.minDistance = r * 0.15; ctl.maxDistance = r * 8;
+      status.textContent = ''; apply();
+    }, e => fail('The 3D model did not open. The image and video on this page still work.'));
+  }).catch(e => fail('The 3D model did not load. The image and video on this page still work.'));
+})();
+</script>
+</body>
+</html>
