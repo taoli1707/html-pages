@@ -89,7 +89,7 @@ a{color:var(--route)}
     <p id="cNote" class="lede" style="font-size:.82rem"></p>
   </div>
   <div class="controls">
-    <label for="airA">Airway wall <input id="airA" type="range" min="0.1" max="1" step="0.05" value="1"></label>
+    <label for="airA">Airway wall <input id="airA" type="range" min="0" max="1" step="0.05" value="1"></label>
     <label for="treeA">Fine branches <input id="treeA" type="range" min="0" max="1" step="0.05" value="0.6"></label>
     <label for="vesA">Blood vessels <input id="vesA" type="range" min="0" max="1" step="0.05" value="0.3"></label>
     <label for="lungA">Lung outline <input id="lungA" type="range" min="0" max="0.4" step="0.02" value="0"></label>
@@ -198,7 +198,10 @@ function start(){
 
   function apply(){
     if (!mat.air) return;
-    mat.airU.value = +sliders.air.value;
+    const wall = +sliders.air.value;                       // one slider drives both airway layers: the outer wall and the brown inner wall
+    mat.airU.value = wall; mat.air.visible = wall > 0.01;
+    const wasClear = mat.inner.transparent; mat.inner.opacity = wall; mat.inner.transparent = wall < 0.99; mat.inner.depthWrite = wall >= 0.99; mat.inner.visible = wall > 0.01;
+    if (wasClear !== mat.inner.transparent) mat.inner.needsUpdate = true;
     mat.shell.opacity = +sliders.lung.value; mat.shell.visible = mat.shell.opacity > 0.001;
     mat.line.opacity = Math.min(1, +sliders.tree.value); mat.line.visible = +sliders.tree.value > 0.001;
     [mat.cloudA, mat.cloudB].forEach(m => { m.opacity = Math.min(1, +sliders.tree.value * 1.3); m.visible = +sliders.tree.value > 0.001; });
