@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lung Report Model</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -39,6 +40,13 @@ ul{margin:0;padding-left:20px;max-width:65ch}
 button{font:inherit;font-weight:500;color:var(--bg);background:var(--route);border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
 button:disabled{opacity:.5;cursor:default}
 button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+button.quiet{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.controls{align-items:center}
+.card{background:var(--panel);border:1px solid var(--line);border-left:3px solid #7a3fd0;border-radius:6px;padding:12px 14px;margin-top:10px}
+.cardhead{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.card dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:10px 0 6px;font-size:.9rem}
+.card dt{color:var(--muted)}.card dd{margin:0}
+#mv canvas{cursor:grab;touch-action:none}
 .key{font-family:var(--mono);font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px}
 .key i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px}
 footer{color:var(--muted);font-size:.82rem;border-top:1px solid var(--line);padding-top:14px}
@@ -73,16 +81,22 @@ a{color:var(--route)}
 
 <section>
   <h2>Interactive 3D model with headset mode</h2>
-  <div id="mv" role="img" aria-label="Template lungs with four lesions and a bronchoscope route"><div id="status">Loading the 3D model (11 MB)</div></div>
+  <div id="mv" role="img" aria-label="Template lungs with four lesions and a bronchoscope route"><div id="status">Loading the 3D model</div></div>
+  <div class="controls"><button id="playBtn" type="button" disabled>Play the scope route</button><button id="homeBtn" type="button" class="quiet" disabled>Reset the view</button></div>
+  <div id="card" class="card" hidden>
+    <div class="cardhead"><strong id="cTitle"></strong><button id="cClose" type="button" class="quiet" aria-label="Close the details">Close</button></div>
+    <dl><dt>Lobe</dt><dd id="cLobe"></dd><dt>Type</dt><dd id="cKind"></dd><dt>Report text</dt><dd id="cText"></dd></dl>
+    <p id="cNote" class="lede" style="font-size:.82rem"></p>
+  </div>
   <div class="controls">
     <label for="airA">Airway wall <input id="airA" type="range" min="0.1" max="1" step="0.05" value="1"></label>
     <label for="treeA">Fine branches <input id="treeA" type="range" min="0" max="1" step="0.05" value="0.6"></label>
+    <label for="vesA">Blood vessels <input id="vesA" type="range" min="0" max="1" step="0.05" value="0.3"></label>
     <label for="lungA">Lung outline <input id="lungA" type="range" min="0" max="0.4" step="0.02" value="0"></label>
   </div>
-  <div class="controls"><button id="playBtn" type="button" disabled>Play the scope route</button><button id="homeBtn" type="button">Reset the view</button></div>
-  <div class="key"><span><i style="background:#16181c"></i>bronchoscope, 213 mm in the airway</span><span><i style="background:#ffc21a"></i>sampling tool</span><span><i style="background:#7a3fd0"></i>lesions</span></div>
+  <div class="key"><span><i style="background:#16181c"></i>bronchoscope, 213 mm in the airway</span><span><i style="background:#ffc21a"></i>sampling tool</span><span><i style="background:#7a3fd0"></i>lesions</span><span><i style="background:#6f8fc4"></i>pulmonary arteries</span><span><i style="background:#b9788c"></i>pulmonary veins</span></div>
   <p class="lede" id="vrNote" style="font-size:.85rem">Headset mode: open this page in the browser of a virtual reality headset. Then use the ENTER VR button in the viewer.</p>
-  <p class="lede" style="font-size:.85rem">One finger or left button rotates. Pinch or scroll zooms. Two fingers or right button move the view.</p>
+  <p class="lede" style="font-size:.85rem">Select a lesion or its label for details. One finger or left button rotates. Pinch or scroll zooms. Two fingers or right button move the view.</p>
 </section>
 
 <section>
@@ -115,7 +129,7 @@ LUNGS / AIRWAYS / PLEURA: Left lower lobe solid spiculated pulmonary nodule meas
     <li>The route does not check the bronchoscope diameter.</li>
     <li>The images and the video are pre-rendered. The interactive model is real-time and has a headset mode.</li>
     <li>The headset mode is not yet tested on a real headset.</li>
-    <li>The interactive model uses simpler shading than the rendered images.</li>
+    <li>The blood vessels are from the same template body. They are not from a scan.</li>
   </ul>
 </section>
 
@@ -129,123 +143,175 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-const box = document.getElementById('mv'), status = document.getElementById('status');
-const lung = document.getElementById('lungA'), air = document.getElementById('airA'), tree = document.getElementById('treeA');
-const playBtn = document.getElementById('playBtn'), vrNote = document.getElementById('vrNote');
+const $ = id => document.getElementById(id);
+const box = $('mv'), status = $('status'), card = $('card');
+const sliders = {air: $('airA'), tree: $('treeA'), lung: $('lungA'), ves: $('vesA')};
 const BG = 0xa3b4c8;
-const LABELS = {F1: ['21 x 13 mm', 'LEFT LOWER LOBE / solid, spiculated'], F2: ['5 x 3 mm', 'RIGHT LOWER LOBE / solid'],
-                F3: ['5 mm', 'RIGHT UPPER LOBE / ground glass'], F4: ['4 mm*', 'RIGHT LOWER LOBE / calcified']};
+const LOBE = {RUL: 'Right upper lobe', RML: 'Right middle lobe', RLL: 'Right lower lobe', LUL: 'Left upper lobe', LLL: 'Left lower lobe'};
+const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ease = x => x * x * (3 - 2 * x), clamp01 = x => Math.max(0, Math.min(1, x));
 function fail(msg){ status.textContent = msg; }
 
 let renderer;
-try { renderer = new THREE.WebGLRenderer({antialias: true, alpha: true}); }
+try { renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, powerPreference: 'high-performance'}); }
 catch (e) { fail('This browser cannot show 3D graphics. The images and video on this page still work.'); }
 if (renderer) start();
 
-function textPlane(lines, w, h, px, opts){
+function textPlane(lines, w, h){
   const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
-  g.fillStyle = (opts && opts.bg) || 'rgba(14,20,32,0.78)'; g.beginPath();
+  g.fillStyle = 'rgba(14,20,32,0.82)'; g.beginPath();
   const r = 18; g.moveTo(r, 0); g.arcTo(w, 0, w, h, r); g.arcTo(w, h, 0, h, r); g.arcTo(0, h, 0, 0, r); g.arcTo(0, 0, w, 0, r); g.fill();
   let y = 0;
-  lines.forEach((ln, i) => { const size = Array.isArray(ln) ? ln[1] : px; const t = Array.isArray(ln) ? ln[0] : ln;
-    g.font = (i === 0 ? '600 ' : '400 ') + size + 'px system-ui, sans-serif'; g.fillStyle = i === 0 ? '#ffffff' : '#c7d1de';
-    y += size * 1.32; g.fillText(t, 22, y); });
+  lines.forEach((ln, i) => { g.font = (i === 0 ? '600 ' : '400 ') + ln[1] + 'px system-ui, sans-serif'; g.fillStyle = i === 0 ? '#ffffff' : '#c7d1de';
+    y += ln[1] * 1.32; g.fillText(ln[0], 22, y); });
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; return tex;
+}
+function describe(f){
+  const d = f.dims_mm, size = (d.length > 1 && d[0] !== d[1] ? d.slice(0, 2).join(' x ') : d[0]) + ' mm' + (f.size_assumed ? '*' : '');
+  const kind = f.attenuation.replace('_', ' ') + (f.margin !== 'unspecified' ? ', ' + f.margin : '');
+  return {size, kind, lobe: LOBE[f.lobe] || f.lobe};
 }
 
 function start(){
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setClearColor(BG, 0);                                   // the page draws a soft gradient behind the canvas
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));       // sharp enough, and light for phones
+  renderer.setClearColor(BG, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   renderer.xr.enabled = true; renderer.xr.setReferenceSpaceType('local-floor');
   box.insertBefore(renderer.domElement, status);
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(35, 1, 0.01, 30);
-  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;   // soft studio reflections
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
   scene.add(new THREE.HemisphereLight(0xdfe9f7, 0x39424f, 0.4));
   const key = new THREE.DirectionalLight(0xffffff, 2.7); key.position.set(-0.6, 0.9, 0.8); scene.add(key);
   const rim = new THREE.DirectionalLight(0xcfe0ff, 1.4); rim.position.set(0.5, 0.3, -1); scene.add(rim);
-  const ctl = new OrbitControls(cam, renderer.domElement); ctl.enableDamping = true;
+  const ctl = new OrbitControls(cam, renderer.domElement); ctl.enableDamping = true; ctl.dampingFactor = 0.08; ctl.rotateSpeed = 0.8; ctl.zoomSpeed = 0.9;
   let dirty = true; ctl.addEventListener('change', () => dirty = true);
-  const rig = new THREE.Group(); scene.add(rig);                 // the model lives here; the headset mode moves and scales the rig
-  const lobes = [], airway = [], lines = [], scopeParts = {rings: []};
-  let anim = null, radius = 0.2;
+  ctl.addEventListener('start', () => { tween = null; if (anim) anim.cam = null; ctl.enableDamping = true; });   // the user's hand always wins over a camera move
+  const rig = new THREE.Group(); scene.add(rig);
+  const S = {curve: null, scope: null, tip: null, tool: null, group: null, focus: null};
+  const mat = {}, pick = [], findings = {};
+  let radius = 0.2, home = null, anim = null, tween = null, selected = null, selRing = null;
 
   function size(){ if (renderer.xr.isPresenting) return; const w = box.clientWidth, h = box.clientHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); dirty = true; }
   window.addEventListener('resize', size); size();
-  function apply(){
-    for (const m of lobes){ m.opacity = +lung.value; m.visible = m.opacity > 0.001; }
-    for (const u of airway) u.value = +air.value;
-    lines.forEach((m, i) => { m.opacity = +tree.value * (i ? 1.3 : 1.0); m.visible = m.opacity > 0.001; });
-    dirty = true;
-  }
-  [lung, air, tree].forEach(el => el.addEventListener('input', apply));
+  if ('ResizeObserver' in window) new ResizeObserver(size).observe(box);
 
-  // scope animation: the tube grows along a smooth curve with the metal tip at its front end, then the tool extends
-  function reveal(mesh, f){ if (!mesh) return; const n = mesh.geometry.index.count;
-    mesh.geometry.setDrawRange(0, Math.floor(n * Math.max(0, Math.min(1, f)) / 3) * 3); mesh.visible = f > 0.001; }
-  const ease = x => x * x * (3 - 2 * x), UP = new THREE.Vector3(0, 1, 0);
-  function setProgress(p){
-    const ps = ease(Math.min(p / 0.74, 1)), pt = ease(Math.max(0, Math.min((p - 0.78) / 0.22, 1)));
-    reveal(scopeParts.scope, ps); reveal(scopeParts.tool, pt);
-    if (scopeParts.tip && scopeParts.curve){
-      const u = Math.max(ps, 0.02), pos = scopeParts.curve.getPointAt(u), tan = scopeParts.curve.getTangentAt(u);
-      scopeParts.tip.position.copy(pos).addScaledVector(tan, -0.003); scopeParts.tip.quaternion.setFromUnitVectors(UP, tan);
-    }
+  function apply(){
+    if (!mat.air) return;
+    mat.airU.value = +sliders.air.value;
+    mat.shell.opacity = +sliders.lung.value; mat.shell.visible = mat.shell.opacity > 0.001;
+    mat.line.opacity = Math.min(1, +sliders.tree.value); mat.line.visible = +sliders.tree.value > 0.001;
+    [mat.cloudA, mat.cloudB].forEach(m => { m.opacity = Math.min(1, +sliders.tree.value * 1.3); m.visible = +sliders.tree.value > 0.001; });
+    [mat.artery, mat.vein].forEach(m => { m.opacity = +sliders.ves.value; m.visible = m.opacity > 0.001; });
     dirty = true;
   }
-  function smoothCurve(points, spacing){                  // resample by distance, then fit a smooth curve
+  Object.values(sliders).forEach(el => el.addEventListener('input', apply));
+
+  // ---------- scope route ----------
+  function reveal(mesh, f){ if (!mesh) return; const n = mesh.geometry.index.count; mesh.geometry.setDrawRange(0, Math.floor(n * clamp01(f) / 3) * 3); mesh.visible = f > 0.001; }
+  const UP = new THREE.Vector3(0, 1, 0);
+  function setProgress(p){
+    const ps = ease(clamp01(p / 0.74)), pt = ease(clamp01((p - 0.78) / 0.22));
+    reveal(S.scope, ps); reveal(S.tool, pt);
+    if (S.tip && S.curve){ const u = Math.max(ps, 0.02), pos = S.curve.getPointAt(u), tan = S.curve.getTangentAt(u);
+      S.tip.position.copy(pos).addScaledVector(tan, -0.003); S.tip.quaternion.setFromUnitVectors(UP, tan); }
+    dirty = true;
+  }
+  function smoothCurve(points, spacing){
     const out = [points[0]]; let acc = 0, total = 0;
-    for (let i = 1; i < points.length; i++){ const d = points[i].distanceTo(points[i - 1]); acc += d; total += d;
-      if (acc >= spacing(total)){ out.push(points[i]); acc = 0; } }
+    for (let i = 1; i < points.length; i++){ const d = points[i].distanceTo(points[i - 1]); acc += d; total += d; if (acc >= spacing(total)){ out.push(points[i]); acc = 0; } }
     if (out[out.length - 1] !== points[points.length - 1]) out.push(points[points.length - 1]);
     return new THREE.CatmullRomCurve3(out, false, 'centripetal');
   }
-  function buildRoute(route, parent, mats){
+  function buildRoute(route, parent){
     const V = a => new THREE.Vector3(a[0], a[1], a[2]);
     const sp = route.scope.slice(24).map(V), tp = route.tool.map(V);
-    const sc = smoothCurve(sp, d => d < 0.17 ? 0.020 : 0.009);     // wide airways allow a gentler bend at the carina
-    scopeParts.curve = sc;
-    scopeParts.scope = new THREE.Mesh(new THREE.TubeGeometry(sc, 420, route.scope_r, 14, false), mats.M_scope);
-    scopeParts.tip = new THREE.Mesh(new THREE.CylinderGeometry(route.scope_r * 1.15, route.scope_r * 1.0, 0.007, 18), mats.M_scope_tip);
+    const sc = smoothCurve(sp, d => d < 0.17 ? 0.020 : 0.009);
+    S.curve = sc;
+    const len = sc.getLength(), mc = document.createElement('canvas'); mc.width = 2048; mc.height = 8;      // depth marks every 50 mm, like a real insertion tube
+    const mg = mc.getContext('2d'); mg.fillStyle = '#101216'; mg.fillRect(0, 0, 2048, 8); mg.fillStyle = '#e9edf2';
+    for (let d = len - 0.05; d > 0; d -= 0.05) mg.fillRect(Math.round(d / len * 2048) - 3, 0, 6, 8);
+    mg.fillStyle = '#23262c'; mg.fillRect(Math.round((len - 0.03) / len * 2048), 0, 2048, 8);                 // bending section near the tip
+    const marks = new THREE.CanvasTexture(mc); marks.colorSpace = THREE.SRGBColorSpace;
+    mat.scope = new THREE.MeshPhysicalMaterial({map: marks, roughness: 0.24, clearcoat: 1, clearcoatRoughness: 0.12, envMapIntensity: 1.2, fog: false});
+    S.scope = new THREE.Mesh(new THREE.TubeGeometry(sc, 420, route.scope_r, 14, false), mat.scope);
+    S.tip = new THREE.Mesh(new THREE.CylinderGeometry(route.scope_r * 1.15, route.scope_r, 0.007, 18), mat.tip);
     const end = sc.getPointAt(1), tan = sc.getTangentAt(1), target = tp[tp.length - 1];
-    const tc = new THREE.QuadraticBezierCurve3(end.clone().addScaledVector(tan, -0.003), end.clone().addScaledVector(tan, end.distanceTo(target) * 0.5), target);   // leave along the scope axis, arc to the nodule
-    const lamp = new THREE.PointLight(0xfff2e0, 0.02, 0.06, 2); lamp.position.set(0, 0.006, 0); scopeParts.lamp = lamp;
-    scopeParts.tool = new THREE.Mesh(new THREE.TubeGeometry(tc, 80, route.tool_r * 1.4, 8, false), mats.M_tool);
-    [scopeParts.scope, scopeParts.tip, scopeParts.tool].forEach(m => { m.renderOrder = 2; parent.add(m); });
-    scopeParts.tip.add(lamp);
-    scopeParts.group = parent; scopeParts.focus = end.clone().lerp(target, 0.5);
+    const tc = new THREE.QuadraticBezierCurve3(end.clone().addScaledVector(tan, -0.003), end.clone().addScaledVector(tan, end.distanceTo(target) * 0.5), target);
+    S.tool = new THREE.Mesh(new THREE.TubeGeometry(tc, 80, route.tool_r * 1.4, 8, false), mat.tool);
+    const lamp = new THREE.PointLight(0xfff2e0, 0.02, 0.06, 2); lamp.position.set(0, 0.006, 0); S.tip.add(lamp);
+    [S.scope, S.tip, S.tool].forEach(m => { m.renderOrder = 2; parent.add(m); });
+    S.group = parent; S.focus = end.clone().lerp(target, 0.5);
   }
-  let home = null;
+
+  // ---------- camera moves ----------
+  function flyTo(c1, t1, ms){ if (calm || renderer.xr.isPresenting){ cam.position.copy(c1); ctl.target.copy(t1); dirty = true; return; }
+    ctl.enableDamping = false;                                         // drop leftover spin, so the move ends exactly at its goal
+    tween = {c0: cam.position.clone(), t0: ctl.target.clone(), c1, t1, t: performance.now(), ms}; }
+  function viewFor(worldPoint, dist){ const dir = cam.position.clone().sub(ctl.target).normalize(); return worldPoint.clone().addScaledVector(dir, dist); }
   function play(){
-    anim = {t0: performance.now(), dur: 9000};
-    if (!renderer.xr.isPresenting && scopeParts.focus){                     // desktop and phone: move the view to the target while the scope arrives
-      if (!home) home = {c: cam.position.clone(), t: ctl.target.clone()};
-      const t1 = scopeParts.group.localToWorld(scopeParts.focus.clone());
-      const dir = home.c.clone().sub(home.t).normalize();
+    tween = null; ctl.enableDamping = false; anim = {t0: performance.now(), dur: 9000};
+    if (!renderer.xr.isPresenting && S.focus && home && !calm){
+      const t1 = S.group.localToWorld(S.focus.clone()), dir = home.c.clone().sub(home.t).normalize();
       anim.cam = {c0: home.c, t0: home.t, t1, c1: t1.clone().addScaledVector(dir, radius * 1.25).add(new THREE.Vector3(-0.05, 0.04, 0))};
     }
   }
-  playBtn.addEventListener('click', play);
-  document.getElementById('homeBtn').addEventListener('click', () => { if (home){ anim = null; cam.position.copy(home.c); ctl.target.copy(home.t); setProgress(1); } });
+  function reset(){ anim = null; setProgress(1); select(null); if (home) flyTo(home.c.clone(), home.t.clone(), 600); }
+  $('playBtn').addEventListener('click', play); $('homeBtn').addEventListener('click', reset);
 
-  // headset mode
+  // ---------- finding selection ----------
+  function select(id, fromVR){
+    selected = id; if (selRing) selRing.visible = false;
+    if (!id){ card.hidden = true; if (vrCard) vrCard.visible = false; dirty = true; return; }
+    const f = findings[id], d = describe(f.data);
+    $('cTitle').textContent = id + '  ' + d.size; $('cLobe').textContent = d.lobe; $('cKind').textContent = d.kind;
+    $('cText').textContent = f.data.source_sentence; $('cNote').textContent = f.data.size_assumed ? 'The report gives no size. The model uses 4 mm as a placeholder.' : 'Position in the model: the lobe only.';
+    card.hidden = false;
+    const c = f.mesh.getWorldPosition(new THREE.Vector3());
+    if (selRing){ selRing.visible = true; f.mesh.parent.worldToLocal(selRing.position.copy(c)); const r = Math.max(f.r * 0.95, 0.006); selRing.scale.setScalar(r); }
+    if (fromVR){ showVrCard(f, d); } else if (!renderer.xr.isPresenting){ anim = null; setProgress(1); flyTo(viewFor(c, radius * 1.15), c, 700); }
+    dirty = true;
+  }
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
+  function hitAt(ev){ const r = renderer.domElement.getBoundingClientRect(); ndc.set((ev.clientX - r.left) / r.width * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+    cam.updateMatrixWorld(); ray.setFromCamera(ndc, cam); return nearestFinding(); }
+  function nearestFinding(){                       // of everything under the pointer, take the lesion whose centre is closest to the ray; labels count only when no lesion is hit
+    const hits = ray.intersectObjects(pick, false); if (!hits.length) return null;
+    const solid = hits.filter(h => !h.object.isSprite), pool = solid.length ? solid : hits; let best = null, bd = Infinity;
+    for (const h of pool){ const id = h.object.userData.finding, d = ray.ray.distanceSqToPoint(findings[id].mesh.getWorldPosition(new THREE.Vector3())); if (d < bd){ bd = d; best = id; } }
+    return best; }
+  renderer.domElement.addEventListener('pointerdown', ev => { down = {x: ev.clientX, y: ev.clientY, t: performance.now()}; });
+  renderer.domElement.addEventListener('pointerup', ev => { if (!down) return; const moved = Math.hypot(ev.clientX - down.x, ev.clientY - down.y); down = null;
+    /* a press with no drag is a selection, on slow devices too */ if (moved < 6){ const id = hitAt(ev); if (id) select(id); else if (selected) select(null); } });
+  let lastHover = 0;
+  renderer.domElement.addEventListener('pointermove', ev => { if (ev.pointerType !== 'mouse' || down) return; const now = performance.now(); if (now - lastHover < 60) return; lastHover = now;
+    renderer.domElement.style.cursor = hitAt(ev) ? 'pointer' : 'grab'; });
+  $('cClose').addEventListener('click', () => select(null));
+
+  // ---------- headset mode ----------
   const vrOnly = new THREE.Group(); vrOnly.visible = false; scene.add(vrOnly);
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBasicMaterial({color: 0xa7b6c8}));
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBasicMaterial({color: 0x8d9fb5}));
   floor.rotation.x = -Math.PI / 2; vrOnly.add(floor);
-  const help = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.20), new THREE.MeshBasicMaterial({map: textPlane(
-    [['Lung Report Model', 44], ['Trigger or pinch: play the scope', 30], ['Grip: grab and move the model', 30], ['Stick left or right: rotate', 30], ['Stick up or down: change size', 30], ['Schematic. Lesion position = lobe only.', 26]], 736, 320, 30), transparent: true, fog: false}));
+  const help = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.235), new THREE.MeshBasicMaterial({map: textPlane(
+    [['Lung Report Model', 44], ['Trigger on a lesion: show details', 30], ['Trigger elsewhere: play the scope', 30], ['Grip: grab and move the model', 30], ['Stick: rotate, change size', 30], ['Schematic. Lesion position = lobe only.', 26]], 736, 376), transparent: true, fog: false}));
   help.position.set(-0.62, 1.30, -0.62); help.rotation.y = 0.75; vrOnly.add(help);
-  const saved = {};
+  let vrCard = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.25), new THREE.MeshBasicMaterial({transparent: true, fog: false}));
+  vrCard.position.set(0.62, 1.30, -0.62); vrCard.rotation.y = -0.75; vrCard.visible = false; vrOnly.add(vrCard);
+  function showVrCard(f, d){ const words = f.data.source_sentence.split(' '), rows = []; let row = '';
+    for (const w of words){ if ((row + ' ' + w).length > 44){ rows.push(row); row = w; } else row = row ? row + ' ' + w : w; } rows.push(row);
+    if (vrCard.material.map) vrCard.material.map.dispose();
+    vrCard.material.map = textPlane([[f.data.id + '   ' + d.size, 46], [d.lobe + ' / ' + d.kind, 30]].concat(rows.slice(0, 5).map(r => [r, 30])), 800, 400); vrCard.material.needsUpdate = true; vrCard.visible = true; }
+  const saved = {}, tmpM = new THREE.Matrix4();
   const ctrls = [0, 1].map(i => { const c = renderer.xr.getController(i);
-    c.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -0.35)]), new THREE.LineBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.6, fog: false})));
+    c.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -0.5)]), new THREE.LineBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.6, fog: false})));
     c.add(new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 8), new THREE.MeshBasicMaterial({color: 0x16181c, fog: false})));
-    c.addEventListener('selectstart', play);
+    c.addEventListener('selectstart', () => { tmpM.identity().extractRotation(c.matrixWorld); ray.ray.origin.setFromMatrixPosition(c.matrixWorld); ray.ray.direction.set(0, 0, -1).applyMatrix4(tmpM);
+      const id = nearestFinding(); if (id) select(id, true); else play(); });
     c.addEventListener('squeezestart', () => c.attach(rig));
     c.addEventListener('squeezeend', () => { if (rig.parent === c) scene.attach(rig); });
     c.visible = false; scene.add(c); return c; });
   renderer.xr.addEventListener('sessionstart', () => {
-    saved.fog = scene.fog; saved.pos = rig.position.clone(); saved.quat = rig.quaternion.clone(); saved.scale = rig.scale.clone();
+    tween = null; saved.fog = scene.fog; saved.pos = rig.position.clone(); saved.quat = rig.quaternion.clone(); saved.scale = rig.scale.clone();
     scene.attach(rig); rig.position.set(0, 1.25, -0.62); rig.quaternion.identity(); rig.scale.setScalar(1.6);
     scene.fog = new THREE.Fog(BG, 0.6, 3.2); scene.background = new THREE.Color(BG); vrOnly.visible = true; ctrls.forEach(c => c.visible = true); ctl.enabled = false; play();
   });
@@ -253,16 +319,20 @@ function start(){
     scene.attach(rig); rig.position.copy(saved.pos); rig.quaternion.copy(saved.quat); rig.scale.copy(saved.scale);
     scene.fog = saved.fog; scene.background = null; vrOnly.visible = false; ctrls.forEach(c => c.visible = false); ctl.enabled = true; size(); dirty = true;
   });
-  if ('xr' in navigator) box.appendChild(VRButton.createButton(renderer));   // the button reports by itself when the device has no headset mode
+  if ('xr' in navigator && navigator.xr.isSessionSupported){              // show the headset button only where a headset session can start
+    navigator.xr.isSessionSupported('immersive-vr').then(ok => { if (ok){ box.appendChild(VRButton.createButton(renderer)); $('vrNote').textContent = 'This device has a headset mode. Use the ENTER VR button in the viewer.'; } }).catch(() => {});
+  }
 
-  let last = performance.now();
+  // ---------- frame loop: draws only when something changed ----------
+  let last = performance.now(), frames = 0;
   renderer.setAnimationLoop(() => {
     const now = performance.now(), dt = Math.min((now - last) / 1000, 0.1); last = now;
-    if (anim){ const p = Math.min((now - anim.t0) / anim.dur, 1); setProgress(p);
-      if (anim.cam && !renderer.xr.isPresenting){ const k = ease(Math.max(0, Math.min((p - 0.3) / 0.45, 1)));
-        cam.position.lerpVectors(anim.cam.c0, anim.cam.c1, k); ctl.target.lerpVectors(anim.cam.t0, anim.cam.t1, k); }
-      if (p >= 1) anim = null; }
     const xr = renderer.xr.isPresenting;
+    if (anim){ const p = Math.min((now - anim.t0) / anim.dur, 1); setProgress(p);
+      if (anim.cam && !xr){ const k = ease(clamp01((p - 0.3) / 0.45)); cam.position.lerpVectors(anim.cam.c0, anim.cam.c1, k); ctl.target.lerpVectors(anim.cam.t0, anim.cam.t1, k); }
+      if (p >= 1){ anim = null; ctl.enableDamping = true; } }
+    if (tween && !xr){ const k = ease(clamp01((now - tween.t) / tween.ms)); cam.position.lerpVectors(tween.c0, tween.c1, k); ctl.target.lerpVectors(tween.t0, tween.t1, k); dirty = true; if (k >= 1){ tween = null; ctl.enableDamping = true; } }
+    if (selRing && selRing.visible){ selRing.quaternion.copy(cam.quaternion); if (rig.parent !== scene || xr) selRing.lookAt(cam.getWorldPosition(new THREE.Vector3())); }
     if (xr){
       const ses = renderer.xr.getSession();
       if (ses && rig.parent === scene) for (const src of ses.inputSources){ const gp = src.gamepad; if (!gp || gp.axes.length < 4) continue;
@@ -270,20 +340,27 @@ function start(){
         if (Math.abs(ax) > 0.2) rig.rotation.y += ax * dt * 1.6;
         if (Math.abs(ay) > 0.2) rig.scale.setScalar(Math.max(0.6, Math.min(8, rig.scale.x * (1 - ay * dt * 0.9)))); }
     } else ctl.update();
-    if (xr || dirty || anim){ dirty = false; renderer.render(scene, cam); }
+    if (xr || dirty || anim || tween){ dirty = false; renderer.render(scene, cam); frames++; }
   });
+  window.__viewer = {findingPos: id => findings[id].mesh.getWorldPosition(new THREE.Vector3()), get frames(){ return frames; }, info: renderer.info, cam, ctl, select, play, reset, get selected(){ return selected; }, get anim(){ return !!anim; }, get tween(){ return !!tween; }, mat};
 
-  const getJson = u => fetch(u).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
-  Promise.all([getJson('lung_model.json'), getJson('route.json')]).then(([d, route]) => {
-    const bin = atob(d.glb), buf = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-    new GLTFLoader().parse(buf.buffer, '', g => {
+  // ---------- load with progress ----------
+  async function getBuffer(url){
+    const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status);
+    const total = +r.headers.get('content-length') || 0;
+    if (!r.body || !total) return r.arrayBuffer();
+    const reader = r.body.getReader(), chunks = []; let got = 0;
+    for (;;){ const {done, value} = await reader.read(); if (done) break; chunks.push(value); got += value.length; status.textContent = 'Loading the 3D model: ' + Math.round(got / total * 100) + '%'; }
+    const out = new Uint8Array(got); let o = 0; for (const c of chunks){ out.set(c, o); o += c.length; } return out.buffer;
+  }
+  Promise.all([getBuffer('lung_model.glb'), fetch('route.json').then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })]).then(([buf, route]) => {
+    status.textContent = 'Building the model';
+    new GLTFLoader().parse(buf, '', g => {
       const phys = (c, o) => new THREE.MeshPhysicalMaterial(Object.assign({color: c, roughness: 0.5, metalness: 0, envMapIntensity: 0.55}, o || {}));
-      // airway in two layers: an opaque inner wall, and an outer wall that turns to clear tissue along the route
-      const airMat = phys(0x93a3b8, {roughness: 0.46, clearcoat: 0.22, clearcoatRoughness: 0.5, sheen: 0.6, sheenColor: new THREE.Color(0xcfe0f5), side: THREE.FrontSide, envMapIntensity: 0.4, transparent: true, depthWrite: true});
-      const airUni = {uAir: {value: 1}};
-      airMat.onBeforeCompile = sh => {
-        sh.uniforms.uAir = airUni.uAir;
+      mat.air = phys(0x93a3b8, {roughness: 0.46, clearcoat: 0.22, clearcoatRoughness: 0.5, sheen: 0.6, sheenColor: new THREE.Color(0xcfe0f5), side: THREE.FrontSide, envMapIntensity: 0.4, transparent: true, depthWrite: true});
+      mat.airU = {value: 1};
+      mat.air.onBeforeCompile = sh => {            // outer wall: wrinkled surface, clear tissue along the route
+        sh.uniforms.uAir = mat.airU;
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 color;\nvarying float vCut;\nvarying vec3 vObj;')
           .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCut = color.r; vObj = position;');
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
@@ -295,59 +372,69 @@ float vn(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
 float surf(vec3 p){ return 0.65 * vn(p * 170.0) + 0.35 * vn(p * vec3(520.0, 80.0, 520.0)); }`)
           .replace('#include <color_fragment>', `#include <color_fragment>
 { float fres = pow(1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))), 1.5);
-  float clearTissue = mix(0.26, 0.95, fres);                       // see-through at the centre, solid at the silhouette
-  diffuseColor.a *= uAir * mix(1.0, clearTissue, smoothstep(0.12, 0.55, vCut)); }`)
+  diffuseColor.a *= uAir * mix(1.0, mix(0.26, 0.95, fres), smoothstep(0.12, 0.55, vCut)); }`)
           .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
 { float hh = surf(vObj) * 0.0006; vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition);
   vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
   vec3 grad = sign(det) * (dFdx(hh) * r1 + dFdy(hh) * r2); normal = normalize(abs(det) * normal - grad); }`);
       };
-      const innerMat = phys(0x80656f, {roughness: 0.7, side: THREE.BackSide, envMapIntensity: 0.25});
-      const mats = {
-        M_airway: airMat,
-        M_lobe_shell: phys(0xffffff, {transparent: true, depthWrite: false, side: THREE.DoubleSide, envMapIntensity: 0.2}),
-        M_lesion: phys(0x7a35d6, {roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.15, emissive: 0x2c0f5c, emissiveIntensity: 0.7, fog: false}),
-        M_scope: phys(0x0b0c0f, {roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.12, envMapIntensity: 1.2, fog: false}),
-        M_scope_tip: phys(0xd9dee4, {roughness: 0.25, metalness: 0.9, envMapIntensity: 1.3, fog: false}),
-        M_tool: phys(0xffc21a, {roughness: 0.3, emissive: 0xb37a00, emissiveIntensity: 0.9, fog: false})
-      };
+      mat.inner = phys(0x80656f, {roughness: 0.7, side: THREE.BackSide, envMapIntensity: 0.25});
+      mat.shell = phys(0xffffff, {transparent: true, depthWrite: false, side: THREE.DoubleSide, envMapIntensity: 0.2});
+      mat.lesion = phys(0x7a35d6, {roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.15, emissive: 0x2c0f5c, emissiveIntensity: 0.7, fog: false});
+      mat.artery = phys(0x6f8fc4, {roughness: 0.4, clearcoat: 0.4, transparent: true, envMapIntensity: 0.5});
+      mat.vein = phys(0xb9788c, {roughness: 0.4, clearcoat: 0.4, transparent: true, envMapIntensity: 0.5});
+      mat.tip = phys(0xd9dee4, {roughness: 0.25, metalness: 0.9, envMapIntensity: 1.3, fog: false});
+      mat.tool = phys(0xffc21a, {roughness: 0.3, emissive: 0xb37a00, emissiveIntensity: 0.9, fog: false});
+      mat.line = new THREE.LineBasicMaterial({color: 0xdfe7f1, transparent: true, depthWrite: false});
       const dot = document.createElement('canvas'); dot.width = dot.height = 64; const dg = dot.getContext('2d');
       const grd = dg.createRadialGradient(32, 32, 2, 32, 32, 30); grd.addColorStop(0, 'rgba(255,255,255,1)'); grd.addColorStop(0.55, 'rgba(255,255,255,0.85)'); grd.addColorStop(1, 'rgba(255,255,255,0)');
-      dg.fillStyle = grd; dg.fillRect(0, 0, 64, 64);
-      const cloudMat = new THREE.PointsMaterial({color: 0xeef3fa, size: 0.0046, sizeAttenuation: true, map: new THREE.CanvasTexture(dot), transparent: true, opacity: 1, depthWrite: false, fog: true});
-      const lineMat = new THREE.LineBasicMaterial({color: 0xdfe7f1, transparent: true, depthWrite: false});
-      lobes.push(mats.M_lobe_shell); airway.push(airUni.uAir); lines.push(lineMat); lines.push(cloudMat);
-      const inner = [];
-      const lesions = [];
+      dg.fillStyle = grd; dg.fillRect(0, 0, 64, 64); const dotTex = new THREE.CanvasTexture(dot);
+      const cloud = sz => { const m = new THREE.PointsMaterial({color: 0xeef3fa, size: sz, sizeAttenuation: true, map: dotTex, transparent: true, depthWrite: false});
+        m.onBeforeCompile = sh => {                      // particles close to the eye fade out, so they never block the view
+          sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vEye;').replace('#include <project_vertex>', '#include <project_vertex>\nvEye = -mvPosition.z;');
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vEye;').replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.a *= smoothstep(0.16, 0.42, vEye);'); };
+        return m; };
+      mat.cloudA = cloud(0.0036); mat.cloudB = cloud(0.0054);
+      const byName = {M_airway: mat.air, M_lobe_shell: mat.shell, M_lesion: mat.lesion, M_pulmonary_artery: mat.artery, M_pulmonary_vein: mat.vein};
+      const lesions = [], inner = [];
       g.scene.traverse(o => {
-        const own = o.name || '', par = (o.parent && o.parent.name) || '';
-        if (o.isPoints){ if ((own + par).indexOf('ParticleCloud') >= 0){ o.material = cloudMat; o.renderOrder = 5; } else o.visible = false; return; }
-        if (o.isLine || o.isLineSegments){ if ((own + par).indexOf('FineTree') >= 0){ o.material = lineMat; o.renderOrder = 1; } else o.visible = false; return; }
+        const own = o.name || '', par = (o.parent && o.parent.name) || '', nm = own + ' ' + par;
+        if (o.isPoints){ if (nm.indexOf('ParticleCloudA') >= 0){ o.material = mat.cloudA; o.renderOrder = 5; } else if (nm.indexOf('ParticleCloudB') >= 0){ o.material = mat.cloudB; o.renderOrder = 5; } else o.visible = false; return; }
+        if (o.isLine || o.isLineSegments){ if (nm.indexOf('FineTree') >= 0){ o.material = mat.line; o.renderOrder = 1; } else o.visible = false; return; }
         if (!o.isMesh) return;
-        const n = (o.material && o.material.name) || '', nm = o.name || (o.parent && o.parent.name) || '';
-        o.material = mats[n] || mats.M_airway;
-        o.renderOrder = n === 'M_lobe_shell' ? 6 : n === 'M_airway' ? 3 : 2;
-        if (n === 'M_airway') inner.push(o);
-        if (n === 'M_lesion') lesions.push([nm, o]);
+        const n = (o.material && o.material.name) || '';
+        o.material = byName[n] || mat.air;
+        o.renderOrder = n === 'M_lobe_shell' ? 6 : n === 'M_airway' ? 3 : n.indexOf('M_pulmonary') === 0 ? 4 : 2;
+        if (n === 'M_lesion') lesions.push([own || par, o]); if (n === 'M_airway') inner.push(o);
       });
-      for (const o of inner){ const i2 = new THREE.Mesh(o.geometry, innerMat); i2.position.copy(o.position); i2.quaternion.copy(o.quaternion); i2.scale.copy(o.scale); i2.renderOrder = 1; o.parent.add(i2); }
+      for (const o of inner){ const i2 = new THREE.Mesh(o.geometry, mat.inner); i2.position.copy(o.position); i2.quaternion.copy(o.quaternion); i2.scale.copy(o.scale); i2.renderOrder = 1; o.parent.add(i2); }
       const bb = new THREE.Box3().setFromObject(g.scene), c = bb.getCenter(new THREE.Vector3()); radius = bb.getSize(new THREE.Vector3()).length() / 2;
-      buildRoute(route, g.scene, mats);
+      buildRoute(route, g.scene);
       g.scene.position.sub(c); rig.add(g.scene); rig.updateMatrixWorld(true);
+      selRing = new THREE.Mesh(new THREE.RingGeometry(1.0, 1.06, 64), new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false, fog: false, side: THREE.DoubleSide}));
+      selRing.visible = false; selRing.renderOrder = 11; rig.add(selRing);
+      const data = {}; (route.findings || []).forEach(f => data[f.id] = f);
       const usedY = {'1': [], '-1': []};
-      lesions.sort((p, q) => new THREE.Box3().setFromObject(q[1]).getCenter(new THREE.Vector3()).y - new THREE.Box3().setFromObject(p[1]).getCenter(new THREE.Vector3()).y);
-      for (const [nm, o] of lesions){ const id = nm.slice(0, 2), L = LABELS[id]; if (!L) continue;
-        const lb = new THREE.Box3().setFromObject(o), lc = lb.getCenter(new THREE.Vector3()), side = lc.x >= 0 ? 1 : -1;
+      const centre = o => new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
+      lesions.sort((p, q) => centre(q[1]).y - centre(p[1]).y);
+      for (const [nm, o] of lesions){ const id = nm.slice(0, 2), f = data[id]; if (!f) continue;
+        const lb = new THREE.Box3().setFromObject(o), lc = lb.getCenter(new THREE.Vector3()), side = lc.x >= 0 ? 1 : -1, d = describe(f);
         let ly = lc.y + (id === 'F1' ? -0.034 : 0.014); while (usedY[side].some(v => Math.abs(v - ly) < 0.02)) ly -= 0.02; usedY[side].push(ly);
-        const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: textPlane([[L[0], 58], [L[1], 26]], 512, 132, 30), depthTest: false, transparent: true, fog: false}));
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: textPlane([[d.size, 58], [d.lobe.toUpperCase() + ' / ' + d.kind, 26]], 512, 132), depthTest: false, transparent: true, fog: false}));
         sp.scale.set(0.074, 0.019, 1); sp.position.set(lc.x + side * 0.046, ly, lc.z + 0.02); sp.renderOrder = 10; rig.add(sp);
         const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints([lc, new THREE.Vector3(lc.x + side * 0.016, ly - 0.006, lc.z + 0.02)]), new THREE.LineBasicMaterial({color: 0xffffff, depthTest: false, transparent: true, opacity: 0.8, fog: false}));
-        ln.renderOrder = 9; rig.add(ln); }
+        ln.renderOrder = 9; rig.add(ln);
+        const halo = new THREE.Mesh(new THREE.SphereGeometry(Math.max(lb.getSize(new THREE.Vector3()).length() / 2, 0.009), 12, 8), new THREE.MeshBasicMaterial({visible: false}));   // easy-to-hit target for small lesions
+        halo.position.copy(lc); rig.add(halo);
+        o.userData.finding = id; sp.userData.finding = id; halo.userData.finding = id; pick.push(o, sp, halo);
+        findings[id] = {mesh: o, data: f, r: lb.getSize(new THREE.Vector3()).length() / 2};
+      }
       const d0 = radius / Math.tan(Math.PI * 35 / 360) * 1.02;
       ctl.target.set(0, 0, 0); cam.position.set(0, 0, d0); cam.near = radius / 100; cam.far = radius * 60; cam.updateProjectionMatrix();
       ctl.minDistance = radius * 0.15; ctl.maxDistance = radius * 8;
+      home = {c: cam.position.clone(), t: ctl.target.clone()};
       scene.fog = new THREE.Fog(BG, d0, d0 + radius * 4.5);
-      status.textContent = ''; apply(); setProgress(1); playBtn.disabled = false;
+      status.textContent = ''; apply(); setProgress(1); $('playBtn').disabled = false; $('homeBtn').disabled = false;
       window.__lungReady = true;
     }, () => fail('The 3D model did not open. The images and video on this page still work.'));
   }).catch(() => fail('The 3D model did not load. The images and video on this page still work.'));
