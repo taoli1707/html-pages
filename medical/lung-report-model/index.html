@@ -36,6 +36,9 @@ td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowra
 img,video{max-width:100%;display:block;border:1px solid var(--line);border-radius:6px}
 pre{margin:0;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:.82rem;white-space:pre-wrap}
 ul{margin:0;padding-left:20px;max-width:65ch}
+button{font:inherit;font-weight:500;color:var(--bg);background:var(--route);border:0;border-radius:6px;padding:8px 14px;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .key{font-family:var(--mono);font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px}
 .key i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:6px}
 footer{color:var(--muted);font-size:.82rem;border-top:1px solid var(--line);padding-top:14px}
@@ -69,14 +72,16 @@ a{color:var(--route)}
 </section>
 
 <section>
-  <h2>Interactive 3D model</h2>
+  <h2>Interactive 3D model with headset mode</h2>
   <div id="mv" role="img" aria-label="Template lungs with four lesions and a bronchoscope route"><div id="status">Loading the 3D model (8 MB)</div></div>
   <div class="controls">
     <label for="airA">Airway opacity <input id="airA" type="range" min="0.1" max="1" step="0.05" value="0.4"></label>
     <label for="treeA">Fine branches <input id="treeA" type="range" min="0" max="1" step="0.05" value="0.5"></label>
     <label for="lungA">Lung outline <input id="lungA" type="range" min="0" max="0.4" step="0.02" value="0.06"></label>
   </div>
+  <div class="controls"><button id="playBtn" type="button" disabled>Play the scope route</button></div>
   <div class="key"><span><i style="background:#16181c"></i>bronchoscope, 213 mm in the airway</span><span><i style="background:#f4f6f8"></i>sampling tool</span><span><i style="background:#7a3fd0"></i>lesions</span></div>
+  <p class="lede" id="vrNote" style="font-size:.85rem">Headset mode: open this page in the browser of a virtual reality headset. Then use the ENTER VR button in the viewer.</p>
   <p class="lede" style="font-size:.85rem">One finger or left button rotates. Pinch or scroll zooms. Two fingers or right button move the view.</p>
 </section>
 
@@ -108,50 +113,127 @@ LUNGS / AIRWAYS / PLEURA: Left lower lobe solid spiculated pulmonary nodule meas
     <li>The template has no mouth or larynx. The scope enters at the upper trachea.</li>
     <li>The fine bronchial branches are computer-generated. They are not from a scan.</li>
     <li>The route does not check the bronchoscope diameter.</li>
-    <li>The images and the video are pre-rendered. They are not a real-time headset view.</li>
+    <li>The images and the video are pre-rendered. The interactive model is real-time and has a headset mode.</li>
+    <li>The headset mode is not yet tested on a real headset.</li>
     <li>The interactive model uses simpler shading than the rendered images.</li>
   </ul>
 </section>
 
 <footer>Anatomy: BodyParts3D, &copy; The Database Center for Life Science, licensed under CC Attribution-Share Alike 2.1 Japan. The 3D model on this page is a derived work under the same license.</footer>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script>
-(function(){
-  const box = document.getElementById('mv'), status = document.getElementById('status');
-  const lung = document.getElementById('lungA'), air = document.getElementById('airA'), tree = document.getElementById('treeA');
-  function fail(msg){ status.textContent = msg; }
-  if(!window.THREE){ fail('The 3D library did not load. The image and video on this page still work.'); return; }
-  let renderer;
-  try{ renderer = new THREE.WebGLRenderer({antialias:true}); }catch(e){ fail('This browser cannot show 3D graphics. The image and video on this page still work.'); return; }
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
+
+const box = document.getElementById('mv'), status = document.getElementById('status');
+const lung = document.getElementById('lungA'), air = document.getElementById('airA'), tree = document.getElementById('treeA');
+const playBtn = document.getElementById('playBtn'), vrNote = document.getElementById('vrNote');
+const BG = 0xb9c6d6;
+const LABELS = {F1: ['21 x 13 mm', 'LEFT LOWER LOBE / solid, spiculated'], F2: ['5 x 3 mm', 'RIGHT LOWER LOBE / solid'],
+                F3: ['5 mm', 'RIGHT UPPER LOBE / ground glass'], F4: ['4 mm*', 'RIGHT LOWER LOBE / calcified']};
+function fail(msg){ status.textContent = msg; }
+
+let renderer;
+try { renderer = new THREE.WebGLRenderer({antialias: true}); }
+catch (e) { fail('This browser cannot show 3D graphics. The images and video on this page still work.'); }
+if (renderer) start();
+
+function textPlane(lines, w, h, px, opts){
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  g.fillStyle = (opts && opts.bg) || 'rgba(14,20,32,0.78)'; g.beginPath();
+  const r = 18; g.moveTo(r, 0); g.arcTo(w, 0, w, h, r); g.arcTo(w, h, 0, h, r); g.arcTo(0, h, 0, 0, r); g.arcTo(0, 0, w, 0, r); g.fill();
+  let y = 0;
+  lines.forEach((ln, i) => { const size = Array.isArray(ln) ? ln[1] : px; const t = Array.isArray(ln) ? ln[0] : ln;
+    g.font = (i === 0 ? '600 ' : '400 ') + size + 'px system-ui, sans-serif'; g.fillStyle = i === 0 ? '#ffffff' : '#c7d1de';
+    y += size * 1.32; g.fillText(t, 22, y); });
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; return tex;
+}
+
+function start(){
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.setClearColor(0xb9c6d6);
+  renderer.setClearColor(BG);
+  renderer.xr.enabled = true; renderer.xr.setReferenceSpaceType('local-floor');
   box.insertBefore(renderer.domElement, status);
   const scene = new THREE.Scene();
-  const cam = new THREE.PerspectiveCamera(35, 1, 0.01, 10);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a94a6, 0.55));
-  const key = new THREE.DirectionalLight(0xffffff, 0.6); key.position.set(-0.5, 0.8, 1); scene.add(key);
-  const rim = new THREE.DirectionalLight(0x9fb8ff, 0.4); rim.position.set(0.5, 0.2, -1); scene.add(rim);
-  const ctl = new THREE.OrbitControls(cam, renderer.domElement);
-  ctl.enableDamping = true; ctl.addEventListener('change', () => dirty = true);
-  let dirty = true; const lobes = [], airway = [], lines = [];
-  function size(){ const w = box.clientWidth, h = box.clientHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); dirty = true; }
+  const cam = new THREE.PerspectiveCamera(35, 1, 0.01, 30);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a94a6, 1.7));
+  const key = new THREE.DirectionalLight(0xffffff, 1.9); key.position.set(-0.5, 0.8, 1); scene.add(key);
+  const ctl = new OrbitControls(cam, renderer.domElement); ctl.enableDamping = true;
+  let dirty = true; ctl.addEventListener('change', () => dirty = true);
+  const rig = new THREE.Group(); scene.add(rig);                 // the model lives here; the headset mode moves and scales the rig
+  const lobes = [], airway = [], lines = [], scopeParts = {rings: []};
+  let anim = null, radius = 0.2;
+
+  function size(){ if (renderer.xr.isPresenting) return; const w = box.clientWidth, h = box.clientHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); dirty = true; }
   window.addEventListener('resize', size); size();
   function apply(){
-    for(const m of lobes){ m.opacity = +lung.value; m.visible = m.opacity > 0.001; }
-    for(const m of airway){ m.opacity = +air.value; m.transparent = m.opacity < 1; m.depthWrite = m.opacity >= 1; m.visible = m.opacity > 0.001; m.needsUpdate = true; }
-    for(const m of lines){ m.opacity = +tree.value; m.visible = m.opacity > 0.001; }
+    for (const m of lobes){ m.opacity = +lung.value; m.visible = m.opacity > 0.001; }
+    for (const m of airway){ m.opacity = +air.value; m.transparent = m.opacity < 1; m.depthWrite = m.opacity >= 1; m.needsUpdate = true; }
+    for (const m of lines){ m.opacity = +tree.value; m.visible = m.opacity > 0.001; }
     dirty = true;
   }
-  lung.addEventListener('input', apply); air.addEventListener('input', apply); tree.addEventListener('input', apply);
-  (function loop(){ requestAnimationFrame(loop); ctl.update(); if(dirty){ dirty = false; renderer.render(scene, cam); } })();
-  fetch('lung_model.json').then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
+  [lung, air, tree].forEach(el => el.addEventListener('input', apply));
+
+  // scope animation: reveal the scope tube from the top, then the tool
+  function reveal(mesh, f){ if (!mesh) return; const n = mesh.geometry.index ? mesh.geometry.index.count : mesh.geometry.attributes.position.count;
+    mesh.geometry.setDrawRange(0, Math.floor(n * Math.max(0, Math.min(1, f)) / 3) * 3); mesh.visible = f > 0.001; }
+  function setProgress(p){
+    const ps = Math.min(p / 0.74, 1), pt = (p - 0.78) / 0.22;
+    reveal(scopeParts.scope, ps); reveal(scopeParts.tool, pt);
+    if (scopeParts.tip) scopeParts.tip.visible = ps >= 1; scopeParts.rings.forEach(r => r.visible = ps >= 1);
+    dirty = true;
+  }
+  function play(){ anim = {t0: performance.now(), dur: 8000}; }
+  playBtn.addEventListener('click', play);
+
+  // headset mode
+  const vrOnly = new THREE.Group(); vrOnly.visible = false; scene.add(vrOnly);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBasicMaterial({color: 0xa7b6c8}));
+  floor.rotation.x = -Math.PI / 2; vrOnly.add(floor);
+  const help = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.20), new THREE.MeshBasicMaterial({map: textPlane(
+    [['Lung Report Model', 44], ['Trigger or pinch: play the scope', 30], ['Grip: grab and move the model', 30], ['Stick left or right: rotate', 30], ['Stick up or down: change size', 30], ['Schematic. Lesion position = lobe only.', 26]], 736, 320, 30), transparent: true, fog: false}));
+  help.position.set(-0.62, 1.30, -0.62); help.rotation.y = 0.75; vrOnly.add(help);
+  const saved = {};
+  const ctrls = [0, 1].map(i => { const c = renderer.xr.getController(i);
+    c.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, -0.35)]), new THREE.LineBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.6, fog: false})));
+    c.add(new THREE.Mesh(new THREE.SphereGeometry(0.012, 12, 8), new THREE.MeshBasicMaterial({color: 0x16181c, fog: false})));
+    c.addEventListener('selectstart', play);
+    c.addEventListener('squeezestart', () => c.attach(rig));
+    c.addEventListener('squeezeend', () => { if (rig.parent === c) scene.attach(rig); });
+    c.visible = false; scene.add(c); return c; });
+  renderer.xr.addEventListener('sessionstart', () => {
+    saved.fog = scene.fog; saved.pos = rig.position.clone(); saved.quat = rig.quaternion.clone(); saved.scale = rig.scale.clone();
+    scene.attach(rig); rig.position.set(0, 1.25, -0.62); rig.quaternion.identity(); rig.scale.setScalar(1.6);
+    scene.fog = new THREE.Fog(BG, 0.6, 3.2); vrOnly.visible = true; ctrls.forEach(c => c.visible = true); ctl.enabled = false; play();
+  });
+  renderer.xr.addEventListener('sessionend', () => {
+    scene.attach(rig); rig.position.copy(saved.pos); rig.quaternion.copy(saved.quat); rig.scale.copy(saved.scale);
+    scene.fog = saved.fog; vrOnly.visible = false; ctrls.forEach(c => c.visible = false); ctl.enabled = true; size(); dirty = true;
+  });
+  if ('xr' in navigator) box.appendChild(VRButton.createButton(renderer));   // the button reports by itself when the device has no headset mode
+
+  let last = performance.now();
+  renderer.setAnimationLoop(() => {
+    const now = performance.now(), dt = Math.min((now - last) / 1000, 0.1); last = now;
+    if (anim){ const p = (now - anim.t0) / anim.dur; setProgress(Math.min(p, 1)); if (p >= 1) anim = null; }
+    const xr = renderer.xr.isPresenting;
+    if (xr){
+      const ses = renderer.xr.getSession();
+      if (ses && rig.parent === scene) for (const src of ses.inputSources){ const gp = src.gamepad; if (!gp || gp.axes.length < 4) continue;
+        const ax = gp.axes[2], ay = gp.axes[3];
+        if (Math.abs(ax) > 0.2) rig.rotation.y += ax * dt * 1.6;
+        if (Math.abs(ay) > 0.2) rig.scale.setScalar(Math.max(0.6, Math.min(8, rig.scale.x * (1 - ay * dt * 0.9)))); }
+    } else ctl.update();
+    if (xr || dirty || anim){ dirty = false; renderer.render(scene, cam); }
+  });
+
+  fetch('lung_model.json').then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
     const bin = atob(d.glb), buf = new Uint8Array(bin.length);
-    for(let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-    new THREE.GLTFLoader().parse(buf.buffer, '', g => {
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    new GLTFLoader().parse(buf.buffer, '', g => {
       const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({color: c, roughness: 0.5, metalness: 0}, o || {}));
       const mats = {
         M_airway: std(0x8496ad, {roughness: 0.45, side: THREE.DoubleSide}),
@@ -162,22 +244,37 @@ LUNGS / AIRWAYS / PLEURA: Left lower lobe solid spiculated pulmonary nodule meas
       };
       const lineMat = new THREE.LineBasicMaterial({color: 0x5f6f84, transparent: true, depthWrite: false});
       lobes.push(mats.M_lobe_shell); airway.push(mats.M_airway); lines.push(lineMat);
+      const lesions = [];
       g.scene.traverse(o => {
-        if(o.isLine || o.isLineSegments){ o.material = lineMat; o.renderOrder = 1; return; }
-        if(!o.isMesh) return;
-        const n = (o.material && o.material.name) || '';
+        if (o.isLine || o.isLineSegments){ o.material = lineMat; o.renderOrder = 1; return; }
+        if (!o.isMesh) return;
+        const n = (o.material && o.material.name) || '', nm = o.name || (o.parent && o.parent.name) || '';
         o.material = mats[n] || mats.M_airway;
         o.renderOrder = n === 'M_lobe_shell' ? 4 : n === 'M_airway' ? 3 : 2;
+        if (n === 'M_lesion') lesions.push([nm, o]);
+        if (n === 'M_scope') scopeParts.scope = o; else if (n === 'M_tool') scopeParts.tool = o;
+        else if (n === 'M_scope_tip') scopeParts.tip = o; else if (n === 'M_scope_ring') scopeParts.rings.push(o);
       });
-      scene.add(g.scene);
-      const bb = new THREE.Box3().setFromObject(g.scene), c = bb.getCenter(new THREE.Vector3()), r = bb.getSize(new THREE.Vector3()).length() / 2;
-      ctl.target.copy(c); cam.position.set(c.x, c.y, c.z + r / Math.tan(Math.PI * 35 / 360) * 1.02); cam.near = r / 100; cam.far = r * 20; cam.updateProjectionMatrix();
-      ctl.minDistance = r * 0.15; ctl.maxDistance = r * 8;
-      const d0 = cam.position.distanceTo(c); scene.fog = new THREE.Fog(0xb9c6d6, d0, d0 + r * 4.5);
-      status.textContent = ''; apply();
-    }, e => fail('The 3D model did not open. The image and video on this page still work.'));
-  }).catch(e => fail('The 3D model did not load. The image and video on this page still work.'));
-})();
+      const bb = new THREE.Box3().setFromObject(g.scene), c = bb.getCenter(new THREE.Vector3()); radius = bb.getSize(new THREE.Vector3()).length() / 2;
+      g.scene.position.sub(c); rig.add(g.scene); rig.updateMatrixWorld(true);
+      const usedY = {'1': [], '-1': []};
+      lesions.sort((p, q) => new THREE.Box3().setFromObject(q[1]).getCenter(new THREE.Vector3()).y - new THREE.Box3().setFromObject(p[1]).getCenter(new THREE.Vector3()).y);
+      for (const [nm, o] of lesions){ const id = nm.slice(0, 2), L = LABELS[id]; if (!L) continue;
+        const lb = new THREE.Box3().setFromObject(o), lc = lb.getCenter(new THREE.Vector3()), side = lc.x >= 0 ? 1 : -1;
+        let ly = lc.y + 0.014; while (usedY[side].some(v => Math.abs(v - ly) < 0.02)) ly -= 0.02; usedY[side].push(ly);
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: textPlane([[L[0], 58], [L[1], 26]], 512, 132, 30), depthTest: false, transparent: true, fog: false}));
+        sp.scale.set(0.074, 0.019, 1); sp.position.set(lc.x + side * 0.046, ly, lc.z + 0.02); sp.renderOrder = 10; rig.add(sp);
+        const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints([lc, new THREE.Vector3(lc.x + side * 0.016, ly - 0.006, lc.z + 0.02)]), new THREE.LineBasicMaterial({color: 0xffffff, depthTest: false, transparent: true, opacity: 0.8, fog: false}));
+        ln.renderOrder = 9; rig.add(ln); }
+      const d0 = radius / Math.tan(Math.PI * 35 / 360) * 1.02;
+      ctl.target.set(0, 0, 0); cam.position.set(0, 0, d0); cam.near = radius / 100; cam.far = radius * 60; cam.updateProjectionMatrix();
+      ctl.minDistance = radius * 0.15; ctl.maxDistance = radius * 8;
+      scene.fog = new THREE.Fog(BG, d0, d0 + radius * 4.5);
+      status.textContent = ''; apply(); setProgress(1); playBtn.disabled = false;
+      window.__lungReady = true;
+    }, () => fail('The 3D model did not open. The images and video on this page still work.'));
+  }).catch(() => fail('The 3D model did not load. The images and video on this page still work.'));
+}
 </script>
 </body>
 </html>
