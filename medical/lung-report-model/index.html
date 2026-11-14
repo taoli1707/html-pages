@@ -19,9 +19,9 @@ h2{font-size:1.05rem;font-weight:600;margin:0 0 10px;text-wrap:balance}
 p{margin:0;max-width:65ch}
 .lede{color:var(--muted);margin-top:6px}
 .note{border-left:3px solid var(--lesion);background:var(--panel);padding:10px 14px;font-size:.92rem}
-#mv{width:100%;height:min(55vh,520px);background:#0a0f18;border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden;touch-action:none}
+#mv{width:100%;height:min(55vh,520px);background:#b9c6d6;border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden;touch-action:none}
 #mv canvas{display:block;width:100%;height:100%}
-#status{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.9rem;pointer-events:none;padding:16px;text-align:center}
+#status{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#2a3546;font-size:.9rem;pointer-events:none;padding:16px;text-align:center}
 .controls{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:10px;font-size:.9rem;color:var(--muted)}
 .controls label{display:flex;align-items:center;gap:8px}
 input[type=range]{accent-color:var(--route);width:140px}
@@ -53,7 +53,7 @@ a{color:var(--route)}
 
 <section>
   <h2>Front view</h2>
-  <img src="hero_front.jpg" width="1920" height="1080" style="height:auto" alt="Gray lungs with a fine bronchial tree, four labelled lesions, and a black bronchoscope in a cutaway airway that leads to a purple 21 mm nodule">
+  <img src="hero_front.jpg" width="1920" height="1080" style="height:auto" alt="Blue-gray lungs drawn as a fine bronchial tree with particle clouds, four labelled lesions, and a black bronchoscope in a cutaway airway that leads to a purple 21 mm nodule">
 </section>
 
 <section>
@@ -70,12 +70,13 @@ a{color:var(--route)}
 
 <section>
   <h2>Interactive 3D model</h2>
-  <div id="mv" role="img" aria-label="Template lungs with four lesions and a bronchoscope route"><div id="status">Loading the 3D model (5 MB)</div></div>
+  <div id="mv" role="img" aria-label="Template lungs with four lesions and a bronchoscope route"><div id="status">Loading the 3D model (8 MB)</div></div>
   <div class="controls">
-    <label for="lungA">Lung opacity <input id="lungA" type="range" min="0" max="0.6" step="0.02" value="0.16"></label>
-    <label for="airA">Airway opacity <input id="airA" type="range" min="0" max="1" step="0.05" value="0.35"></label>
+    <label for="airA">Airway opacity <input id="airA" type="range" min="0.1" max="1" step="0.05" value="0.4"></label>
+    <label for="treeA">Fine branches <input id="treeA" type="range" min="0" max="1" step="0.05" value="0.5"></label>
+    <label for="lungA">Lung outline <input id="lungA" type="range" min="0" max="0.4" step="0.02" value="0.06"></label>
   </div>
-  <div class="key"><span><i style="background:var(--route)"></i>route in the airway, 224 mm</span><span><i style="background:#ffd91a"></i>last leg outside the airway, 15 mm</span></div>
+  <div class="key"><span><i style="background:#16181c"></i>bronchoscope, 213 mm in the airway</span><span><i style="background:#f4f6f8"></i>sampling tool</span><span><i style="background:#7a3fd0"></i>lesions</span></div>
   <p class="lede" style="font-size:.85rem">One finger or left button rotates. Pinch or scroll zooms. Two fingers or right button move the view.</p>
 </section>
 
@@ -108,7 +109,7 @@ LUNGS / AIRWAYS / PLEURA: Left lower lobe solid spiculated pulmonary nodule meas
     <li>The fine bronchial branches are computer-generated. They are not from a scan.</li>
     <li>The route does not check the bronchoscope diameter.</li>
     <li>The images and the video are pre-rendered. They are not a real-time headset view.</li>
-    <li>The interactive model uses a simpler style than the rendered images.</li>
+    <li>The interactive model uses simpler shading than the rendered images.</li>
   </ul>
 </section>
 
@@ -120,48 +121,59 @@ LUNGS / AIRWAYS / PLEURA: Left lower lobe solid spiculated pulmonary nodule meas
 <script>
 (function(){
   const box = document.getElementById('mv'), status = document.getElementById('status');
-  const lung = document.getElementById('lungA'), air = document.getElementById('airA');
+  const lung = document.getElementById('lungA'), air = document.getElementById('airA'), tree = document.getElementById('treeA');
   function fail(msg){ status.textContent = msg; }
   if(!window.THREE){ fail('The 3D library did not load. The image and video on this page still work.'); return; }
   let renderer;
   try{ renderer = new THREE.WebGLRenderer({antialias:true}); }catch(e){ fail('This browser cannot show 3D graphics. The image and video on this page still work.'); return; }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.setClearColor(0x0a0f18);
+  renderer.setClearColor(0xb9c6d6);
   box.insertBefore(renderer.domElement, status);
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(35, 1, 0.01, 10);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x334055, 0.9));
-  const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(-0.4, 0.6, 1); scene.add(key);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a94a6, 0.55));
+  const key = new THREE.DirectionalLight(0xffffff, 0.6); key.position.set(-0.5, 0.8, 1); scene.add(key);
   const rim = new THREE.DirectionalLight(0x9fb8ff, 0.4); rim.position.set(0.5, 0.2, -1); scene.add(rim);
   const ctl = new THREE.OrbitControls(cam, renderer.domElement);
   ctl.enableDamping = true; ctl.addEventListener('change', () => dirty = true);
-  let dirty = true; const lobes = [], airway = [];
+  let dirty = true; const lobes = [], airway = [], lines = [];
   function size(){ const w = box.clientWidth, h = box.clientHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); dirty = true; }
   window.addEventListener('resize', size); size();
   function apply(){
     for(const m of lobes){ m.opacity = +lung.value; m.visible = m.opacity > 0.001; }
     for(const m of airway){ m.opacity = +air.value; m.transparent = m.opacity < 1; m.depthWrite = m.opacity >= 1; m.visible = m.opacity > 0.001; m.needsUpdate = true; }
+    for(const m of lines){ m.opacity = +tree.value; m.visible = m.opacity > 0.001; }
     dirty = true;
   }
-  lung.addEventListener('input', apply); air.addEventListener('input', apply);
+  lung.addEventListener('input', apply); air.addEventListener('input', apply); tree.addEventListener('input', apply);
   (function loop(){ requestAnimationFrame(loop); ctl.update(); if(dirty){ dirty = false; renderer.render(scene, cam); } })();
   fetch('lung_model.json').then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
     const bin = atob(d.glb), buf = new Uint8Array(bin.length);
     for(let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
     new THREE.GLTFLoader().parse(buf.buffer, '', g => {
+      const std = (c, o) => new THREE.MeshStandardMaterial(Object.assign({color: c, roughness: 0.5, metalness: 0}, o || {}));
+      const mats = {
+        M_airway: std(0x8496ad, {roughness: 0.45, side: THREE.DoubleSide}),
+        M_lobe_shell: std(0xffffff, {transparent: true, depthWrite: false, side: THREE.DoubleSide}),
+        M_lesion: std(0x7a3fd0, {roughness: 0.3, emissive: 0x3a1470, emissiveIntensity: 0.6, fog: false}),
+        M_scope: std(0x16181c, {roughness: 0.3, fog: false}), M_scope_ring: std(0x2a2d33, {roughness: 0.35, fog: false}),
+        M_scope_tip: std(0x8a9099, {roughness: 0.25, metalness: 0.8, fog: false}), M_tool: std(0xf4f6f8, {roughness: 0.2, emissive: 0x888888, fog: false})
+      };
+      const lineMat = new THREE.LineBasicMaterial({color: 0x5f6f84, transparent: true, depthWrite: false});
+      lobes.push(mats.M_lobe_shell); airway.push(mats.M_airway); lines.push(lineMat);
       g.scene.traverse(o => {
+        if(o.isLine || o.isLineSegments){ o.material = lineMat; o.renderOrder = 1; return; }
         if(!o.isMesh) return;
-        const m = o.material, n = m.name || '';
-        m.side = THREE.DoubleSide;
-        if(n.indexOf('M_Lobe_') === 0){ m.transparent = true; m.depthWrite = false; o.renderOrder = 3; lobes.push(m); }
-        else if(n === 'M_Bronchial_tree'){ o.renderOrder = 2; airway.push(m); }
-        else { o.renderOrder = 1; if(n.indexOf('M_route') === 0 || n.indexOf('M_lesion') === 0){ m.emissiveIntensity = 1; } }
+        const n = (o.material && o.material.name) || '';
+        o.material = mats[n] || mats.M_airway;
+        o.renderOrder = n === 'M_lobe_shell' ? 4 : n === 'M_airway' ? 3 : 2;
       });
       scene.add(g.scene);
       const bb = new THREE.Box3().setFromObject(g.scene), c = bb.getCenter(new THREE.Vector3()), r = bb.getSize(new THREE.Vector3()).length() / 2;
       ctl.target.copy(c); cam.position.set(c.x, c.y, c.z + r / Math.tan(Math.PI * 35 / 360) * 1.02); cam.near = r / 100; cam.far = r * 20; cam.updateProjectionMatrix();
       ctl.minDistance = r * 0.15; ctl.maxDistance = r * 8;
+      const d0 = cam.position.distanceTo(c); scene.fog = new THREE.Fog(0xb9c6d6, d0, d0 + r * 4.5);
       status.textContent = ''; apply();
     }, e => fail('The 3D model did not open. The image and video on this page still work.'));
   }).catch(e => fail('The 3D model did not load. The image and video on this page still work.'));
