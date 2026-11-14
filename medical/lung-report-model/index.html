@@ -73,9 +73,9 @@ a{color:var(--route)}
 
 <section>
   <h2>Interactive 3D model with headset mode</h2>
-  <div id="mv" role="img" aria-label="Template lungs with four lesions and a bronchoscope route"><div id="status">Loading the 3D model (8 MB)</div></div>
+  <div id="mv" role="img" aria-label="Template lungs with four lesions and a bronchoscope route"><div id="status">Loading the 3D model (11 MB)</div></div>
   <div class="controls">
-    <label for="airA">Airway opacity <input id="airA" type="range" min="0.1" max="1" step="0.05" value="1"></label>
+    <label for="airA">Airway wall <input id="airA" type="range" min="0.1" max="1" step="0.05" value="1"></label>
     <label for="treeA">Fine branches <input id="treeA" type="range" min="0" max="1" step="0.05" value="0.6"></label>
     <label for="lungA">Lung outline <input id="lungA" type="range" min="0" max="0.4" step="0.02" value="0"></label>
   </div>
@@ -175,7 +175,7 @@ function start(){
   window.addEventListener('resize', size); size();
   function apply(){
     for (const m of lobes){ m.opacity = +lung.value; m.visible = m.opacity > 0.001; }
-    for (const m of airway){ m.opacity = +air.value; m.transparent = m.opacity < 1; m.depthWrite = m.opacity >= 1; m.needsUpdate = true; }
+    for (const u of airway) u.value = +air.value;
     lines.forEach((m, i) => { m.opacity = +tree.value * (i ? 1.3 : 1.0); m.visible = m.opacity > 0.001; });
     dirty = true;
   }
@@ -279,24 +279,30 @@ function start(){
     for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
     new GLTFLoader().parse(buf.buffer, '', g => {
       const phys = (c, o) => new THREE.MeshPhysicalMaterial(Object.assign({color: c, roughness: 0.5, metalness: 0, envMapIntensity: 0.55}, o || {}));
-      const airMat = phys(0x93a3b8, {roughness: 0.4, clearcoat: 0.3, clearcoatRoughness: 0.4, sheen: 0.5, sheenColor: new THREE.Color(0xcfe0f5), side: THREE.DoubleSide, envMapIntensity: 0.45});
-      airMat.onBeforeCompile = sh => {                               // cutaway + inside tint + wrinkled surface from 3D noise
+      // airway in two layers: an opaque inner wall, and an outer wall that turns to clear tissue along the route
+      const airMat = phys(0x93a3b8, {roughness: 0.46, clearcoat: 0.22, clearcoatRoughness: 0.5, sheen: 0.6, sheenColor: new THREE.Color(0xcfe0f5), side: THREE.FrontSide, envMapIntensity: 0.4, transparent: true, depthWrite: true});
+      const airUni = {uAir: {value: 1}};
+      airMat.onBeforeCompile = sh => {
+        sh.uniforms.uAir = airUni.uAir;
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec4 color;\nvarying float vCut;\nvarying vec3 vObj;')
           .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCut = color.r; vObj = position;');
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-varying float vCut; varying vec3 vObj;
+uniform float uAir; varying float vCut; varying vec3 vObj;
 float h31(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
 float vn(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(mix(h31(i), h31(i + vec3(1,0,0)), f.x), mix(h31(i + vec3(0,1,0)), h31(i + vec3(1,1,0)), f.x), f.y),
              mix(mix(h31(i + vec3(0,0,1)), h31(i + vec3(1,0,1)), f.x), mix(h31(i + vec3(0,1,1)), h31(i + vec3(1,1,1)), f.x), f.y), f.z); }
-float surf(vec3 p){ return 0.6 * vn(p * 240.0) + 0.4 * vn(p * vec3(800.0, 100.0, 800.0)); }`)
-          .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (vCut > 0.5 && gl_FrontFacing) discard;')
-          .replace('#include <color_fragment>', '#include <color_fragment>\nif (!gl_FrontFacing) diffuseColor.rgb = vec3(0.42, 0.27, 0.32);')
+float surf(vec3 p){ return 0.65 * vn(p * 170.0) + 0.35 * vn(p * vec3(520.0, 80.0, 520.0)); }`)
+          .replace('#include <color_fragment>', `#include <color_fragment>
+{ float fres = pow(1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))), 1.5);
+  float clearTissue = mix(0.26, 0.95, fres);                       // see-through at the centre, solid at the silhouette
+  diffuseColor.a *= uAir * mix(1.0, clearTissue, smoothstep(0.12, 0.55, vCut)); }`)
           .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
-if (gl_FrontFacing) { float hh = surf(vObj) * 0.0007; vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition);
+{ float hh = surf(vObj) * 0.0006; vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition);
   vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
   vec3 grad = sign(det) * (dFdx(hh) * r1 + dFdy(hh) * r2); normal = normalize(abs(det) * normal - grad); }`);
       };
+      const innerMat = phys(0x80656f, {roughness: 0.7, side: THREE.BackSide, envMapIntensity: 0.25});
       const mats = {
         M_airway: airMat,
         M_lobe_shell: phys(0xffffff, {transparent: true, depthWrite: false, side: THREE.DoubleSide, envMapIntensity: 0.2}),
@@ -310,7 +316,8 @@ if (gl_FrontFacing) { float hh = surf(vObj) * 0.0007; vec3 dpx = dFdx(-vViewPosi
       dg.fillStyle = grd; dg.fillRect(0, 0, 64, 64);
       const cloudMat = new THREE.PointsMaterial({color: 0xeef3fa, size: 0.0046, sizeAttenuation: true, map: new THREE.CanvasTexture(dot), transparent: true, opacity: 1, depthWrite: false, fog: true});
       const lineMat = new THREE.LineBasicMaterial({color: 0xdfe7f1, transparent: true, depthWrite: false});
-      lobes.push(mats.M_lobe_shell); airway.push(mats.M_airway); lines.push(lineMat); lines.push(cloudMat);
+      lobes.push(mats.M_lobe_shell); airway.push(airUni.uAir); lines.push(lineMat); lines.push(cloudMat);
+      const inner = [];
       const lesions = [];
       g.scene.traverse(o => {
         const own = o.name || '', par = (o.parent && o.parent.name) || '';
@@ -320,8 +327,10 @@ if (gl_FrontFacing) { float hh = surf(vObj) * 0.0007; vec3 dpx = dFdx(-vViewPosi
         const n = (o.material && o.material.name) || '', nm = o.name || (o.parent && o.parent.name) || '';
         o.material = mats[n] || mats.M_airway;
         o.renderOrder = n === 'M_lobe_shell' ? 6 : n === 'M_airway' ? 3 : 2;
+        if (n === 'M_airway') inner.push(o);
         if (n === 'M_lesion') lesions.push([nm, o]);
       });
+      for (const o of inner){ const i2 = new THREE.Mesh(o.geometry, innerMat); i2.position.copy(o.position); i2.quaternion.copy(o.quaternion); i2.scale.copy(o.scale); i2.renderOrder = 1; o.parent.add(i2); }
       const bb = new THREE.Box3().setFromObject(g.scene), c = bb.getCenter(new THREE.Vector3()); radius = bb.getSize(new THREE.Vector3()).length() / 2;
       buildRoute(route, g.scene, mats);
       g.scene.position.sub(c); rig.add(g.scene); rig.updateMatrixWorld(true);
