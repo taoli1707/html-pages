@@ -75,7 +75,7 @@ a{color:var(--route)}
   <h2>Interactive 3D model with headset mode</h2>
   <div id="mv" role="img" aria-label="Template lungs with four lesions and a bronchoscope route"><div id="status">Loading the 3D model (8 MB)</div></div>
   <div class="controls">
-    <label for="airA">Airway opacity <input id="airA" type="range" min="0.1" max="1" step="0.05" value="0.4"></label>
+    <label for="airA">Airway opacity <input id="airA" type="range" min="0.1" max="1" step="0.05" value="0.3"></label>
     <label for="treeA">Fine branches <input id="treeA" type="range" min="0" max="1" step="0.05" value="0.5"></label>
     <label for="lungA">Lung outline <input id="lungA" type="range" min="0" max="0.4" step="0.02" value="0.06"></label>
   </div>
@@ -177,16 +177,40 @@ function start(){
   }
   [lung, air, tree].forEach(el => el.addEventListener('input', apply));
 
-  // scope animation: reveal the scope tube from the top, then the tool
-  function reveal(mesh, f){ if (!mesh) return; const n = mesh.geometry.index ? mesh.geometry.index.count : mesh.geometry.attributes.position.count;
+  // scope animation: the tube grows along a smooth curve with the metal tip at its front end, then the tool extends
+  function reveal(mesh, f){ if (!mesh) return; const n = mesh.geometry.index.count;
     mesh.geometry.setDrawRange(0, Math.floor(n * Math.max(0, Math.min(1, f)) / 3) * 3); mesh.visible = f > 0.001; }
+  const ease = x => x * x * (3 - 2 * x), UP = new THREE.Vector3(0, 1, 0);
   function setProgress(p){
-    const ps = Math.min(p / 0.74, 1), pt = (p - 0.78) / 0.22;
+    const ps = ease(Math.min(p / 0.74, 1)), pt = ease(Math.max(0, Math.min((p - 0.78) / 0.22, 1)));
     reveal(scopeParts.scope, ps); reveal(scopeParts.tool, pt);
-    if (scopeParts.tip) scopeParts.tip.visible = ps >= 1; scopeParts.rings.forEach(r => r.visible = ps >= 1);
+    if (scopeParts.tip && scopeParts.curve){
+      const u = Math.max(ps, 0.02), pos = scopeParts.curve.getPointAt(u), tan = scopeParts.curve.getTangentAt(u);
+      scopeParts.tip.position.copy(pos).addScaledVector(tan, -0.003); scopeParts.tip.quaternion.setFromUnitVectors(UP, tan);
+    }
     dirty = true;
   }
-  function play(){ anim = {t0: performance.now(), dur: 8000}; }
+  function smoothCurve(points, spacing){                  // resample by distance, then fit a smooth curve
+    const out = [points[0]]; let acc = 0, total = 0;
+    for (let i = 1; i < points.length; i++){ const d = points[i].distanceTo(points[i - 1]); acc += d; total += d;
+      if (acc >= spacing(total)){ out.push(points[i]); acc = 0; } }
+    if (out[out.length - 1] !== points[points.length - 1]) out.push(points[points.length - 1]);
+    return new THREE.CatmullRomCurve3(out, false, 'centripetal');
+  }
+  function buildRoute(route, parent, mats){
+    const V = a => new THREE.Vector3(a[0], a[1], a[2]);
+    const sp = route.scope.slice(24).map(V), tp = route.tool.map(V);
+    const sc = smoothCurve(sp, d => d < 0.17 ? 0.020 : 0.009);     // wide airways allow a gentler bend at the carina
+    scopeParts.curve = sc;
+    scopeParts.scope = new THREE.Mesh(new THREE.TubeGeometry(sc, 420, route.scope_r, 14, false), mats.M_scope);
+    scopeParts.tip = new THREE.Mesh(new THREE.CylinderGeometry(route.scope_r * 1.1, route.scope_r * 0.95, 0.006, 18), mats.M_scope_tip);
+    const end = sc.getPointAt(1), tan = sc.getTangentAt(1), target = tp[tp.length - 1];
+    const mid = end.clone().addScaledVector(tan, end.distanceTo(target) * 0.45);     // leave the scope along its axis, then curve to the nodule
+    const tc = new THREE.CatmullRomCurve3([end.clone().addScaledVector(tan, -0.004), end, mid, target], false, 'centripetal');
+    scopeParts.tool = new THREE.Mesh(new THREE.TubeGeometry(tc, 80, route.tool_r, 8, false), mats.M_tool);
+    [scopeParts.scope, scopeParts.tip, scopeParts.tool].forEach(m => { m.renderOrder = 2; parent.add(m); });
+  }
+  function play(){ anim = {t0: performance.now(), dur: 9000}; }
   playBtn.addEventListener('click', play);
 
   // headset mode
@@ -230,7 +254,8 @@ function start(){
     if (xr || dirty || anim){ dirty = false; renderer.render(scene, cam); }
   });
 
-  fetch('lung_model.json').then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => {
+  const getJson = u => fetch(u).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  Promise.all([getJson('lung_model.json'), getJson('route.json')]).then(([d, route]) => {
     const bin = atob(d.glb), buf = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
     new GLTFLoader().parse(buf.buffer, '', g => {
@@ -252,10 +277,9 @@ function start(){
         o.material = mats[n] || mats.M_airway;
         o.renderOrder = n === 'M_lobe_shell' ? 4 : n === 'M_airway' ? 3 : 2;
         if (n === 'M_lesion') lesions.push([nm, o]);
-        if (n === 'M_scope') scopeParts.scope = o; else if (n === 'M_tool') scopeParts.tool = o;
-        else if (n === 'M_scope_tip') scopeParts.tip = o; else if (n === 'M_scope_ring') scopeParts.rings.push(o);
       });
       const bb = new THREE.Box3().setFromObject(g.scene), c = bb.getCenter(new THREE.Vector3()); radius = bb.getSize(new THREE.Vector3()).length() / 2;
+      buildRoute(route, g.scene, mats);
       g.scene.position.sub(c); rig.add(g.scene); rig.updateMatrixWorld(true);
       const usedY = {'1': [], '-1': []};
       lesions.sort((p, q) => new THREE.Box3().setFromObject(q[1]).getCenter(new THREE.Vector3()).y - new THREE.Box3().setFromObject(p[1]).getCenter(new THREE.Vector3()).y);
